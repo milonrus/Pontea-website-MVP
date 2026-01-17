@@ -296,7 +296,8 @@ const ResultsPage: React.FC = () => {
                      {/* Phase 1 */}
                      <div className="relative pl-8 border-l border-white/20">
                         <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-accent"></div>
-                        <h4 className="font-bold text-accent text-sm uppercase tracking-wide mb-1">Month 1: The Weakest Link</h4>
+                        {/* CHANGED: text-accent -> text-white to reduce contrast vibration */}
+                        <h4 className="font-bold text-white text-sm uppercase tracking-wide mb-1">Month 1: The Weakest Link</h4>
                         <p className="text-sm text-gray-300">
                             Your matrix shows a gap in <strong>{weakestDomain.id}</strong>. 
                             We prioritize this first because {weakestDomain.id === 'Logical Reasoning' || weakestDomain.id === 'Reading Comprehension' ? 'it is a tie-breaker domain.' : 'it caps your total score ceiling.'}
@@ -305,7 +306,7 @@ const ResultsPage: React.FC = () => {
 
                      {/* Phase 2 */}
                      <div className="relative pl-8 border-l border-white/20">
-                        <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-gray-500"></div>
+                        <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-blue-400"></div>
                         <h4 className="font-bold text-white text-sm uppercase tracking-wide mb-1">Month 2: Core Competence</h4>
                         <p className="text-sm text-gray-300">
                             Push all domains to <strong>KL2.2</strong>. Begin timed mini-sets to improve your ESL from {eslLevel} to ESL2.1.
@@ -314,7 +315,7 @@ const ResultsPage: React.FC = () => {
 
                      {/* Phase 3 */}
                      <div className="relative pl-8 border-l border-white/20">
-                        <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-gray-500"></div>
+                        <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-blue-300"></div>
                         <h4 className="font-bold text-white text-sm uppercase tracking-wide mb-1">Month 3: Rank Optimization</h4>
                         <p className="text-sm text-gray-300">
                             Full-length simulations with <strong>Section Gating</strong> enforced. Trap-proofing your Logic and History knowledge.

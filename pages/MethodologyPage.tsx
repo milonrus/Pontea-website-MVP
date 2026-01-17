@@ -382,16 +382,24 @@ const MethodologyPage: React.FC = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-24 bg-accent text-center px-4">
-         <h2 className="text-3xl md:text-5xl font-display font-bold text-primary mb-6">Don't guess your level. Measure it.</h2>
-         <p className="text-primary/80 mb-8 max-w-xl mx-auto">
-            Take our free adaptive assessment to see exactly where you stand on the Knowledge Matrix.
-         </p>
-         <Link to="/assessment">
-            <Button size="lg" className="bg-primary text-white hover:bg-gray-900 shadow-xl">
-                Start Free Assessment
-            </Button>
-         </Link>
+      <section className="py-24 bg-primary relative overflow-hidden text-center px-4">
+         {/* Background decoration */}
+         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-400 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-accent rounded-full blur-3xl"></div>
+         </div>
+         
+         <div className="relative z-10 max-w-4xl mx-auto">
+             <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">Don't guess your level. Measure it.</h2>
+             <p className="text-blue-100 mb-8 max-w-xl mx-auto text-lg">
+                Take our free adaptive assessment to see exactly where you stand on the Knowledge Matrix.
+             </p>
+             <Link to="/assessment">
+                <Button size="lg" className="bg-accent text-primary hover:bg-yellow-400 shadow-xl shadow-accent/20 border-transparent font-bold transform hover:scale-105 transition-transform duration-200">
+                    Start Free Assessment
+                </Button>
+             </Link>
+         </div>
       </section>
 
       <footer className="bg-primary text-white py-12 border-t border-white/10">
