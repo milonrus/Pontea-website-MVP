@@ -5,26 +5,88 @@ import AssessmentFlow from './components/assessment/AssessmentFlow';
 import ResultsPage from './pages/ResultsPage';
 import MethodologyPage from './pages/MethodologyPage';
 import ConsultationPage from './pages/ConsultationPage';
+import AuthPage from './pages/AuthPage';
+import DashboardPage from './pages/DashboardPage';
 import ScrollToTop from './components/shared/ScrollToTop';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-// Helper to scroll top on route change
-const ScrollHandler = () => {
-    return <ScrollToTop />;
+// New Imports
+import AdminRoute from './components/auth/AdminRoute';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import QuestionsPage from './pages/admin/QuestionsPage';
+import QuestionFormPage from './pages/admin/QuestionFormPage';
+import BulkImportPage from './pages/admin/BulkImportPage';
+import NewExercisePage from './pages/student/NewExercisePage';
+import ExerciseSessionPage from './pages/student/ExerciseSessionPage';
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentUser, loading } = useAuth();
+  if (loading) return <div>Loading...</div>;
+  if (!currentUser) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
 };
 
 const App: React.FC = () => {
   return (
-    <HashRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/methodology" element={<MethodologyPage />} />
-        <Route path="/assessment" element={<AssessmentFlow />} />
-        <Route path="/results" element={<ResultsPage />} />
-        <Route path="/consultation" element={<ConsultationPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </HashRouter>
+    <AuthProvider>
+      <HashRouter>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/methodology" element={<MethodologyPage />} />
+          <Route path="/assessment" element={<AssessmentFlow />} />
+          <Route path="/results" element={<ResultsPage />} />
+          <Route path="/consultation" element={<ConsultationPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          
+          {/* Protected Student Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/exercise/new" element={
+            <ProtectedRoute>
+              <NewExercisePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/exercise/:setId" element={
+            <ProtectedRoute>
+              <ExerciseSessionPage />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          } />
+          <Route path="/admin/questions" element={
+            <AdminRoute>
+              <QuestionsPage />
+            </AdminRoute>
+          } />
+           <Route path="/admin/questions/new" element={
+            <AdminRoute>
+              <QuestionFormPage />
+            </AdminRoute>
+          } />
+          <Route path="/admin/questions/:id/edit" element={
+            <AdminRoute>
+              <QuestionFormPage />
+            </AdminRoute>
+          } />
+          <Route path="/admin/questions/import" element={
+            <AdminRoute>
+              <BulkImportPage />
+            </AdminRoute>
+          } />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </HashRouter>
+    </AuthProvider>
   );
 };
 
