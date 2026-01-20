@@ -25,7 +25,7 @@ export const useAuth = () => useContext(AuthContext);
 // List of emails that should automatically get Admin privileges
 const ADMIN_EMAILS = ['my.mulyar@gmail.com'];
 // DEV MODE: Set this to true to treat all users as admins during development
-const DEV_AUTO_ADMIN = true; 
+const DEV_AUTO_ADMIN = false; 
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -114,15 +114,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-secondary">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <AuthContext.Provider value={{ 
-      currentUser, 
-      userProfile, 
-      loading, 
+    <AuthContext.Provider value={{
+      currentUser,
+      userProfile,
+      loading,
       isAdmin: userProfile?.role === 'admin',
       refreshProfile
     }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
