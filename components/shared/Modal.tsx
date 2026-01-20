@@ -7,9 +7,16 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   title?: string;
+  maxWidth?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+const Modal: React.FC<ModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  children, 
+  title, 
+  maxWidth = 'max-w-lg' 
+}) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -36,7 +43,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden"
+            className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl overflow-hidden`}
           >
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h3 className="text-xl font-display font-bold text-primary">{title}</h3>
@@ -47,7 +54,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[80vh]">
+            <div className="p-6 overflow-y-auto max-h-[85vh]">
               {children}
             </div>
           </motion.div>

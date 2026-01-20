@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import AssessmentFlow from './components/assessment/AssessmentFlow';
 import ResultsPage from './pages/ResultsPage';
 import MethodologyPage from './pages/MethodologyPage';
+import ConsultationPage from './pages/ConsultationPage';
 import ScrollToTop from './components/shared/ScrollToTop';
 
 // Helper to scroll top on route change
@@ -20,6 +21,7 @@ const App: React.FC = () => {
         <Route path="/methodology" element={<MethodologyPage />} />
         <Route path="/assessment" element={<AssessmentFlow />} />
         <Route path="/results" element={<ResultsPage />} />
+        <Route path="/consultation" element={<ConsultationPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

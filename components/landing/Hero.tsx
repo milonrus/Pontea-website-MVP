@@ -64,9 +64,15 @@ const Hero: React.FC = () => {
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-primary/10 hover:border-primary text-primary hover:bg-blue-50">
-                Book Consultation
-              </Button>
+              <Link to="/consultation">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="w-full sm:w-auto border-2 border-primary/10 hover:border-primary text-primary hover:bg-blue-50"
+                >
+                  Book Consultation
+                </Button>
+              </Link>
             </div>
 
             <div className="flex items-center gap-4 text-sm font-medium">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '../components/shared/Header';
 import Button from '../components/shared/Button';
 import { UserInfo, QuestionResult, Category, KnowledgeLevel } from '../types';
@@ -336,7 +336,11 @@ const ResultsPage: React.FC = () => {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
                 <h4 className="font-bold text-primary mb-2">Want a professional opinion?</h4>
                 <p className="text-sm text-gray-500 mb-4">Book a free 15-min strategy call with our PoliMi alumni.</p>
-                <Button variant="outline" fullWidth size="sm">Book Consultation</Button>
+                <Link to="/consultation">
+                  <Button variant="outline" fullWidth size="sm">
+                    Book Consultation
+                  </Button>
+                </Link>
             </div>
 
           </div>
