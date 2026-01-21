@@ -60,14 +60,6 @@ const ProgressTracking = () => {
                Instead of a vague percentage, you see exactly where you stand in each subject. Watch the grid fill up as you unlock higher levels.
             </p>
 
-            <div className="flex items-start gap-3 text-sm text-gray-500 bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-8">
-                <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold text-primary block mb-1">Focus on the Green Blocks</span>
-                  <p>These show your latest improvements. In this example, the student made a huge jump in Logical Reasoning!</p>
-                </div>
-            </div>
-
             <div className="flex flex-col sm:flex-row items-center gap-4">
                 <Link to="/assessment">
                     <Button size="lg" className="shadow-lg shadow-primary/20 group w-full sm:w-auto">
