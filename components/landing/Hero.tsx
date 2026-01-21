@@ -59,7 +59,11 @@ const Hero: React.FC = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <Link to="/assessment">
-                <Button size="lg" className="shadow-xl shadow-primary/20 hover:shadow-primary/30 w-full sm:w-auto group bg-primary text-white hover:bg-secondary border-transparent">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="shadow-xl shadow-primary/20 hover:shadow-primary/30 w-full sm:w-auto group border-transparent"
+                >
                   Start Free Assessment
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
