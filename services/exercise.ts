@@ -147,3 +147,35 @@ export const completeExercise = async (setId: string) => {
     completedAt: serverTimestamp()
   });
 };
+
+export const getExerciseHistory = async (userId: string): Promise<ExerciseSet[]> => {
+  const q = query(
+    collection(db, 'exerciseSets'),
+    where('studentId', '==', userId),
+    orderBy('startedAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ExerciseSet));
+};
+
+export const getExerciseResponses = async (setId: string) => {
+  const snapshot = await getDocs(collection(db, `exerciseSets/${setId}/responses`));
+  return snapshot.docs.map(d => ({ questionId: d.id, ...d.data() }));
+};
+
+export const getExerciseSetsForStudent = async (studentId: string): Promise<ExerciseSet[]> => {
+  const q = query(
+    collection(db, 'exerciseSets'),
+    where('studentId', '==', studentId),
+    where('status', '==', 'completed'),
+    orderBy('startedAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ExerciseSet));
+};
+
+export const abandonExercise = async (setId: string) => {
+  await updateDoc(doc(db, 'exerciseSets', setId), {
+    status: 'abandoned'
+  });
+};

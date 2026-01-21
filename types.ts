@@ -125,6 +125,23 @@ export interface StudentProgress {
   subjectStats: Record<string, SubjectStats>;
 }
 
+// --- QUESTION REPORTS ---
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved';
+
+export interface QuestionReport {
+  id: string;
+  questionId: string;
+  questionText: string;
+  reportedBy: string;
+  reporterName: string;
+  reason: string;
+  status: ReportStatus;
+  adminNotes?: string;
+  reviewedBy?: string;
+  createdAt: Timestamp;
+  resolvedAt?: Timestamp;
+}
+
 // --- LEGACY TYPES (Keep until refactor complete) ---
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 export type Category = string;
