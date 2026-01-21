@@ -71,12 +71,24 @@ const ExerciseResultsPage: React.FC = () => {
       // Sort questions to match original order
       const sortedQuestions = exerciseData.questionIds.map(
         id => questionsData.find(q => q.id === id)!
-      );
+      ).filter(q => q != null); // Filter out any null/undefined questions
+
+      if (sortedQuestions.length === 0) {
+        console.error('No questions found for exercise');
+        alert('Error: No questions found for this exercise');
+        navigate('/dashboard');
+        return;
+      }
+
+      console.log('Loaded questions:', sortedQuestions.length);
+      console.log('Loaded responses:', responsesData.length);
 
       setQuestions(sortedQuestions);
       setResponses(responsesData);
     } catch (error) {
       console.error('Error loading results:', error);
+      alert('Error loading results: ' + (error as Error).message);
+      navigate('/dashboard');
     } finally {
       setLoading(false);
     }
@@ -112,8 +124,9 @@ const ExerciseResultsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+        <p className="text-gray-600 font-medium">Loading results...</p>
       </div>
     );
   }
@@ -138,6 +151,14 @@ const ExerciseResultsPage: React.FC = () => {
   const avgTimePerQuestion = exercise.totalQuestions > 0
     ? Math.round(exercise.totalTimeSpent / exercise.totalQuestions)
     : 0;
+
+  console.log('Rendering results page with:', {
+    exerciseId: exercise.id,
+    questionsCount: questions.length,
+    responsesCount: responses.length,
+    accuracy,
+    avgTimePerQuestion
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
