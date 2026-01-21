@@ -58,10 +58,16 @@ export const generateExerciseSet = async (
     throw new Error("No available questions found for these filters.");
   }
 
-  // Create Exercise Set
+  // Create Exercise Set - remove undefined values from filters
+  const cleanFilters = {
+    subjectId: filters.subjectId,
+    count: filters.count,
+    ...(filters.difficulty && { difficulty: filters.difficulty })
+  };
+
   const exerciseSetData: Omit<ExerciseSet, 'id'> = {
     studentId: userId,
-    filters,
+    filters: cleanFilters,
     questionIds: selected.map(q => q.id),
     currentIndex: 0,
     status: 'in_progress',
@@ -70,7 +76,7 @@ export const generateExerciseSet = async (
     totalQuestions: selected.length,
     totalTimeSpent: 0
   };
-  
+
   const docRef = await addDoc(collection(db, 'exerciseSets'), exerciseSetData);
   
   return { id: docRef.id, questions: selected };

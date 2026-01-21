@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Questions collection
+    match /questions/{questionId} {
+      // Allow anyone to read questions (for the assessment)
+      allow read: if true;
+
+      // Only authenticated users can write (create, update, delete) questions
+      allow write: if request.auth != null;
+    }
+
+    // Student Progress - users can only access their own progress
+    match /studentProgress/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Exercise Sets - users can only access their own exercise sets
+    match /exerciseSets/{setId} {
+      allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
+      allow read, update: if request.auth != null && resource.data.studentId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.studentId == request.auth.uid;
+
+      // Responses subcollection
+      match /responses/{responseId} {
+        allow read, write: if request.auth != null &&
+                            get(/databases/$(database)/documents/exerciseSets/$(setId)).data.studentId == request.auth.uid;
+      }
+    }
+
+    // Users collection (if you have one)
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
