@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const ExerciseSessionPage: React.FC = () => {
   const { setId } = useParams();
   const navigate = useNavigate();
-  const { currentUser, profile } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const timer = useTimer(true);
 
   const [exercise, setExercise] = useState<ExerciseSet | null>(null);
@@ -75,7 +75,7 @@ const ExerciseSessionPage: React.FC = () => {
     const isCorrect = selectedOption === currentQ.correctAnswer;
 
     // Check user preference for showing results
-    const showAfterEach = profile?.settings?.showResultAfterEach ?? true;
+    const showAfterEach = userProfile?.settings?.showResultAfterEach ?? true;
 
     try {
       // Save to backend

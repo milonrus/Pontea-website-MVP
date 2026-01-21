@@ -35,10 +35,13 @@ const ExerciseResultsPage: React.FC = () => {
 
   useEffect(() => {
     loadResults();
-  }, [setId]);
+  }, [setId, currentUser]);
 
   const loadResults = async () => {
-    if (!setId || !currentUser) return;
+    if (!setId || !currentUser) {
+      setLoading(false);
+      return;
+    }
     try {
       const [exerciseData, subjectsData] = await Promise.all([
         getExerciseSet(setId),
@@ -109,7 +112,16 @@ const ExerciseResultsPage: React.FC = () => {
   }
 
   if (!exercise) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Exercise not found</p>
+          <Button onClick={() => navigate('/dashboard')} className="mt-4">
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const accuracy = exercise.totalQuestions > 0
