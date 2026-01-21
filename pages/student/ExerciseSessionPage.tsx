@@ -94,7 +94,9 @@ const ExerciseSessionPage: React.FC = () => {
       } else {
         // Move to next question immediately
         if (currentIndex >= questions.length - 1) {
+          console.log('Completing exercise (no explanation mode):', exercise.id);
           await completeExercise(exercise.id);
+          console.log('Exercise completed, navigating to results');
           navigate(`/exercise/${exercise.id}/results`);
         } else {
           setCurrentIndex(prev => prev + 1);
@@ -114,8 +116,15 @@ const ExerciseSessionPage: React.FC = () => {
 
     if (currentIndex >= questions.length - 1) {
       // Finish
-      await completeExercise(exercise.id);
-      navigate(`/exercise/${exercise.id}/results`);
+      try {
+        console.log('Completing exercise:', exercise.id);
+        await completeExercise(exercise.id);
+        console.log('Exercise completed, navigating to results');
+        navigate(`/exercise/${exercise.id}/results`);
+      } catch (error) {
+        console.error('Error completing exercise:', error);
+        alert('Error completing exercise. Please try again.');
+      }
     } else {
       setCurrentIndex(prev => prev + 1);
       setIsSubmitted(false);

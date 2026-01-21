@@ -38,8 +38,12 @@ const ExerciseResultsPage: React.FC = () => {
   }, [setId, currentUser]);
 
   const loadResults = async () => {
-    if (!setId || !currentUser) {
+    if (!setId) {
       setLoading(false);
+      return;
+    }
+    if (!currentUser) {
+      // Keep loading while waiting for auth to initialize
       return;
     }
     try {
@@ -49,9 +53,12 @@ const ExerciseResultsPage: React.FC = () => {
       ]);
 
       if (!exerciseData) {
+        console.error('Exercise not found:', setId);
         navigate('/dashboard');
         return;
       }
+
+      console.log('Exercise loaded:', exerciseData);
 
       setExercise(exerciseData);
       setSubjects(subjectsData);
