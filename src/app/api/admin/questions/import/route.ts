@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
     const questionsToInsert = questions.map(q => ({
       subject_id: q.subjectId,
-      topic_id: q.topicId,
+      topic_id: q.topicId || null,
       question_text: q.questionText,
       options: q.options,
       correct_answer: q.correctAnswer,

@@ -5,6 +5,7 @@ import Button from '@/components/shared/Button';
 import { createQuestion, getQuestion, updateQuestion, getSubjects, getTopics } from '@/lib/db';
 import { QuestionModel, SubjectModel, TopicModel, QuestionDifficulty, OptionId } from '@/types';
 import LaTeXRenderer from '@/components/shared/LaTeXRenderer';
+import ImageUpload from '@/components/shared/ImageUpload';
 import { ArrowLeft, Save, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -25,9 +26,12 @@ const QuestionFormPage: React.FC = () => {
   const [error, setError] = useState('');
   const [usingFallbackSubjects, setUsingFallbackSubjects] = useState(false);
   
+  const GENERAL_TOPIC_VALUE = 'general';
+
   const [formData, setFormData] = useState<Partial<QuestionModel>>({
     difficulty: 'medium',
     isActive: true,
+    topicId: null,
     options: [
         { id: 'a', text: '' },
         { id: 'b', text: '' },
@@ -85,7 +89,11 @@ const QuestionFormPage: React.FC = () => {
   // Fetch topics when subject changes
   useEffect(() => {
     if (formData.subjectId) {
-        getTopics(formData.subjectId).then(setTopics).catch(err => console.log("No topics loaded", err));
+        getTopics(formData.subjectId)
+          .then(setTopics)
+          .catch(err => console.log("No topics loaded", err));
+    } else {
+        setTopics([]);
     }
   }, [formData.subjectId]);
 
@@ -119,8 +127,8 @@ const QuestionFormPage: React.FC = () => {
             return;
         }
 
-        if (!formData.topicId || !isUuid(formData.topicId)) {
-            setError("Please select a topic before saving. Topics are required for questions.");
+        if (formData.topicId && !isUuid(formData.topicId)) {
+            setError("Topics must come from the database. Create topics or select General.");
             setLoading(false);
             return;
         }
@@ -128,7 +136,7 @@ const QuestionFormPage: React.FC = () => {
         // Sanitize payload
         const payload: any = {
             subjectId: formData.subjectId,
-            topicId: formData.topicId,
+            topicId: formData.topicId ?? null,
             tags: formData.tags || [],
             difficulty: formData.difficulty || 'medium',
             questionText: formData.questionText,
@@ -188,7 +196,7 @@ const QuestionFormPage: React.FC = () => {
                         <select 
                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                             value={formData.subjectId || ''}
-                            onChange={e => setFormData({...formData, subjectId: e.target.value})}
+                            onChange={e => setFormData({...formData, subjectId: e.target.value, topicId: null})}
                             required
                         >
                             <option value="">Select Subject...</option>
@@ -199,11 +207,16 @@ const QuestionFormPage: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Topic</label>
                         <select 
                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                            value={formData.topicId || ''}
-                            onChange={e => setFormData({...formData, topicId: e.target.value})}
-                            required
+                            value={formData.topicId ?? GENERAL_TOPIC_VALUE}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                topicId: e.target.value === GENERAL_TOPIC_VALUE ? null : e.target.value
+                              })
+                            }
+                            disabled={!formData.subjectId}
                         >
-                             <option value="">Select Topic...</option>
+                             <option value={GENERAL_TOPIC_VALUE}>General (no topic)</option>
                              {topics.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                     </div>
@@ -238,6 +251,13 @@ const QuestionFormPage: React.FC = () => {
                         placeholder="e.g. Solve for $x$ in $x^2 + 2x + 1 = 0$"
                     />
                 </div>
+
+                <ImageUpload
+                    currentUrl={formData.questionImageUrl}
+                    onUpload={url => setFormData({ ...formData, questionImageUrl: url })}
+                    folder="questions"
+                    label="Question Image"
+                />
 
                 <div className="space-y-3">
                     <label className="block text-sm font-medium text-gray-700">Options *</label>
@@ -276,6 +296,13 @@ const QuestionFormPage: React.FC = () => {
                     />
                 </div>
 
+                <ImageUpload
+                    currentUrl={formData.explanationImageUrl}
+                    onUpload={url => setFormData({ ...formData, explanationImageUrl: url })}
+                    folder="explanations"
+                    label="Explanation Image"
+                />
+
                 <div className="pt-4 border-t border-gray-100">
                     <Button type="submit" isLoading={loading} className="w-full flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
                         <Save className="w-4 h-4" />
@@ -298,6 +325,14 @@ const QuestionFormPage: React.FC = () => {
                         )}
                     </div>
 
+                    {formData.questionImageUrl && (
+                        <img
+                            src={formData.questionImageUrl}
+                            alt="Question"
+                            className="w-full max-h-60 object-contain rounded-lg border border-gray-200 bg-gray-50 mb-6"
+                        />
+                    )}
+
                     <div className="space-y-3">
                         {formData.options?.map(opt => (
                             <div 
@@ -315,10 +350,21 @@ const QuestionFormPage: React.FC = () => {
                         ))}
                     </div>
 
-                    {formData.explanation && (
+                    {(formData.explanation || formData.explanationImageUrl) && (
                         <div className="mt-6 p-4 bg-blue-50 rounded-lg text-sm text-blue-900 border border-blue-100">
                             <span className="font-bold block mb-1 flex items-center gap-1 text-primary"><span className="w-1.5 h-1.5 rounded-full bg-accent"></span> Explanation:</span>
-                            <LaTeXRenderer text={formData.explanation} />
+                            {formData.explanation ? (
+                                <LaTeXRenderer text={formData.explanation} />
+                            ) : (
+                                <span className="text-blue-400 italic">No explanation text</span>
+                            )}
+                            {formData.explanationImageUrl && (
+                                <img
+                                    src={formData.explanationImageUrl}
+                                    alt="Explanation"
+                                    className="w-full max-h-60 object-contain rounded-lg border border-blue-100 bg-white mt-4"
+                                />
+                            )}
                         </div>
                     )}
                 </div>

@@ -56,15 +56,17 @@ export const Feedback: React.FC<FeedbackProps> = ({
       </div>
 
       {/* Explanation */}
-      {showExplanation && explanation && (
+      {showExplanation && (explanation || explanationImageUrl) && (
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="w-5 h-5 text-amber-500" />
             <h4 className="font-bold text-gray-900">Explanation</h4>
           </div>
-          <div className="text-sm text-gray-700 leading-relaxed prose max-w-none">
-            <LaTeXRenderer text={explanation} />
-          </div>
+          {explanation && (
+            <div className="text-sm text-gray-700 leading-relaxed prose max-w-none">
+              <LaTeXRenderer text={explanation} />
+            </div>
+          )}
           {explanationImageUrl && (
             <img
               src={explanationImageUrl}

@@ -275,6 +275,13 @@ const ExerciseResultsPage: React.FC = () => {
                           <div>
                             <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Question</p>
                             <LaTeXRenderer text={question.questionText} className="text-gray-900" />
+                            {question.questionImageUrl && (
+                              <img
+                                src={question.questionImageUrl}
+                                alt="Question illustration"
+                                className="mt-3 max-w-full h-auto rounded-lg border border-gray-200"
+                              />
+                            )}
                           </div>
 
                           {/* Options */}
@@ -307,6 +314,13 @@ const ExerciseResultsPage: React.FC = () => {
                           <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
                             <p className="text-xs font-semibold text-blue-700 uppercase mb-2">Explanation</p>
                             <LaTeXRenderer text={question.explanation} className="text-sm text-blue-900" />
+                            {question.explanationImageUrl && (
+                              <img
+                                src={question.explanationImageUrl}
+                                alt="Explanation illustration"
+                                className="mt-3 max-w-full h-auto rounded-lg border border-blue-100"
+                              />
+                            )}
                           </div>
 
                           {/* Time spent */}

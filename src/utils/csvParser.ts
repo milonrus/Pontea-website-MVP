@@ -3,7 +3,7 @@ import { QuestionModel, QuestionDifficulty, OptionId, ParsedQuestion } from '@/t
 
 interface CSVRow {
   subjectId: string;
-  topicId: string;
+  topicId?: string;
   difficulty: string;
   tags: string;
   questionText: string;
@@ -42,11 +42,15 @@ export const parseQuestionsCSV = (file: File): Promise<ParsedQuestion[]> => {
             errors.push('Invalid difficulty (must be easy, medium, or hard)');
           }
           
+          const rawTopicId = row.topicId?.trim();
+          const normalizedTopicId =
+            rawTopicId && rawTopicId.toLowerCase() !== 'general' ? rawTopicId : null;
+
           return {
             rowNumber: index + 2, // +2 accounting for header row and 0-based index
             data: {
               subjectId: row.subjectId?.trim(),
-              topicId: row.topicId?.trim() || 'general',
+              topicId: normalizedTopicId,
               difficulty: difficulty || 'medium',
               tags: row.tags ? row.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
               questionText: row.questionText?.trim(),

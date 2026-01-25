@@ -30,7 +30,7 @@ const mapTopic = (row: any): TopicModel => ({
 const mapQuestion = (row: any): QuestionModel => ({
   id: row.id,
   subjectId: row.subject_id,
-  topicId: row.topic_id,
+  topicId: row.topic_id ?? null,
   tags: row.tags || [],
   difficulty: row.difficulty,
   questionText: row.question_text,
@@ -179,7 +179,7 @@ export const createQuestion = async (
   const now = new Date().toISOString();
   const { error } = await supabase.from('questions').insert({
     subject_id: data.subjectId,
-    topic_id: data.topicId,
+    topic_id: data.topicId ?? null,
     tags: data.tags,
     difficulty: data.difficulty,
     question_text: data.questionText,
@@ -218,7 +218,7 @@ export const batchCreateQuestions = async (
   const now = new Date().toISOString();
   const rows = questions.map(q => ({
     subject_id: q.subjectId,
-    topic_id: q.topicId,
+    topic_id: q.topicId ?? null,
     tags: q.tags,
     difficulty: q.difficulty,
     question_text: q.questionText,

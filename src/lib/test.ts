@@ -4,7 +4,7 @@ import { ExerciseFilters, ExerciseSet, QuestionModel, OptionId, ExerciseResponse
 const mapQuestion = (row: any): QuestionModel => ({
   id: row.id,
   subjectId: row.subject_id,
-  topicId: row.topic_id,
+  topicId: row.topic_id ?? null,
   tags: row.tags || [],
   difficulty: row.difficulty,
   questionText: row.question_text,
@@ -22,7 +22,7 @@ const mapQuestion = (row: any): QuestionModel => ({
 
 const mapExerciseSet = (row: any): ExerciseSet => ({
   id: row.id,
-  studentId: row.student_id,
+  studentId: row.user_id,
   title: row.title ?? undefined,
   filters: row.filters || {},
   questionIds: row.question_ids || [],
@@ -31,7 +31,7 @@ const mapExerciseSet = (row: any): ExerciseSet => ({
   startedAt: row.started_at,
   completedAt: row.completed_at ?? undefined,
   correctCount: row.correct_count ?? 0,
-  totalQuestions: row.total_questions ?? 0,
+  totalQuestions: row.total_questions ?? row.question_ids?.length ?? 0,
   totalTimeSpent: row.total_time_spent ?? 0
 });
 
@@ -93,16 +93,15 @@ export const generateExerciseSet = async (
   const now = new Date().toISOString();
 
   const { data: insertData, error: insertError } = await supabase
-    .from('exercise_sets')
+    .from('practice_sessions')
     .insert({
-      student_id: userId,
+      user_id: userId,
       filters: cleanFilters,
       question_ids: selected.map(q => q.id),
       current_index: 0,
       status: 'in_progress',
       started_at: now,
       correct_count: 0,
-      total_questions: selected.length,
       total_time_spent: 0
     })
     .select('id')
@@ -114,7 +113,7 @@ export const generateExerciseSet = async (
 };
 
 export const getExerciseSet = async (id: string): Promise<ExerciseSet | null> => {
-  const { data, error } = await supabase.from('exercise_sets').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('practice_sessions').select('*').eq('id', id).single();
   if (error) {
     if (error.code === 'PGRST116') return null;
     throw error;
@@ -141,21 +140,51 @@ export const submitAnswer = async (
   timeSpent: number,
   isCorrect: boolean
 ) => {
-  const { error } = await supabase.rpc('submit_answer', {
-    user_id: userId,
-    set_id: setId,
-    question_id: questionId,
-    selected_answer: selectedAnswer,
-    time_spent: timeSpent,
-    is_correct: isCorrect
-  });
+  const serverTime = new Date().toISOString();
 
-  if (error) throw error;
+  const { data: session, error: sessionError } = await supabase
+    .from('practice_sessions')
+    .select('*')
+    .eq('id', setId)
+    .eq('user_id', userId)
+    .single();
+
+  if (sessionError) throw sessionError;
+
+  const { error: answerError } = await supabase
+    .from('practice_answers')
+    .upsert({
+      session_id: setId,
+      question_id: questionId,
+      selected_answer: selectedAnswer,
+      is_correct: isCorrect,
+      time_spent: timeSpent || 0,
+      answered_at: serverTime
+    }, {
+      onConflict: 'session_id,question_id'
+    });
+
+  if (answerError) throw answerError;
+
+  const newCorrectCount = (session?.correct_count ?? 0) + (isCorrect ? 1 : 0);
+  const newTimeSpent = (session?.total_time_spent ?? 0) + (timeSpent || 0);
+  const newIndex = (session?.current_index ?? 0) + 1;
+
+  const { error: updateError } = await supabase
+    .from('practice_sessions')
+    .update({
+      current_index: newIndex,
+      correct_count: newCorrectCount,
+      total_time_spent: newTimeSpent
+    })
+    .eq('id', setId);
+
+  if (updateError) throw updateError;
 };
 
 export const completeExercise = async (setId: string) => {
   const { error } = await supabase
-    .from('exercise_sets')
+    .from('practice_sessions')
     .update({ status: 'completed', completed_at: new Date().toISOString() })
     .eq('id', setId);
 
@@ -164,9 +193,9 @@ export const completeExercise = async (setId: string) => {
 
 export const getExerciseHistory = async (userId: string): Promise<ExerciseSet[]> => {
   const { data, error } = await supabase
-    .from('exercise_sets')
+    .from('practice_sessions')
     .select('*')
-    .eq('student_id', userId)
+    .eq('user_id', userId)
     .order('started_at', { ascending: false });
 
   if (error) throw error;
@@ -175,9 +204,9 @@ export const getExerciseHistory = async (userId: string): Promise<ExerciseSet[]>
 
 export const getExerciseResponses = async (setId: string): Promise<ExerciseResponse[]> => {
   const { data, error } = await supabase
-    .from('exercise_responses')
+    .from('practice_answers')
     .select('*')
-    .eq('exercise_set_id', setId)
+    .eq('session_id', setId)
     .order('answered_at', { ascending: true });
 
   if (error) throw error;
@@ -186,9 +215,9 @@ export const getExerciseResponses = async (setId: string): Promise<ExerciseRespo
 
 export const getExerciseSetsForStudent = async (studentId: string): Promise<ExerciseSet[]> => {
   const { data, error } = await supabase
-    .from('exercise_sets')
+    .from('practice_sessions')
     .select('*')
-    .eq('student_id', studentId)
+    .eq('user_id', studentId)
     .eq('status', 'completed')
     .order('started_at', { ascending: false });
 
@@ -198,7 +227,7 @@ export const getExerciseSetsForStudent = async (studentId: string): Promise<Exer
 
 export const abandonExercise = async (setId: string) => {
   const { error } = await supabase
-    .from('exercise_sets')
+    .from('practice_sessions')
     .update({ status: 'abandoned' })
     .eq('id', setId);
 

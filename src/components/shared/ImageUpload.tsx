@@ -17,6 +17,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 }) => {
   const bucketName = 'questions';
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,10 +36,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleFile = async (file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file');
@@ -101,6 +99,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await handleFile(file);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await handleFile(file);
+  };
+
   const handleRemove = async () => {
     if (!currentUrl) return;
 
@@ -138,8 +150,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       ) : (
         <div
           onClick={() => fileInputRef.current?.click()}
+          onDragOver={e => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
           className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-            uploading
+            uploading || isDragging
               ? 'border-primary/50 bg-primary/5'
               : 'border-gray-300 hover:border-primary/50 hover:bg-gray-50'
           }`}
@@ -155,7 +173,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 <Upload className="w-6 h-6 text-gray-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-700">Click to upload</p>
+                <p className="text-sm font-medium text-gray-700">Click or drag to upload</p>
                 <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
               </div>
             </div>

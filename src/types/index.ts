@@ -49,7 +49,7 @@ export interface QuestionStats {
 export interface QuestionModel {
   id: string;
   subjectId: string;
-  topicId: string;
+  topicId: string | null;
   tags: string[];
   difficulty: QuestionDifficulty;
   questionText: string;
