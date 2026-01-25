@@ -57,9 +57,9 @@ export async function GET(request: NextRequest) {
 
     const attemptQuestions = attempt.attempt_questions || [];
     const attemptSections = attempt.attempt_sections || [];
-    const questionIds = (attempt.question_ids || []).length > 0
-      ? attempt.question_ids
-      : attemptQuestions.map((q: any) => q.question_id).filter(Boolean);
+    const questionIds: string[] = (attempt.question_ids || []).length > 0
+      ? (attempt.question_ids as string[])
+      : (attemptQuestions.map((q: any) => q.question_id).filter(Boolean) as string[]);
 
     let questionRows: any[] = [];
     if (questionIds.length > 0) {
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     }
 
     const questionById = new Map(questionRows.map(q => [q.id, q]));
-    const orderMap = new Map(
+    const orderMap = new Map<string, number>(
       (questionIds || []).map((id: string, index: number) => [id, index])
     );
 
@@ -92,8 +92,8 @@ export async function GET(request: NextRequest) {
       const sectionQuestions = attemptQuestions
         .filter((q: any) => (q.section_index ?? 0) === sectionIndex)
         .sort((a: any, b: any) => {
-          const aOrder = orderMap.get(a.question_id) ?? 0;
-          const bOrder = orderMap.get(b.question_id) ?? 0;
+          const aOrder = orderMap.get(String(a.question_id)) ?? 0;
+          const bOrder = orderMap.get(String(b.question_id)) ?? 0;
           return aOrder - bOrder;
         });
 
