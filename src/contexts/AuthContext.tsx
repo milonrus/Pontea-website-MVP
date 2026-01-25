@@ -25,11 +25,6 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-// List of emails that should automatically get Admin privileges
-const ADMIN_EMAILS = ['my.mulyar@gmail.com'];
-// DEV MODE: Set this to true to treat all users as admins during development
-const DEV_AUTO_ADMIN = false;
-
 const mapUserRow = (row: any): UserProfile => ({
   uid: row.id,
   email: row.email || '',
@@ -65,8 +60,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       console.log('[AuthContext] Fetching profile for user:', user.id);
-      const shouldBeAdmin = DEV_AUTO_ADMIN || (!!user.email && ADMIN_EMAILS.includes(user.email));
-
       console.log('[AuthContext] Querying Supabase...');
 
       // Add timeout to prevent infinite hanging
@@ -91,19 +84,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log('[AuthContext] Query result:', { data, error });
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('[AuthContext] Error fetching profile:', error);
+      const isNoRowError = error?.code === 'PGRST116' || error?.status === 406;
+      if (error && !isNoRowError) {
         throw error;
       }
 
       if (data) {
         console.log('[AuthContext] Profile found:', data);
-        if (shouldBeAdmin && data.role !== 'admin') {
-          console.log('[AuthContext] Updating role to admin...');
-          await supabase.from('users').update({ role: 'admin' }).eq('id', user.id);
-          data.role = 'admin';
-        }
-
         // Check if aborted before setState
         if (abortSignal?.aborted) {
           console.log('[AuthContext] Fetch aborted before setState');
@@ -122,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: user.id,
         email: user.email || '',
         display_name: user.user_metadata?.full_name || user.email || 'Student',
-        role: shouldBeAdmin ? 'admin' : 'student',
+        role: 'student',
         created_at: new Date().toISOString(),
         settings: {
           showResultAfterEach: false
@@ -151,7 +138,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('[AuthContext] Profile created:', inserted);
       setUserProfile(mapUserRow(inserted));
     } catch (error: any) {
-      console.warn('[AuthContext] Could not fetch/create user profile in Supabase. Using local fallback.', error?.message || error);
+      const errorDetails = error && typeof error === 'object' ? {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      } : error;
+      console.warn('[AuthContext] Could not fetch/create user profile in Supabase. Using local fallback.', errorDetails);
 
       // Check if aborted before using fallback
       if (abortSignal?.aborted) {
@@ -160,12 +153,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      const shouldBeAdmin = DEV_AUTO_ADMIN || (!!user.email && ADMIN_EMAILS.includes(user.email || ''));
       const fallbackProfile: UserProfile = {
         uid: user.id,
         email: user.email || '',
         displayName: user.user_metadata?.full_name || user.email || 'Student',
-        role: shouldBeAdmin ? 'admin' : 'student',
+        role: 'student',
         createdAt: new Date().toISOString(),
         settings: {
           showResultAfterEach: false

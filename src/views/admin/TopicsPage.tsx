@@ -26,6 +26,19 @@ const TopicsPage: React.FC = () => {
     loadData();
   }, [subjectId]);
 
+  const describeError = (error: unknown) => {
+    if (error && typeof error === 'object') {
+      const err = error as { message?: string; code?: string; details?: string; hint?: string };
+      return {
+        message: err.message,
+        code: err.code,
+        details: err.details,
+        hint: err.hint
+      };
+    }
+    return error;
+  };
+
   const loadData = async () => {
     if (!subjectId) return;
     try {
@@ -40,7 +53,7 @@ const TopicsPage: React.FC = () => {
       const topicsData = await getTopics(subjectId);
       setTopics(topicsData);
     } catch (error) {
-      console.error('Error loading topics:', error);
+      console.error('Error loading topics:', describeError(error));
     } finally {
       setLoading(false);
     }
@@ -70,14 +83,13 @@ const TopicsPage: React.FC = () => {
         await createTopic({
           subjectId,
           name: formData.name.trim(),
-          order: topics.length + 1,
-          questionCount: 0
+          order: topics.length + 1
         });
       }
       setIsModalOpen(false);
       loadData();
     } catch (error) {
-      console.error('Error saving topic:', error);
+      console.error('Error saving topic:', describeError(error));
       alert('Failed to save topic');
     } finally {
       setSaving(false);
@@ -96,7 +108,7 @@ const TopicsPage: React.FC = () => {
       await deleteTopic(topic.id);
       loadData();
     } catch (error) {
-      console.error('Error deleting topic:', error);
+      console.error('Error deleting topic:', describeError(error));
       alert('Failed to delete topic');
     } finally {
       setDeleting(null);
@@ -117,7 +129,7 @@ const TopicsPage: React.FC = () => {
       ]);
       setTopics(newTopics);
     } catch (error) {
-      console.error('Error reordering topics:', error);
+      console.error('Error reordering topics:', describeError(error));
     }
   };
 

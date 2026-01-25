@@ -1,23 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
 import Button from '@/components/shared/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateExerciseSet } from '@/lib/test';
 import { BrainCircuit, Sliders } from 'lucide-react';
-import { QuestionDifficulty } from '@/types';
+import { getSubjects } from '@/lib/db';
+import { QuestionDifficulty, SubjectModel } from '@/types';
 
 const NewExercisePage: React.FC = () => {
   const router = useRouter();
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [subjects, setSubjects] = useState<SubjectModel[]>([]);
+  const [subjectsLoading, setSubjectsLoading] = useState(true);
+  const [subjectsError, setSubjectsError] = useState('');
 
   const [config, setConfig] = useState({
     subjectId: 'all',
     difficulty: 'any',
     count: 10
   });
+
+  useEffect(() => {
+    const loadSubjects = async () => {
+      try {
+        const data = await getSubjects();
+        setSubjects(data);
+      } catch (err: any) {
+        console.error('Failed to load subjects:', err);
+        setSubjectsError('Unable to load subjects. Please try again later.');
+      } finally {
+        setSubjectsLoading(false);
+      }
+    };
+    loadSubjects();
+  }, []);
 
   const handleStart = async () => {
     if (!currentUser) return;
@@ -60,21 +79,41 @@ const NewExercisePage: React.FC = () => {
                     <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                         <Sliders className="w-4 h-4 text-accent" /> Subject
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
-                        {['all', 'math', 'physics', 'logic', 'history', 'drawing'].map(sub => (
-                             <button
-                                key={sub}
-                                onClick={() => setConfig({...config, subjectId: sub})}
-                                className={`py-3 px-4 rounded-lg text-sm font-medium border transition-all capitalize
-                                    ${config.subjectId === sub 
-                                        ? 'bg-primary text-white border-primary shadow-md' 
+                    {subjectsLoading ? (
+                        <p className="text-sm text-gray-500">Loading subjects...</p>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setConfig({...config, subjectId: 'all'})}
+                                className={`py-3 px-4 rounded-lg text-sm font-medium border transition-all
+                                    ${config.subjectId === 'all'
+                                        ? 'bg-primary text-white border-primary shadow-md'
                                         : 'bg-white text-gray-600 border-gray-200 hover:border-primary/50'}
                                 `}
-                             >
-                                {sub === 'all' ? 'All Subjects' : sub}
-                             </button>
-                        ))}
-                    </div>
+                            >
+                                All Subjects
+                            </button>
+                            {subjects.map(subject => (
+                                <button
+                                    key={subject.id}
+                                    onClick={() => setConfig({...config, subjectId: subject.id})}
+                                    className={`py-3 px-4 rounded-lg text-sm font-medium border transition-all
+                                        ${config.subjectId === subject.id
+                                            ? 'bg-primary text-white border-primary shadow-md'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:border-primary/50'}
+                                    `}
+                                >
+                                    {subject.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {subjectsError && (
+                        <p className="text-xs text-red-600 mt-2">{subjectsError}</p>
+                    )}
+                    {!subjectsLoading && !subjectsError && subjects.length === 0 && (
+                        <p className="text-xs text-gray-500 mt-2">No subjects found. Add them in Admin {'>'} Subjects.</p>
+                    )}
                 </div>
 
                 <div>

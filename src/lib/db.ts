@@ -5,7 +5,8 @@ import {
   QuestionModel,
   QuestionReport,
   UserProfile,
-  StudentProgress
+  StudentProgress,
+  UserRole
 } from '@/types';
 
 const mapSubject = (row: any): SubjectModel => ({
@@ -116,7 +117,6 @@ export const createSubject = async (data: Omit<SubjectModel, 'id' | 'createdAt'>
     name: data.name,
     description: data.description ?? null,
     order: data.order,
-    question_count: data.questionCount ?? 0,
     created_at: new Date().toISOString()
   });
 
@@ -140,7 +140,6 @@ export const createTopic = async (data: Omit<TopicModel, 'id' | 'createdAt'>) =>
     subject_id: data.subjectId,
     name: data.name,
     order: data.order,
-    question_count: data.questionCount ?? 0,
     created_at: new Date().toISOString()
   });
 
@@ -245,7 +244,6 @@ export const updateSubject = async (id: string, data: Partial<SubjectModel>) => 
   if (data.name !== undefined) update.name = data.name;
   if (data.description !== undefined) update.description = data.description ?? null;
   if (data.order !== undefined) update.order = data.order;
-  if (data.questionCount !== undefined) update.question_count = data.questionCount;
 
   const { error } = await supabase.from('subjects').update(update).eq('id', id);
   if (error) throw error;
@@ -268,7 +266,6 @@ export const updateTopic = async (id: string, data: Partial<TopicModel>) => {
   if (data.name !== undefined) update.name = data.name;
   if (data.order !== undefined) update.order = data.order;
   if (data.subjectId !== undefined) update.subject_id = data.subjectId;
-  if (data.questionCount !== undefined) update.question_count = data.questionCount;
 
   const { error } = await supabase.from('topics').update(update).eq('id', id);
   if (error) throw error;
@@ -341,7 +338,6 @@ export const getStudents = async (): Promise<UserProfile[]> => {
   const { data, error } = await supabase
     .from('users')
     .select('*')
-    .eq('role', 'student')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -364,6 +360,14 @@ export const updateUser = async (uid: string, data: Partial<UserProfile>) => {
   if (data.settings !== undefined) update.settings = data.settings;
 
   const { error } = await supabase.from('users').update(update).eq('id', uid);
+  if (error) throw error;
+};
+
+export const updateUserRole = async (uid: string, role: UserRole) => {
+  const { error } = await supabase.rpc('admin_update_user_role', {
+    target_user_id: uid,
+    new_role: role
+  });
   if (error) throw error;
 };
 

@@ -23,6 +23,19 @@ const SubjectsPage: React.FC = () => {
     loadData();
   }, []);
 
+  const describeError = (error: unknown) => {
+    if (error && typeof error === 'object') {
+      const err = error as { message?: string; code?: string; details?: string; hint?: string };
+      return {
+        message: err.message,
+        code: err.code,
+        details: err.details,
+        hint: err.hint
+      };
+    }
+    return error;
+  };
+
   const loadData = async () => {
     try {
       const subjectsData = await getSubjects();
@@ -36,7 +49,7 @@ const SubjectsPage: React.FC = () => {
       }
       setTopicCounts(counts);
     } catch (error) {
-      console.error('Error loading subjects:', error);
+      console.error('Error loading subjects:', describeError(error));
     } finally {
       setLoading(false);
     }
@@ -67,14 +80,13 @@ const SubjectsPage: React.FC = () => {
         await createSubject({
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
-          order: subjects.length + 1,
-          questionCount: 0
+          order: subjects.length + 1
         });
       }
       setIsModalOpen(false);
       loadData();
     } catch (error) {
-      console.error('Error saving subject:', error);
+      console.error('Error saving subject:', describeError(error));
       alert('Failed to save subject');
     } finally {
       setSaving(false);
@@ -97,7 +109,7 @@ const SubjectsPage: React.FC = () => {
       await deleteSubject(subject.id);
       loadData();
     } catch (error) {
-      console.error('Error deleting subject:', error);
+      console.error('Error deleting subject:', describeError(error));
       alert('Failed to delete subject');
     } finally {
       setDeleting(null);
@@ -119,7 +131,7 @@ const SubjectsPage: React.FC = () => {
       ]);
       setSubjects(newSubjects);
     } catch (error) {
-      console.error('Error reordering subjects:', error);
+      console.error('Error reordering subjects:', describeError(error));
     }
   };
 

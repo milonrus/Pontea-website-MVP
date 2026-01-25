@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:install": "playwright install"
   },
   "dependencies": {
     "react": "^19.2.3",
@@ -27,6 +30,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "@playwright/test": "^1.49.0"
   }
 }

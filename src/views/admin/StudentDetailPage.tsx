@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
-import { getUser, getStudentProgress, getSubjects } from '@/lib/db';
+import { getUser, getStudentProgress, getSubjects, updateUserRole } from '@/lib/db';
 import { getExerciseSetsForStudent } from '@/lib/test';
-import { UserProfile, StudentProgress, ExerciseSet, SubjectModel } from '@/types';
+import { UserProfile, StudentProgress, ExerciseSet, SubjectModel, UserRole } from '@/types';
 import {
   ChevronRight,
   ArrowLeft,
@@ -30,6 +30,9 @@ const StudentDetailPage: React.FC = () => {
   const [exercises, setExercises] = useState<ExerciseSet[]>([]);
   const [subjects, setSubjects] = useState<SubjectModel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<UserRole>('student');
+  const [roleSaving, setRoleSaving] = useState(false);
+  const [roleMessage, setRoleMessage] = useState('');
 
   useEffect(() => {
     loadData();
@@ -51,6 +54,8 @@ const StudentDetailPage: React.FC = () => {
       }
 
       setStudent(studentData);
+      setRole(studentData.role);
+      setRoleMessage('');
       setProgress(progressData);
       setExercises(exercisesData);
       setSubjects(subjectsData);
@@ -81,6 +86,22 @@ const StudentDetailPage: React.FC = () => {
 
   const getSubjectName = (subjectId: string) => {
     return subjects.find(s => s.id === subjectId)?.name || subjectId;
+  };
+
+  const handleRoleUpdate = async () => {
+    if (!student || roleSaving || role === student.role) return;
+    setRoleSaving(true);
+    setRoleMessage('');
+    try {
+      await updateUserRole(student.uid, role);
+      setStudent({ ...student, role });
+      setRoleMessage('Role updated.');
+    } catch (error: any) {
+      console.error('Failed to update role:', error);
+      setRoleMessage(error?.message || 'Failed to update role.');
+    } finally {
+      setRoleSaving(false);
+    }
   };
 
   if (loading) {
@@ -141,6 +162,40 @@ const StudentDetailPage: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-gray-700">Role</p>
+              <p className="text-xs text-gray-500">Set the user access level.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={role}
+                onChange={event => setRole(event.target.value as UserRole)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              >
+                <option value="student">User</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button
+                type="button"
+                onClick={handleRoleUpdate}
+                disabled={roleSaving || role === student.role}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  roleSaving || role === student.role
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-primary text-white hover:bg-primary/90'
+                }`}
+              >
+                {roleSaving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+          {roleMessage && (
+            <p className="text-xs text-gray-500 mt-2">{roleMessage}</p>
+          )}
         </div>
 
         {/* Stats Cards */}

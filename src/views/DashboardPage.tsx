@@ -1,16 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/shared/Header';
 import Button from '@/components/shared/Button';
-import { LogOut, User as UserIcon, Shield, RefreshCw, Check, AlertTriangle } from 'lucide-react';
+import { LogOut, User as UserIcon, Shield, AlertTriangle } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
-  const { currentUser, isAdmin, refreshProfile } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
   const router = useRouter();
-  const [repairing, setRepairing] = useState(false);
-  const [message, setMessage] = useState('');
 
   useEffect(() => {
     if (!currentUser) {
@@ -24,22 +22,6 @@ const DashboardPage: React.FC = () => {
       router.replace('/auth');
     } catch (error) {
       console.error('Failed to log out', error);
-    }
-  };
-
-  const handleRepairPermissions = async () => {
-    if (!currentUser) return;
-    setRepairing(true);
-    setMessage('');
-    try {
-        await supabase.from('users').update({ role: 'admin' }).eq('id', currentUser.id);
-        await refreshProfile();
-        setMessage('Success! You are now an Admin in Supabase.');
-    } catch (e: any) {
-        console.error(e);
-        setMessage('Failed: ' + e.message);
-    } finally {
-        setRepairing(false);
     }
   };
 
@@ -95,17 +77,7 @@ const DashboardPage: React.FC = () => {
                         <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-100 flex items-center gap-2">
                              <AlertTriangle className="w-3 h-3" /> Admin access required
                         </div>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={handleRepairPermissions} 
-                            isLoading={repairing}
-                            className="w-full"
-                        >
-                            <RefreshCw className="w-3 h-3 mr-2" />
-                            Repair Permissions
-                        </Button>
-                        {message && <p className="text-xs text-green-600 font-bold">{message}</p>}
+                        <p className="text-xs text-gray-500">Contact an admin to request access.</p>
                     </div>
                 )}
             </div>
