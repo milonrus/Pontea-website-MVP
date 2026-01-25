@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { Question, UserInfo, QuestionResult } from '../../types';
 import { QUESTIONS } from '../../data/questions';
 import IntroScreen from './IntroScreen';
@@ -8,7 +8,7 @@ import QuestionCard from './QuestionCard';
 import ProgressBar from './ProgressBar';
 
 const AssessmentFlow: React.FC = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [step, setStep] = useState<'intro' | 'info' | 'quiz'>('intro');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   
@@ -97,7 +97,7 @@ const AssessmentFlow: React.FC = () => {
       medianTimeMs
     };
     localStorage.setItem('pontea_results', JSON.stringify(results));
-    navigate('/results');
+    router.push('/results');
   };
 
   if (step === 'intro') {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import Button from '../shared/Button';
 import { ArrowRight, CheckCircle, Users, PlayCircle, Trophy } from 'lucide-react';
 
@@ -58,7 +58,7 @@ const Hero: React.FC = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Link to="/assessment">
+              <Link href="/assessment">
                 <Button
                   size="lg"
                   variant="secondary"
@@ -68,7 +68,7 @@ const Hero: React.FC = () => {
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/consultation">
+              <Link href="/consultation">
                 <Button 
                   size="lg" 
                   variant="outline" 

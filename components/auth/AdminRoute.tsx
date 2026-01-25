@@ -1,10 +1,27 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+"use client";
+
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
-const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AdminRoute = ({ children }: { children: ReactNode }) => {
   const { currentUser, userProfile, loading, profileLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading || (currentUser && profileLoading)) {
+      return;
+    }
+    if (!currentUser) {
+      router.replace('/auth');
+      return;
+    }
+    if (userProfile?.role !== 'admin') {
+      router.replace('/dashboard');
+    }
+  }, [currentUser, userProfile, loading, profileLoading, router]);
 
   if (loading || (currentUser && profileLoading)) {
     return (
@@ -15,11 +32,11 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   if (!currentUser) {
-    return <Navigate to="/auth" replace />;
+    return null;
   }
 
   if (userProfile?.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
+    return null;
   }
 
   return <>{children}</>;

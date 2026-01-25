@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { BookOpen, CheckSquare, ArrowRight, MonitorPlay, FileText, BrainCircuit, ChevronLeft, ChevronRight, XCircle, CheckCircle2, AlertCircle } from 'lucide-react';
 import Button from '../shared/Button';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 const FEATURES = [
   {
@@ -183,7 +183,7 @@ export default function SchoolShowcase() {
                 </div>
                 
                 <div className="mt-4 hidden lg:block">
-                <Link to="/assessment">
+                <Link href="/assessment">
                     <Button size="lg" className="w-full shadow-xl shadow-accent/20">
                     Try it Free
                     <ArrowRight className="ml-2 w-5 h-5" />
@@ -407,7 +407,7 @@ export default function SchoolShowcase() {
             </div>
             
             <div className="lg:hidden col-span-12 mt-4">
-                <Link to="/assessment">
+                <Link href="/assessment">
                     <Button size="lg" className="w-full shadow-xl shadow-accent/20">
                     Try it Free
                     <ArrowRight className="ml-2 w-5 h-5" />

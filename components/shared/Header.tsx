@@ -1,13 +1,16 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { Menu, X, User } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Button from './Button';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
+  const pathname = usePathname();
   const { currentUser, isAdmin } = useAuth();
 
   useEffect(() => {
@@ -20,7 +23,7 @@ const Header: React.FC = () => {
 
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false);
-    if (location.pathname !== '/') {
+    if (pathname !== '/') {
       window.location.hash = id;
       // Let the hash change trigger the scroll after navigation
       setTimeout(() => {
@@ -49,7 +52,7 @@ const Header: React.FC = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 z-50">
+        <Link href="/" className="flex items-center gap-2 z-50">
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-accent font-display font-bold text-xl">P</span>
           </div>
@@ -64,7 +67,7 @@ const Header: React.FC = () => {
             link.type === 'link' ? (
               <Link
                 key={link.label}
-                to={link.path!}
+                href={link.path || '/'}
                 className="text-sm font-medium text-gray-600 hover:text-primary transition-colors"
               >
                 {link.label}
@@ -81,27 +84,27 @@ const Header: React.FC = () => {
           ))}
           
           {isAdmin && (
-            <Link to="/admin" className="text-sm font-bold text-primary hover:text-accent transition-colors">
+            <Link href="/admin" className="text-sm font-bold text-primary hover:text-accent transition-colors">
               Admin
             </Link>
           )}
 
           {currentUser ? (
-            <Link to="/dashboard">
+            <Link href="/dashboard">
               <Button size="sm" variant="outline" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Dashboard
               </Button>
             </Link>
           ) : (
-            <Link to="/auth">
+            <Link href="/auth">
               <span className="text-sm font-medium text-gray-600 hover:text-primary transition-colors cursor-pointer">
                 Login
               </span>
             </Link>
           )}
 
-          <Link to="/assessment">
+          <Link href="/assessment">
             <Button size="sm" variant="primary">Free Assessment</Button>
           </Link>
         </nav>
@@ -121,7 +124,7 @@ const Header: React.FC = () => {
                link.type === 'link' ? (
                 <Link
                   key={link.label}
-                  to={link.path!}
+                  href={link.path!}
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-xl font-display font-bold text-primary"
                 >
@@ -139,22 +142,22 @@ const Header: React.FC = () => {
             ))}
 
             {isAdmin && (
-              <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
                 <span className="text-xl font-display font-bold text-accent">Admin Portal</span>
               </Link>
             )}
              
             {currentUser ? (
-              <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                 <span className="text-xl font-display font-bold text-primary">Dashboard</span>
               </Link>
             ) : (
-              <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
                 <span className="text-xl font-display font-bold text-primary">Login</span>
               </Link>
             )}
 
-            <Link to="/assessment" onClick={() => setMobileMenuOpen(false)}>
+            <Link href="/assessment" onClick={() => setMobileMenuOpen(false)}>
               <Button size="lg" variant="primary">Start Assessment</Button>
             </Link>
           </div>
