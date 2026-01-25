@@ -200,3 +200,116 @@ Geometry,easy,"What is the area of a circle with radius 5?","25π","10π","5π",
 6. **Practice Mode:** Complete practice session, verify immediate feedback and analytics saved
 7. **CSV Import:** Upload test CSV, verify questions created with correct data
 8. **Responsive:** Test on mobile viewport, verify usable test-taking experience
+
+---
+
+## Current Status Assessment (Jan 2026)
+
+### Phase 1: Foundation - ✅ COMPLETE
+- [x] Next.js 14+ with App Router setup
+- [x] Supabase database with all 13 tables (users, questions, test_templates, test_sections, test_attempts, attempt_questions, attempt_sections, practice_sessions, practice_answers, subjects, topics, student_progress, question_reports)
+- [x] Auth flow (email/password, social, magic link via Supabase Auth)
+- [x] Base UI components (Button, Modal, Header, ImageUpload, LaTeXRenderer)
+- [x] RLS policies for all tables
+- [x] AuthContext with role-based access (ProtectedRoute, AdminRoute, PublicRoute)
+
+### Phase 2: Test Engine - ⚠️ 85% COMPLETE
+**Implemented:**
+- [x] API routes: `/api/test/start`, `/api/test/answer`, `/api/test/sync`, `/api/test/next-section`, `/api/test/resume`, `/api/test/complete`
+- [x] Timer manager (`src/lib/test/timer-manager.ts`) with server sync and drift detection
+- [x] Test session hook (`src/hooks/use-test-session.ts`) with 30s sync interval
+- [x] Scoring system (+1/-0.25/0 formula) in `src/lib/test/scoring.ts`
+- [x] Test UI components (Timer, QuestionDisplay, AnswerOptions, Navigation)
+
+**Missing (Critical):**
+- [ ] **Tab blocking** - BroadcastChannel + localStorage NOT implemented
+- [ ] **Per-section time limits** - Missing `section_started_at` tracking in DB
+- [ ] **Auto-advance on section expiry** - Only auto-completes entire test, not per-section
+- [ ] **Section locking** - No enforcement preventing navigation to previous sections
+
+**Architecture Issue:**1
+- Current `TestSessionPage.tsx` uses legacy practice-mode code (`getExerciseSet`, `submitAnswer` from `/lib/test.ts`)
+- The proper test engine (`use-test-session.ts` + `/api/test/*` routes) exists but is NOT wired up to the UI
+
+### Phase 3: Practice Mode - ✅ COMPLETE
+- [x] Practice API routes (`/api/practice/start`, `/api/practice/answer`, `/api/practice/complete`)
+- [x] Practice setup with filters (subject, difficulty, question count)
+- [x] Immediate feedback with explanations
+- [x] Practice results summary
+- [x] Exercise history with filtering
+
+### Phase 4: Admin Interface - ⚠️ 90% COMPLETE
+**Implemented:**
+- [x] Admin dashboard with stats (questions, students, weekly additions, pending reports)
+- [x] Question CRUD (`/admin/questions/`) with LaTeX preview
+- [x] CSV bulk import (`/admin/questions/import/`)
+- [x] Test template builder UI (`TestBuilder.tsx`)
+- [x] Student management (`/admin/students/`) with role editing
+- [x] Subject/topic management
+- [x] Question reports management
+
+**Missing:**
+- [ ] **Test template API endpoints** - Missing create/update/publish APIs
+- [ ] **Full test preview** - Cannot preview test before publishing
+
+### Phase 5: Polish & Launch - ⚠️ 50% COMPLETE
+**Implemented:**
+- [x] Landing page with SEO elements, hero, pricing, FAQ, teacher testimonials
+- [x] Responsive design throughout (mobile/tablet/desktop)
+- [x] Framer Motion animations
+- [x] Progress tracking dashboard with 14-day activity chart
+
+**Missing:**
+- [ ] **Signup page** - Directory exists (`/auth/signup/`) but view not implemented
+- [ ] **Comprehensive testing & QA**
+- [ ] **Production deployment verification**
+
+---
+
+## Database Tables Status
+
+| Table | Status | Notes |
+|-------|--------|-------|
+| `users` | ✅ | Extends Supabase auth, has role/settings |
+| `questions` | ✅ | Full schema with images, options, stats |
+| `subjects` | ✅ | Subject hierarchy |
+| `topics` | ✅ | Topics within subjects |
+| `test_templates` | ✅ | Admin-configurable tests |
+| `test_sections` | ✅ | Time limits, question counts, difficulty distribution |
+| `test_attempts` | ✅ | Server-side session tracking |
+| `attempt_questions` | ✅ | Answer tracking with correctness |
+| `attempt_sections` | ⚠️ | Missing `started_at` column for per-section timing |
+| `practice_sessions` | ✅ | With filtering and question selection |
+| `practice_answers` | ✅ | Answer tracking with feedback |
+| `student_progress` | ✅ | Progress tracking (not actively used yet) |
+| `question_reports` | ✅ | Issue reporting system |
+
+---
+
+## Key Files Reference
+
+| Component | Location | Status |
+|-----------|----------|--------|
+| Test Session Hook | `src/hooks/use-test-session.ts` | ✅ Exists, NOT integrated |
+| Timer Manager | `src/lib/test/timer-manager.ts` | ✅ Complete |
+| Scoring | `src/lib/test/scoring.ts` | ✅ Complete |
+| Test Page (current) | `src/views/student/TestSessionPage.tsx` | ⚠️ Uses legacy code |
+| Test API - start | `src/app/api/test/start/route.ts` | ✅ Complete |
+| Test API - answer | `src/app/api/test/answer/route.ts` | ⚠️ Needs section validation |
+| Test API - sync | `src/app/api/test/sync/route.ts` | ⚠️ Needs section timing |
+| Test API - next-section | `src/app/api/test/next-section/route.ts` | ⚠️ Needs `started_at` |
+| Practice Setup | `src/components/practice/PracticeSetup.tsx` | ✅ Complete |
+| Admin Dashboard | `src/views/admin/AdminDashboard.tsx` | ✅ Complete |
+| Test Builder | `src/components/admin/TestBuilder.tsx` | ✅ UI exists |
+
+---
+
+## Next Priority: Test Engine Reliability
+
+The following features are required to complete Phase 2:
+
+1. **Wire up proper test engine** - Create new `TimedTestPage.tsx` using `use-test-session.ts`
+2. **Tab blocking** - New `use-tab-blocking.ts` hook
+3. **Per-section timing** - Add `started_at` to `attempt_sections`, update APIs
+4. **Auto-advance** - Timer callback triggers section advance on expiry
+5. **Section locking** - Server + UI enforcement to prevent going back

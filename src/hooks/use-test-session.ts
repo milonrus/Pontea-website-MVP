@@ -23,10 +23,22 @@ import {
 } from '@/lib/test/timer-manager';
 import { calculateScore } from '@/lib/test/scoring';
 
+interface SectionConfig {
+  index: number;
+  name?: string;
+  questionStartIndex: number;
+  questionEndIndex: number;
+  timeLimitSeconds?: number;
+}
+
 interface UseTestSessionOptions {
   attemptId: string;
   userId: string;
   autoSubmitOnExpiry?: boolean;
+  autoAdvanceOnSectionExpiry?: boolean;
+  sections?: SectionConfig[];  // Optional - will be loaded from resume API if not provided
+  onSectionExpiry?: (sectionIndex: number) => void;
+  onTestExpiry?: () => void;
 }
 
 interface UseTestSessionReturn {
@@ -38,9 +50,12 @@ interface UseTestSessionReturn {
   currentSectionIndex: number;
   loading: boolean;
   error: string | null;
+  completedSections: number[];
+  sections: SectionConfig[];
 
   // Timer
   timeInfo: TimeInfo | null;
+  sectionTimeInfo: TimeInfo | null;
 
   // Actions
   selectAnswer: (questionId: string, answer: OptionId) => Promise<void>;
@@ -54,6 +69,9 @@ interface UseTestSessionReturn {
   currentQuestion: QuestionModel | null;
   progress: { answered: number; total: number; percentage: number };
   isLastQuestion: boolean;
+  isLastQuestionInSection: boolean;
+  currentSectionConfig: SectionConfig | null;
+  sectionBoundaries: number[];
 }
 
 const SYNC_INTERVAL_MS = 30000; // 30 seconds
@@ -62,7 +80,11 @@ const TAB_VISIBILITY_SYNC_DELAY_MS = 1000;
 export function useTestSession({
   attemptId,
   userId,
-  autoSubmitOnExpiry = true
+  autoSubmitOnExpiry = true,
+  autoAdvanceOnSectionExpiry = true,
+  sections: propSections = [],
+  onSectionExpiry,
+  onTestExpiry
 }: UseTestSessionOptions): UseTestSessionReturn {
   const router = useRouter();
 
@@ -74,15 +96,25 @@ export function useTestSession({
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [completedSections, setCompletedSections] = useState<number[]>([]);
 
-  // Timer state
+  // Sections state - initialized from props but can be updated from resume API
+  const [sections, setSections] = useState<SectionConfig[]>(propSections);
+
+  // Timer state (overall test)
   const [timerState, setTimerState] = useState<TimerState | null>(null);
   const [timeInfo, setTimeInfo] = useState<TimeInfo | null>(null);
+
+  // Section timer state
+  const [sectionTimerState, setSectionTimerState] = useState<TimerState | null>(null);
+  const [sectionTimeInfo, setSectionTimeInfo] = useState<TimeInfo | null>(null);
 
   // Refs for intervals and cleanup
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const sectionTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
+  const sectionExpiryCalledRef = useRef<Set<number>>(new Set());
 
   // Get auth token for API calls
   const getAuthToken = async () => {
@@ -103,7 +135,7 @@ export function useTestSession({
       });
 
       const responseReceivedAt = Date.now();
-      const data: ServerSyncResponse = await response.json();
+      const data = await response.json();
 
       if (!isMountedRef.current) return;
 
@@ -114,13 +146,22 @@ export function useTestSession({
           responseReceivedAt
         );
 
+        // Update overall timer
         if (data.remainingTime !== undefined && timerState) {
-          // Check for significant drift
           const localTimeInfo = getTimeInfo(timerState);
           if (exceedsDriftThreshold(localTimeInfo.remainingMs, data.remainingTime)) {
-            // Force update from server time
             setTimerState(prev =>
               prev ? updateTimerFromSync(prev, data.remainingTime!, serverOffset) : prev
+            );
+          }
+        }
+
+        // Update section timer
+        if (data.sectionRemainingTime !== undefined && sectionTimerState) {
+          const localSectionTimeInfo = getTimeInfo(sectionTimerState);
+          if (exceedsDriftThreshold(localSectionTimeInfo.remainingMs, data.sectionRemainingTime)) {
+            setSectionTimerState(prev =>
+              prev ? updateTimerFromSync(prev, data.sectionRemainingTime!, serverOffset) : prev
             );
           }
         }
@@ -133,6 +174,11 @@ export function useTestSession({
           setCurrentQuestionIndex(data.currentQuestionIndex);
         }
 
+        // Update completed sections
+        if (data.completedSections) {
+          setCompletedSections(data.completedSections);
+        }
+
         // Handle completed/expired status
         if (data.status === 'completed' || data.status === 'timed_out') {
           router.push(`/test/${attemptId}/results`);
@@ -141,7 +187,7 @@ export function useTestSession({
     } catch (err) {
       console.error('Sync error:', err);
     }
-  }, [attemptId, timerState, router]);
+  }, [attemptId, timerState, sectionTimerState, router]);
 
   // Initialize session
   useEffect(() => {
@@ -176,7 +222,7 @@ export function useTestSession({
         });
         setAnswers(answersMap);
 
-        // Initialize timer if there's a time limit
+        // Initialize overall timer if there's a time limit
         if (data.remainingTime !== undefined && data.attempt.time_limit_seconds) {
           const serverOffset = calculateServerOffset(
             data.serverTime,
@@ -191,8 +237,38 @@ export function useTestSession({
           setTimerState(state);
         }
 
-        // Load questions (you may want to fetch these from a separate endpoint)
-        // For now, we'll fetch from the existing exercise service
+        // Initialize section timer if there's section timing
+        if (data.sectionRemainingTime !== undefined && data.currentSectionTimeLimit) {
+          const serverOffset = calculateServerOffset(
+            data.serverTime,
+            requestSentAt,
+            responseReceivedAt
+          );
+          // Find the current section's started_at
+          const currentSection = data.sections?.find(
+            (s: any) => s.section_index === (data.attempt.current_section_index || 0)
+          );
+          if (currentSection?.started_at) {
+            const sectionState = createTimerState(
+              currentSection.started_at,
+              data.currentSectionTimeLimit,
+              serverOffset
+            );
+            setSectionTimerState(sectionState);
+          }
+        }
+
+        // Initialize completed sections
+        if (data.completedSections) {
+          setCompletedSections(data.completedSections);
+        }
+
+        // Initialize sections from resume API (if available and no prop sections)
+        if (data.sectionConfig && data.sectionConfig.length > 0) {
+          setSections(data.sectionConfig);
+        }
+
+        // Load questions
         const questionIds = data.attempt.question_ids || [];
         if (questionIds.length > 0) {
           const { data: questionsData } = await supabase
@@ -201,10 +277,29 @@ export function useTestSession({
             .in('id', questionIds);
 
           if (questionsData) {
-            // Sort to match original order
-            const sorted = questionIds.map((id: string) =>
-              questionsData.find(q => q.id === id)
-            ).filter(Boolean);
+            // Sort to match original order and transform to QuestionModel
+            const sorted = questionIds.map((id: string) => {
+              const q = questionsData.find((q: any) => q.id === id);
+              if (!q) return null;
+              return {
+                id: q.id,
+                subjectId: q.subject_id,
+                topicId: q.topic_id,
+                tags: q.tags || [],
+                difficulty: q.difficulty,
+                questionText: q.question_text,
+                questionImageUrl: q.question_image_url,
+                options: q.options,
+                correctAnswer: q.correct_answer,
+                explanation: q.explanation,
+                explanationImageUrl: q.explanation_image_url,
+                createdBy: q.created_by,
+                createdAt: q.created_at,
+                updatedAt: q.updated_at,
+                isActive: q.is_active,
+                stats: q.stats || { totalAttempts: 0, correctCount: 0, totalTimeSpent: 0 }
+              } as QuestionModel;
+            }).filter(Boolean) as QuestionModel[];
             setQuestions(sorted);
           }
         }
@@ -224,7 +319,7 @@ export function useTestSession({
     };
   }, [attemptId]);
 
-  // Timer update interval
+  // Overall timer update interval
   useEffect(() => {
     if (!timerState) return;
 
@@ -234,6 +329,7 @@ export function useTestSession({
 
       // Auto-submit on expiry
       if (info.isExpired && autoSubmitOnExpiry) {
+        onTestExpiry?.();
         completeTest();
       }
     };
@@ -246,7 +342,36 @@ export function useTestSession({
         clearInterval(timerIntervalRef.current);
       }
     };
-  }, [timerState, autoSubmitOnExpiry]);
+  }, [timerState, autoSubmitOnExpiry, onTestExpiry]);
+
+  // Section timer update interval
+  useEffect(() => {
+    if (!sectionTimerState) return;
+
+    const updateSectionTimer = () => {
+      const info = getTimeInfo(sectionTimerState);
+      setSectionTimeInfo(info);
+
+      // Auto-advance on section expiry
+      if (info.isExpired && autoAdvanceOnSectionExpiry) {
+        // Prevent calling multiple times for the same section
+        if (!sectionExpiryCalledRef.current.has(currentSectionIndex)) {
+          sectionExpiryCalledRef.current.add(currentSectionIndex);
+          onSectionExpiry?.(currentSectionIndex);
+          advanceSection();
+        }
+      }
+    };
+
+    updateSectionTimer(); // Initial update
+    sectionTimerIntervalRef.current = setInterval(updateSectionTimer, 1000);
+
+    return () => {
+      if (sectionTimerIntervalRef.current) {
+        clearInterval(sectionTimerIntervalRef.current);
+      }
+    };
+  }, [sectionTimerState, autoAdvanceOnSectionExpiry, currentSectionIndex, onSectionExpiry]);
 
   // Sync interval
   useEffect(() => {
@@ -285,6 +410,7 @@ export function useTestSession({
     try {
       const token = await getAuthToken();
       const startTime = answers.get(questionId)?.timeSpent || 0;
+      const questionSection = getQuestionSection(currentQuestionIndex);
 
       const response = await fetch('/api/test/answer', {
         method: 'POST',
@@ -296,7 +422,8 @@ export function useTestSession({
           attemptId,
           questionId,
           selectedAnswer,
-          timeSpent: startTime + (timeInfo?.elapsedMs || 0) / 1000
+          timeSpent: startTime + (timeInfo?.elapsedMs || 0) / 1000,
+          questionSectionIndex: questionSection
         })
       });
 
@@ -312,37 +439,68 @@ export function useTestSession({
             selectedAnswer,
             isCorrect: data.isCorrect,
             timeSpent: startTime,
-            answeredAt: new Date().toISOString()
+            answeredAt: new Date().toISOString(),
+            sectionIndex: questionSection
           });
           return newMap;
         });
+      } else if (response.status === 400 && data.error?.includes('section')) {
+        // Section is locked, show error
+        setError(data.error);
       }
     } catch (err) {
       console.error('Answer submission error:', err);
     }
   };
 
+  // Helper to get which section a question belongs to
+  const getQuestionSection = useCallback((questionIndex: number): number => {
+    if (sections.length === 0) return 0;
+    for (let i = sections.length - 1; i >= 0; i--) {
+      if (questionIndex >= sections[i].questionStartIndex) return i;
+    }
+    return 0;
+  }, [sections]);
+
+  // Check if navigation to a question is allowed (section locking)
+  const canNavigateToQuestion = useCallback((targetIndex: number): boolean => {
+    const targetSection = getQuestionSection(targetIndex);
+    // Can't navigate to completed sections
+    if (completedSections.includes(targetSection)) {
+      return false;
+    }
+    // Can't navigate to future sections
+    if (targetSection > currentSectionIndex) {
+      return false;
+    }
+    return true;
+  }, [getQuestionSection, completedSections, currentSectionIndex]);
+
   const goToQuestion = (index: number) => {
-    if (index >= 0 && index < questions.length) {
+    if (index >= 0 && index < questions.length && canNavigateToQuestion(index)) {
       setCurrentQuestionIndex(index);
     }
   };
 
   const goToNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+    const nextIndex = currentQuestionIndex + 1;
+    if (nextIndex < questions.length && canNavigateToQuestion(nextIndex)) {
+      setCurrentQuestionIndex(nextIndex);
     }
   };
 
   const goToPreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+    const prevIndex = currentQuestionIndex - 1;
+    if (prevIndex >= 0 && canNavigateToQuestion(prevIndex)) {
+      setCurrentQuestionIndex(prevIndex);
     }
   };
 
   const advanceSection = async () => {
     try {
       const token = await getAuthToken();
+      const nextSectionIndex = currentSectionIndex + 1;
+      const nextSectionConfig = sections.find(s => s.index === nextSectionIndex);
 
       const response = await fetch('/api/test/next-section', {
         method: 'POST',
@@ -350,12 +508,45 @@ export function useTestSession({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ attemptId })
+        body: JSON.stringify({
+          attemptId,
+          sectionTimeLimit: nextSectionConfig?.timeLimitSeconds
+        })
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        setCurrentSectionIndex(prev => prev + 1);
-        setCurrentQuestionIndex(0);
+        // Update completed sections
+        setCompletedSections(prev => [...prev, currentSectionIndex]);
+
+        // Move to next section
+        setCurrentSectionIndex(nextSectionIndex);
+
+        // Move to first question of new section
+        if (nextSectionConfig) {
+          setCurrentQuestionIndex(nextSectionConfig.questionStartIndex);
+        } else {
+          setCurrentQuestionIndex(0);
+        }
+
+        // Reset section timer for new section
+        if (data.sectionRemainingTime !== undefined && nextSectionConfig?.timeLimitSeconds) {
+          const serverOffset = calculateServerOffset(
+            data.serverTime,
+            Date.now(),
+            Date.now()
+          );
+          const newSectionState = createTimerState(
+            data.serverTime,
+            nextSectionConfig.timeLimitSeconds,
+            serverOffset
+          );
+          setSectionTimerState(newSectionState);
+        } else {
+          setSectionTimerState(null);
+          setSectionTimeInfo(null);
+        }
       }
     } catch (err) {
       console.error('Section advance error:', err);
@@ -400,6 +591,13 @@ export function useTestSession({
   };
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
+  // Section-related computed values
+  const currentSectionConfig = sections.find(s => s.index === currentSectionIndex) || null;
+  const isLastQuestionInSection = currentSectionConfig
+    ? currentQuestionIndex === currentSectionConfig.questionEndIndex
+    : false;
+  const sectionBoundaries = sections.map(s => s.questionStartIndex);
+
   return {
     attempt,
     questions,
@@ -408,7 +606,10 @@ export function useTestSession({
     currentSectionIndex,
     loading,
     error,
+    completedSections,
+    sections,
     timeInfo,
+    sectionTimeInfo,
     selectAnswer,
     goToQuestion,
     goToNextQuestion,
@@ -417,6 +618,9 @@ export function useTestSession({
     completeTest,
     currentQuestion,
     progress,
-    isLastQuestion
+    isLastQuestion,
+    isLastQuestionInSection,
+    currentSectionConfig,
+    sectionBoundaries
   };
 }

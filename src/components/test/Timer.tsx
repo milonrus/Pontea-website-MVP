@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Clock, AlertTriangle } from 'lucide-react';
 import { TimeInfo } from '@/lib/test/timer-manager';
 
@@ -10,6 +10,8 @@ interface TimerProps {
   warningThresholdSeconds?: number;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  onExpiry?: () => void;
+  label?: string;
 }
 
 export const Timer: React.FC<TimerProps> = ({
@@ -17,8 +19,27 @@ export const Timer: React.FC<TimerProps> = ({
   showWarning = true,
   warningThresholdSeconds = 300, // 5 minutes
   size = 'md',
-  className = ''
+  className = '',
+  onExpiry,
+  label
 }) => {
+  const hasCalledExpiry = useRef(false);
+
+  // Call onExpiry when timer expires
+  useEffect(() => {
+    if (timeInfo?.isExpired && onExpiry && !hasCalledExpiry.current) {
+      hasCalledExpiry.current = true;
+      onExpiry();
+    }
+  }, [timeInfo?.isExpired, onExpiry]);
+
+  // Reset expiry flag when timeInfo changes (new timer)
+  useEffect(() => {
+    if (!timeInfo?.isExpired) {
+      hasCalledExpiry.current = false;
+    }
+  }, [timeInfo?.isExpired]);
+
   if (!timeInfo) {
     return null;
   }
@@ -61,6 +82,7 @@ export const Timer: React.FC<TimerProps> = ({
       ) : (
         <Clock className={iconSizes[size]} />
       )}
+      {label && <span className="text-xs opacity-75">{label}:</span>}
       <span>{isExpired ? "Time's Up!" : formatted}</span>
     </div>
   );

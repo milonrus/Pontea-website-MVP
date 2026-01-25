@@ -210,6 +210,7 @@ export interface AttemptSection {
   startedAt?: string;
   completedAt?: string;
   status: 'pending' | 'in_progress' | 'completed';
+  timeLimitSeconds?: number;
 }
 
 // --- PRACTICE SESSIONS ---
@@ -242,9 +243,11 @@ export interface PracticeAnswer {
 export interface ServerSyncResponse {
   serverTime: string;
   remainingTime?: number;
+  sectionRemainingTime?: number;
   currentSectionIndex?: number;
   currentQuestionIndex?: number;
   status?: TestAttemptStatus;
+  completedSections?: number[];
 }
 
 // --- SCORING ---

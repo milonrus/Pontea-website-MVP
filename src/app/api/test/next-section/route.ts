@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { attemptId } = body;
+    const { attemptId, sectionTimeLimit } = body;
 
     if (!attemptId) {
       return NextResponse.json({ error: 'attemptId required' }, { status: 400 });
@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
     const supabase = createServerClient();
     const serverTime = new Date().toISOString();
 
-    // Get current attempt
+    // Get current attempt with sections
     const { data: attempt, error: attemptError } = await supabase
       .from('test_attempts')
-      .select('*')
+      .select('*, attempt_sections(*)')
       .eq('id', attemptId)
       .eq('user_id', user.id)
       .single();
@@ -49,6 +49,23 @@ export async function POST(request: NextRequest) {
 
     // Move to next section
     const nextSectionIndex = currentSectionIndex + 1;
+
+    // Create new section record with started_at
+    const { error: newSectionError } = await supabase
+      .from('attempt_sections')
+      .insert({
+        attempt_id: attemptId,
+        section_index: nextSectionIndex,
+        started_at: serverTime,
+        status: 'in_progress',
+        time_limit_seconds: sectionTimeLimit || null
+      });
+
+    if (newSectionError) {
+      console.error('Error creating new section record:', newSectionError);
+      // Continue - section tracking is not critical
+    }
+
     const { data: updatedAttempt, error: updateError } = await supabase
       .from('test_attempts')
       .update({
@@ -64,11 +81,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to advance section' }, { status: 500 });
     }
 
+    // Calculate section remaining time
+    let sectionRemainingTime = null;
+    if (sectionTimeLimit) {
+      sectionRemainingTime = sectionTimeLimit * 1000; // Fresh start = full time
+    }
+
+    // Get completed sections
+    const completedSections = (attempt.attempt_sections || [])
+      .filter((s: any) => s.status === 'completed')
+      .map((s: any) => s.section_index);
+    completedSections.push(currentSectionIndex); // Add the section we just completed
+
     return NextResponse.json({
       success: true,
       serverTime,
       currentSectionIndex: nextSectionIndex,
-      attempt: updatedAttempt
+      attempt: updatedAttempt,
+      sectionRemainingTime,
+      completedSections
     });
   } catch (error) {
     console.error('Error in test/next-section:', error);

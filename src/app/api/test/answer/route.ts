@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { attemptId, questionId, selectedAnswer, timeSpent } = body;
+    const { attemptId, questionId, selectedAnswer, timeSpent, questionSectionIndex } = body;
 
     if (!attemptId || !questionId) {
       return NextResponse.json({ error: 'attemptId and questionId required' }, { status: 400 });
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     // Verify attempt belongs to user and is in progress
     const { data: attempt, error: attemptError } = await supabase
       .from('test_attempts')
-      .select('*')
+      .select('*, attempt_sections(*)')
       .eq('id', attemptId)
       .eq('user_id', user.id)
       .single();
@@ -32,6 +32,29 @@ export async function POST(request: NextRequest) {
 
     if (attempt.status !== 'in_progress') {
       return NextResponse.json({ error: 'Attempt is not in progress' }, { status: 400 });
+    }
+
+    // Check section locking - reject answers for completed sections
+    if (questionSectionIndex !== undefined) {
+      const currentSectionIndex = attempt.current_section_index || 0;
+      const completedSections = (attempt.attempt_sections || [])
+        .filter((s: any) => s.status === 'completed')
+        .map((s: any) => s.section_index);
+
+      if (completedSections.includes(questionSectionIndex)) {
+        return NextResponse.json(
+          { error: 'Cannot submit answer for completed section' },
+          { status: 400 }
+        );
+      }
+
+      // Also reject if question is from a future section
+      if (questionSectionIndex > currentSectionIndex) {
+        return NextResponse.json(
+          { error: 'Cannot submit answer for future section' },
+          { status: 400 }
+        );
+      }
     }
 
     // Get the question to check the answer
