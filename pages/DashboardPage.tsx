@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth, db } from '../firebase';
-import { setDoc, doc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/shared/Header';
 import Button from '../components/shared/Button';
@@ -22,7 +20,7 @@ const DashboardPage: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
       navigate('/auth');
     } catch (error) {
       console.error('Failed to log out', error);
@@ -34,10 +32,9 @@ const DashboardPage: React.FC = () => {
     setRepairing(true);
     setMessage('');
     try {
-        // Force write role: admin to Firestore
-        await setDoc(doc(db, 'users', currentUser.uid), { role: 'admin' }, { merge: true });
+        await supabase.from('users').update({ role: 'admin' }).eq('id', currentUser.id);
         await refreshProfile();
-        setMessage('Success! You are now an Admin in Firestore.');
+        setMessage('Success! You are now an Admin in Supabase.');
     } catch (e: any) {
         console.error(e);
         setMessage('Failed: ' + e.message);

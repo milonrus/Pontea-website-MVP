@@ -6,16 +6,22 @@ import { createQuestion, getQuestion, updateQuestion, getSubjects, getTopics } f
 import { QuestionModel, SubjectModel, TopicModel, QuestionDifficulty, OptionId } from '../../types';
 import LaTeXRenderer from '../../components/shared/LaTeXRenderer';
 import { ArrowLeft, Save, AlertTriangle } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+
+const isUuid = (value?: string) =>
+    !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 
 const QuestionFormPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
+  const { currentUser } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [subjects, setSubjects] = useState<SubjectModel[]>([]);
   const [topics, setTopics] = useState<TopicModel[]>([]);
   const [error, setError] = useState('');
+  const [usingFallbackSubjects, setUsingFallbackSubjects] = useState(false);
   
   const [formData, setFormData] = useState<Partial<QuestionModel>>({
     difficulty: 'medium',
@@ -37,12 +43,21 @@ const QuestionFormPage: React.FC = () => {
             const subs = await getSubjects();
             if (subs.length > 0) {
               setSubjects(subs);
+              setUsingFallbackSubjects(false);
             } else {
-               // Fallback if DB is empty or permissions fail silently with empty array
-               throw new Error("No subjects found");
+               setUsingFallbackSubjects(true);
+               setSubjects([
+                   { id: 'math', name: 'Mathematics', order: 1, createdAt: null as any },
+                   { id: 'physics', name: 'Physics', order: 2, createdAt: null as any },
+                   { id: 'logic', name: 'Logical Reasoning', order: 3, createdAt: null as any },
+                   { id: 'history', name: 'Knowledge & History', order: 4, createdAt: null as any },
+                   { id: 'drawing', name: 'Drawing & Representation', order: 5, createdAt: null as any },
+                   { id: 'reading', name: 'Reading Comprehension', order: 6, createdAt: null as any },
+               ]);
             }
         } catch (e) {
             console.warn("Using fallback subjects due to error:", e);
+            setUsingFallbackSubjects(true);
             setSubjects([
                 { id: 'math', name: 'Mathematics', order: 1, createdAt: null as any },
                 { id: 'physics', name: 'Physics', order: 2, createdAt: null as any },
@@ -90,11 +105,28 @@ const QuestionFormPage: React.FC = () => {
             return;
         }
 
-        // Sanitize Payload
-        // Ensure no undefined values are passed to Firestore
+        if (!currentUser?.id) {
+            setError("You must be signed in to save questions.");
+            setLoading(false);
+            return;
+        }
+
+        if (usingFallbackSubjects || !isUuid(formData.subjectId)) {
+            setError("Subjects must come from the database. Create subjects in Admin > Subjects, then try again.");
+            setLoading(false);
+            return;
+        }
+
+        if (!formData.topicId || !isUuid(formData.topicId)) {
+            setError("Please select a topic before saving. Topics are required for questions.");
+            setLoading(false);
+            return;
+        }
+
+        // Sanitize payload
         const payload: any = {
             subjectId: formData.subjectId,
-            topicId: formData.topicId || 'general', // Default to general if empty
+            topicId: formData.topicId,
             tags: formData.tags || [],
             difficulty: formData.difficulty || 'medium',
             questionText: formData.questionText,
@@ -104,7 +136,7 @@ const QuestionFormPage: React.FC = () => {
             explanation: formData.explanation || '',
             explanationImageUrl: formData.explanationImageUrl || null,
             isActive: formData.isActive !== undefined ? formData.isActive : true,
-            createdBy: 'admin', 
+            createdBy: isEdit ? (formData.createdBy || currentUser.id) : currentUser.id,
         };
 
         if (isEdit && id) {
@@ -163,14 +195,14 @@ const QuestionFormPage: React.FC = () => {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Topic</label>
-                         <select 
+                        <select 
                             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                             value={formData.topicId || ''}
                             onChange={e => setFormData({...formData, topicId: e.target.value})}
+                            required
                         >
                              <option value="">Select Topic...</option>
                              {topics.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                             <option value="general">General</option>
                         </select>
                     </div>
                 </div>

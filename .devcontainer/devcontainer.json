@@ -1,0 +1,10 @@
+{
+  "name": "Pontea School Development",
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "Vite Dev Server",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}

@@ -36,7 +36,7 @@ const HistoryPage: React.FC = () => {
     if (!currentUser) return;
     try {
       const [exercisesData, subjectsData] = await Promise.all([
-        getExerciseHistory(currentUser.uid),
+        getExerciseHistory(currentUser.id),
         getSubjects()
       ]);
       setExercises(exercisesData);
@@ -50,7 +50,7 @@ const HistoryPage: React.FC = () => {
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return '-';
-    const date = timestamp.toDate?.() || new Date(timestamp);
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',

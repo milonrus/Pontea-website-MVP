@@ -30,7 +30,7 @@ const NewExercisePage: React.FC = () => {
             count: config.count,
             difficulty: config.difficulty === 'any' ? undefined : (config.difficulty as QuestionDifficulty)
         };
-        const { id } = await generateExerciseSet(currentUser.uid, filters);
+        const { id } = await generateExerciseSet(currentUser.id, filters);
         navigate(`/exercise/${id}`);
     } catch (err: any) {
         console.error(err);

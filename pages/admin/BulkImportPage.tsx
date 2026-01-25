@@ -38,7 +38,7 @@ const BulkImportPage: React.FC = () => {
     
     const validQuestions = parsedData.filter(q => q.isValid).map(q => ({
       ...q.data,
-      createdBy: currentUser.uid
+      createdBy: currentUser.id
     }));
 
     if (validQuestions.length === 0) {

@@ -80,7 +80,7 @@ const ExerciseSessionPage: React.FC = () => {
     try {
       // Save to backend
       await submitAnswer(
-        currentUser.uid,
+        currentUser.id,
         exercise.id,
         currentQ.id,
         selectedOption,

@@ -1,102 +1,136 @@
-import {
-  collection,
-  addDoc,
-  getDocs,
-  getDoc,
-  doc,
-  query,
-  where,
-  updateDoc,
-  serverTimestamp,
-  increment,
-  arrayUnion,
-  setDoc,
-  orderBy
-} from 'firebase/firestore';
-import { db } from '../firebase';
-import { ExerciseFilters, ExerciseSet, QuestionModel, OptionId } from '../types';
+import { supabase } from '../supabase';
+import { ExerciseFilters, ExerciseSet, QuestionModel, OptionId, ExerciseResponse } from '../types';
+
+const mapQuestion = (row: any): QuestionModel => ({
+  id: row.id,
+  subjectId: row.subject_id,
+  topicId: row.topic_id,
+  tags: row.tags || [],
+  difficulty: row.difficulty,
+  questionText: row.question_text,
+  questionImageUrl: row.question_image_url ?? null,
+  options: row.options || [],
+  correctAnswer: row.correct_answer,
+  explanation: row.explanation,
+  explanationImageUrl: row.explanation_image_url ?? null,
+  createdBy: row.created_by,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  isActive: row.is_active,
+  stats: row.stats || { totalAttempts: 0, totalTimeSpent: 0, correctCount: 0 }
+});
+
+const mapExerciseSet = (row: any): ExerciseSet => ({
+  id: row.id,
+  studentId: row.student_id,
+  title: row.title ?? undefined,
+  filters: row.filters || {},
+  questionIds: row.question_ids || [],
+  currentIndex: row.current_index ?? 0,
+  status: row.status,
+  startedAt: row.started_at,
+  completedAt: row.completed_at ?? undefined,
+  correctCount: row.correct_count ?? 0,
+  totalQuestions: row.total_questions ?? 0,
+  totalTimeSpent: row.total_time_spent ?? 0
+});
+
+const mapExerciseResponse = (row: any): ExerciseResponse => ({
+  questionId: row.question_id,
+  selectedAnswer: row.selected_answer,
+  isCorrect: row.is_correct,
+  timeSpent: row.time_spent,
+  answeredAt: row.answered_at
+});
 
 export const generateExerciseSet = async (
-  userId: string, 
+  userId: string,
   filters: ExerciseFilters
 ): Promise<{ id: string; questions: QuestionModel[] }> => {
-  // 1. Get student's mastered questions to avoid repetition
-  const progressRef = doc(db, 'studentProgress', userId);
-  const progressSnap = await getDoc(progressRef);
-  const masteredIds: string[] = progressSnap.exists() 
-    ? progressSnap.data()?.masteredQuestionIds || []
-    : [];
-  
-  // 2. Build Query
-  let constraints = [where('isActive', '==', true)];
-  
-  if (filters.subjectId && filters.subjectId !== 'all') {
-    constraints.push(where('subjectId', '==', filters.subjectId));
-  }
-  if (filters.topicId && filters.topicId !== 'all') {
-    constraints.push(where('topicId', '==', filters.topicId));
-  }
-  if (filters.difficulty && filters.difficulty !== 'any' as any) {
-    constraints.push(where('difficulty', '==', filters.difficulty));
-  }
-  
-  // Note: Firestore doesn't support random access natively easily.
-  // For MVP, we fetch more than needed and shuffle client-side.
-  // In production, use a dedicated solution like 'random' field.
-  const q = query(collection(db, 'questions'), ...constraints);
-  const snapshot = await getDocs(q);
-  
-  let candidates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuestionModel));
-  
-  // Filter mastered
-  candidates = candidates.filter(q => !masteredIds.includes(q.id));
-  
-  // Shuffle
-  const shuffled = candidates.sort(() => Math.random() - 0.5);
-  const selected = shuffled.slice(0, filters.count);
-  
-  if (selected.length === 0) {
-    throw new Error("No available questions found for these filters.");
+  const { data: progressData, error: progressError } = await supabase
+    .from('student_progress')
+    .select('mastered_question_ids')
+    .eq('id', userId)
+    .single();
+
+  if (progressError && progressError.code !== 'PGRST116') {
+    throw progressError;
   }
 
-  // Create Exercise Set - remove undefined values from filters
+  const masteredIds: string[] = progressData?.mastered_question_ids || [];
+
+  let query = supabase.from('questions').select('*').eq('is_active', true);
+
+  if (filters.subjectId && filters.subjectId !== 'all') {
+    query = query.eq('subject_id', filters.subjectId);
+  }
+  if (filters.topicId && filters.topicId !== 'all') {
+    query = query.eq('topic_id', filters.topicId);
+  }
+  if (filters.difficulty && (filters.difficulty as any) !== 'any') {
+    query = query.eq('difficulty', filters.difficulty);
+  }
+
+  const { data: questionRows, error } = await query;
+  if (error) throw error;
+
+  let candidates = (questionRows || []).map(mapQuestion);
+  candidates = candidates.filter(q => !masteredIds.includes(q.id));
+
+  const shuffled = candidates.sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, filters.count);
+
+  if (selected.length === 0) {
+    throw new Error('No available questions found for these filters.');
+  }
+
   const cleanFilters = {
     subjectId: filters.subjectId,
     count: filters.count,
     ...(filters.difficulty && { difficulty: filters.difficulty })
   };
 
-  const exerciseSetData: Omit<ExerciseSet, 'id'> = {
-    studentId: userId,
-    filters: cleanFilters,
-    questionIds: selected.map(q => q.id),
-    currentIndex: 0,
-    status: 'in_progress',
-    startedAt: serverTimestamp() as any,
-    correctCount: 0,
-    totalQuestions: selected.length,
-    totalTimeSpent: 0
-  };
+  const now = new Date().toISOString();
 
-  const docRef = await addDoc(collection(db, 'exerciseSets'), exerciseSetData);
-  
-  return { id: docRef.id, questions: selected };
+  const { data: insertData, error: insertError } = await supabase
+    .from('exercise_sets')
+    .insert({
+      student_id: userId,
+      filters: cleanFilters,
+      question_ids: selected.map(q => q.id),
+      current_index: 0,
+      status: 'in_progress',
+      started_at: now,
+      correct_count: 0,
+      total_questions: selected.length,
+      total_time_spent: 0
+    })
+    .select('id')
+    .single();
+
+  if (insertError) throw insertError;
+
+  return { id: insertData.id, questions: selected };
 };
 
 export const getExerciseSet = async (id: string): Promise<ExerciseSet | null> => {
-  const snap = await getDoc(doc(db, 'exerciseSets', id));
-  if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as ExerciseSet;
+  const { data, error } = await supabase.from('exercise_sets').select('*').eq('id', id).single();
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+  return data ? mapExerciseSet(data) : null;
 };
 
 export const getQuestionsByIds = async (ids: string[]): Promise<QuestionModel[]> => {
-  // Firestore "in" query limited to 10. We will fetch individually for simplicity or batch
-  // For MVP, we assume small sets (e.g. 10-20). 
-  // Optimization: If many questions, implement batched fetching.
-  
-  const promises = ids.map(id => getDoc(doc(db, 'questions', id)));
-  const snaps = await Promise.all(promises);
-  return snaps.map(s => ({ id: s.id, ...s.data() } as QuestionModel));
+  if (ids.length === 0) return [];
+
+  const { data, error } = await supabase.from('questions').select('*').in('id', ids);
+  if (error) throw error;
+
+  const mapped = (data || []).map(mapQuestion);
+  const mapById = new Map(mapped.map(q => [q.id, q]));
+  return ids.map(id => mapById.get(id)).filter(Boolean) as QuestionModel[];
 };
 
 export const submitAnswer = async (
@@ -107,82 +141,66 @@ export const submitAnswer = async (
   timeSpent: number,
   isCorrect: boolean
 ) => {
-  // 1. Save response
-  await setDoc(doc(db, `exerciseSets/${setId}/responses`, questionId), {
-    questionId,
-    selectedAnswer,
-    isCorrect,
-    timeSpent,
-    answeredAt: serverTimestamp()
+  const { error } = await supabase.rpc('submit_answer', {
+    user_id: userId,
+    set_id: setId,
+    question_id: questionId,
+    selected_answer: selectedAnswer,
+    time_spent: timeSpent,
+    is_correct: isCorrect
   });
 
-  // 2. Update Exercise Set
-  const setRef = doc(db, 'exerciseSets', setId);
-  await updateDoc(setRef, {
-    currentIndex: increment(1),
-    correctCount: increment(isCorrect ? 1 : 0),
-    totalTimeSpent: increment(timeSpent)
-  });
-
-  // 3. Update Student Progress
-  const progressRef = doc(db, 'studentProgress', userId);
-  const progressUpdate: any = {
-    totalQuestionsAttempted: increment(1),
-    totalTimeSpent: increment(timeSpent),
-    lastActivityAt: serverTimestamp()
-  };
-
-  if (isCorrect) {
-    progressUpdate.totalCorrect = increment(1);
-    progressUpdate.masteredQuestionIds = arrayUnion(questionId);
-  }
-
-  await setDoc(progressRef, progressUpdate, { merge: true });
-  
-  // 4. Update Question Stats (optional, good for admin)
-  const qRef = doc(db, 'questions', questionId);
-  await updateDoc(qRef, {
-    'stats.totalAttempts': increment(1),
-    'stats.totalTimeSpent': increment(timeSpent),
-    'stats.correctCount': increment(isCorrect ? 1 : 0)
-  });
+  if (error) throw error;
 };
 
 export const completeExercise = async (setId: string) => {
-  await updateDoc(doc(db, 'exerciseSets', setId), {
-    status: 'completed',
-    completedAt: serverTimestamp()
-  });
+  const { error } = await supabase
+    .from('exercise_sets')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', setId);
+
+  if (error) throw error;
 };
 
 export const getExerciseHistory = async (userId: string): Promise<ExerciseSet[]> => {
-  const q = query(
-    collection(db, 'exerciseSets'),
-    where('studentId', '==', userId),
-    orderBy('startedAt', 'desc')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ExerciseSet));
+  const { data, error } = await supabase
+    .from('exercise_sets')
+    .select('*')
+    .eq('student_id', userId)
+    .order('started_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []).map(mapExerciseSet);
 };
 
-export const getExerciseResponses = async (setId: string) => {
-  const snapshot = await getDocs(collection(db, `exerciseSets/${setId}/responses`));
-  return snapshot.docs.map(d => ({ questionId: d.id, ...d.data() }));
+export const getExerciseResponses = async (setId: string): Promise<ExerciseResponse[]> => {
+  const { data, error } = await supabase
+    .from('exercise_responses')
+    .select('*')
+    .eq('exercise_set_id', setId)
+    .order('answered_at', { ascending: true });
+
+  if (error) throw error;
+  return (data || []).map(mapExerciseResponse);
 };
 
 export const getExerciseSetsForStudent = async (studentId: string): Promise<ExerciseSet[]> => {
-  const q = query(
-    collection(db, 'exerciseSets'),
-    where('studentId', '==', studentId),
-    where('status', '==', 'completed'),
-    orderBy('startedAt', 'desc')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ExerciseSet));
+  const { data, error } = await supabase
+    .from('exercise_sets')
+    .select('*')
+    .eq('student_id', studentId)
+    .eq('status', 'completed')
+    .order('started_at', { ascending: false });
+
+  if (error) throw error;
+  return (data || []).map(mapExerciseSet);
 };
 
 export const abandonExercise = async (setId: string) => {
-  await updateDoc(doc(db, 'exerciseSets', setId), {
-    status: 'abandoned'
-  });
+  const { error } = await supabase
+    .from('exercise_sets')
+    .update({ status: 'abandoned' })
+    .eq('id', setId);
+
+  if (error) throw error;
 };

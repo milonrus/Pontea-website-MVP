@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Header from '../../components/shared/Header';
 import Button from '../../components/shared/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { updateUser } from '../../services/db';
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { auth } from '../../firebase';
+import { supabase } from '../../supabase';
 import {
   User,
   Mail,
@@ -22,8 +20,7 @@ import {
 import { motion } from 'framer-motion';
 
 const SettingsPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { currentUser, profile, refreshProfile } = useAuth();
+  const { currentUser, userProfile, refreshProfile } = useAuth();
 
   // Profile settings
   const [displayName, setDisplayName] = useState('');
@@ -41,11 +38,11 @@ const SettingsPage: React.FC = () => {
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    if (profile) {
-      setDisplayName(profile.displayName || '');
-      setShowResultAfterEach(profile.settings?.showResultAfterEach ?? true);
+    if (userProfile) {
+      setDisplayName(userProfile.displayName || '');
+      setShowResultAfterEach(userProfile.settings?.showResultAfterEach ?? true);
     }
-  }, [profile]);
+  }, [userProfile]);
 
   const handleSaveProfile = async () => {
     if (!currentUser) return;
@@ -53,7 +50,7 @@ const SettingsPage: React.FC = () => {
     setProfileMessage(null);
 
     try {
-      await updateUser(currentUser.uid, {
+      await updateUser(currentUser.id, {
         displayName: displayName.trim(),
         settings: {
           showResultAfterEach
@@ -87,11 +84,15 @@ const SettingsPage: React.FC = () => {
 
     try {
       // Re-authenticate the user first
-      const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
-      await reauthenticateWithCredential(currentUser, credential);
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: currentUser.email,
+        password: currentPassword
+      });
 
-      // Update password
-      await updatePassword(currentUser, newPassword);
+      if (signInError) throw signInError;
+
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) throw updateError;
 
       setCurrentPassword('');
       setNewPassword('');
@@ -99,10 +100,8 @@ const SettingsPage: React.FC = () => {
       setPasswordMessage({ type: 'success', text: 'Password changed successfully!' });
     } catch (error: any) {
       console.error('Error changing password:', error);
-      if (error.code === 'auth/wrong-password') {
+      if (error?.message?.toLowerCase().includes('invalid')) {
         setPasswordMessage({ type: 'error', text: 'Current password is incorrect' });
-      } else if (error.code === 'auth/requires-recent-login') {
-        setPasswordMessage({ type: 'error', text: 'Please sign out and sign in again before changing your password' });
       } else {
         setPasswordMessage({ type: 'error', text: error.message || 'Failed to change password' });
       }

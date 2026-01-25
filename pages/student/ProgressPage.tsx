@@ -34,9 +34,9 @@ const ProgressPage: React.FC = () => {
     if (!currentUser) return;
     try {
       const [progressData, subjectsData, exercisesData] = await Promise.all([
-        getStudentProgress(currentUser.uid),
+        getStudentProgress(currentUser.id),
         getSubjects(),
-        getExerciseHistory(currentUser.uid)
+        getExerciseHistory(currentUser.id)
       ]);
       setProgress(progressData);
       setSubjects(subjectsData);
@@ -65,8 +65,8 @@ const ProgressPage: React.FC = () => {
     if (exercises.length === 0) return 0;
 
     const sortedExercises = [...exercises].sort((a, b) => {
-      const dateA = a.startedAt?.toDate?.() || new Date(0);
-      const dateB = b.startedAt?.toDate?.() || new Date(0);
+      const dateA = a.startedAt ? new Date(a.startedAt) : new Date(0);
+      const dateB = b.startedAt ? new Date(b.startedAt) : new Date(0);
       return dateB.getTime() - dateA.getTime();
     });
 
@@ -75,7 +75,7 @@ const ProgressPage: React.FC = () => {
     currentDate.setHours(0, 0, 0, 0);
 
     for (const exercise of sortedExercises) {
-      const exerciseDate = exercise.startedAt?.toDate?.();
+      const exerciseDate = exercise.startedAt ? new Date(exercise.startedAt) : null;
       if (!exerciseDate) continue;
 
       const exerciseDateOnly = new Date(exerciseDate);
@@ -107,7 +107,7 @@ const ProgressPage: React.FC = () => {
       const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
       const count = exercises.filter(ex => {
-        const exDate = ex.startedAt?.toDate?.();
+        const exDate = ex.startedAt ? new Date(ex.startedAt) : null;
         if (!exDate) return false;
         return exDate.toDateString() === date.toDateString();
       }).length;

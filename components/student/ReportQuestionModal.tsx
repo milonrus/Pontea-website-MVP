@@ -26,7 +26,7 @@ const ReportQuestionModal: React.FC<ReportQuestionModalProps> = ({
   onClose,
   question
 }) => {
-  const { currentUser, profile } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const [selectedReason, setSelectedReason] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -43,8 +43,8 @@ const ReportQuestionModal: React.FC<ReportQuestionModalProps> = ({
       await createReport({
         questionId: question.id,
         questionText: question.questionText,
-        reportedBy: currentUser.uid,
-        reporterName: profile?.displayName || currentUser.email || 'Anonymous',
+        reportedBy: currentUser.id,
+        reporterName: userProfile?.displayName || currentUser.email || 'Anonymous',
         reason: selectedReason === 'Other' && additionalDetails
           ? `Other: ${additionalDetails}`
           : selectedReason,

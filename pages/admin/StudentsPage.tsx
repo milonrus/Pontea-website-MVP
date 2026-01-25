@@ -45,7 +45,11 @@ const StudentsPage: React.FC = () => {
             ? Math.round((progress.totalCorrect / progress.totalQuestionsAttempted) * 100)
             : 0;
 
-          const lastActive = progress?.lastActivityAt?.toDate?.() || student.createdAt?.toDate?.();
+          const lastActive = progress?.lastActivityAt
+            ? new Date(progress.lastActivityAt)
+            : student.createdAt
+            ? new Date(student.createdAt)
+            : undefined;
 
           return {
             ...student,
@@ -65,8 +69,9 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-  const formatDate = (date?: Date) => {
-    if (!date) return '-';
+  const formatDate = (value?: string | Date) => {
+    if (!value) return '-';
+    const date = value instanceof Date ? value : new Date(value);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -162,7 +167,7 @@ const StudentsPage: React.FC = () => {
                 <div className="col-span-2 flex items-center justify-center md:justify-center gap-2 text-sm text-gray-600">
                   <Calendar className="w-4 h-4 text-gray-400 md:hidden" />
                   <span className="md:hidden text-gray-400">Registered:</span>
-                  {formatDate(student.createdAt?.toDate?.())}
+                  {formatDate(student.createdAt)}
                 </div>
 
                 <div className="col-span-2 flex items-center justify-center md:justify-center gap-2">

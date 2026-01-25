@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '../../firebase';
-import { Upload, X, Image, Loader2 } from 'lucide-react';
+import { supabase } from '../../supabase';
+import { Upload, X, Loader2 } from 'lucide-react';
 
 interface ImageUploadProps {
   currentUrl?: string | null;
@@ -16,9 +15,25 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   folder = 'questions',
   label = 'Image'
 }) => {
+  const bucketName = 'questions';
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getStoragePath = (url: string) => {
+    try {
+      const parsed = new URL(url);
+      const marker = '/storage/v1/object/public/';
+      const index = parsed.pathname.indexOf(marker);
+      if (index === -1) return null;
+      const path = parsed.pathname.slice(index + marker.length);
+      const [bucket, ...rest] = path.split('/');
+      if (bucket !== bucketName) return null;
+      return rest.join('/');
+    } catch (err) {
+      return null;
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,19 +58,30 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       // Generate unique filename
       const timestamp = Date.now();
       const fileName = `${folder}/${timestamp}_${file.name}`;
-      const storageRef = ref(storage, fileName);
 
-      // Upload file
-      await uploadBytes(storageRef, file);
+      const { error: uploadError } = await supabase
+        .storage
+        .from(bucketName)
+        .upload(fileName, file);
 
-      // Get download URL
-      const url = await getDownloadURL(storageRef);
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: publicUrlData } = supabase
+        .storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
+
+      const url = publicUrlData.publicUrl;
 
       // Delete old image if exists
       if (currentUrl) {
         try {
-          const oldRef = ref(storage, currentUrl);
-          await deleteObject(oldRef);
+          const oldPath = getStoragePath(currentUrl);
+          if (oldPath) {
+            await supabase.storage.from(bucketName).remove([oldPath]);
+          }
         } catch (err) {
           // Ignore errors deleting old file
           console.warn('Could not delete old image:', err);
@@ -79,8 +105,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     if (!currentUrl) return;
 
     try {
-      const imageRef = ref(storage, currentUrl);
-      await deleteObject(imageRef);
+      const imagePath = getStoragePath(currentUrl);
+      if (imagePath) {
+        await supabase.storage.from(bucketName).remove([imagePath]);
+      }
     } catch (err) {
       console.warn('Could not delete image:', err);
     }

@@ -1,11 +1,12 @@
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import AssessmentFlow from './components/assessment/AssessmentFlow';
 import ResultsPage from './pages/ResultsPage';
 import MethodologyPage from './pages/MethodologyPage';
 import ConsultationPage from './pages/ConsultationPage';
 import AuthPage from './pages/AuthPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 import DashboardPage from './pages/DashboardPage';
 import ScrollToTop from './components/shared/ScrollToTop';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -37,18 +38,34 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentUser, loading } = useAuth();
+  if (loading) return <div>Loading...</div>;
+  if (currentUser) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <HashRouter>
+      <BrowserRouter>
         <ScrollToTop />
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          } />
           <Route path="/methodology" element={<MethodologyPage />} />
           <Route path="/assessment" element={<AssessmentFlow />} />
           <Route path="/results" element={<ResultsPage />} />
           <Route path="/consultation" element={<ConsultationPage />} />
-          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth" element={
+            <PublicRoute>
+              <AuthPage />
+            </PublicRoute>
+          } />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
           {/* Protected Student Routes */}
           <Route path="/dashboard" element={
@@ -141,7 +158,7 @@ const App: React.FC = () => {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </HashRouter>
+      </BrowserRouter>
     </AuthProvider>
   );
 };

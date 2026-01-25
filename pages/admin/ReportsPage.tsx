@@ -77,7 +77,7 @@ const ReportsPage: React.FC = () => {
       await updateReport(selectedReport.id, {
         status,
         adminNotes,
-        reviewedBy: currentUser.uid
+        reviewedBy: currentUser.id
       });
       setSelectedReport(null);
       setQuestion(null);

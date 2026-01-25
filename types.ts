@@ -1,5 +1,3 @@
-import { Timestamp } from 'firebase/firestore';
-
 // --- USER & AUTH ---
 export type UserRole = 'admin' | 'student';
 
@@ -8,7 +6,7 @@ export interface UserProfile {
   email: string;
   displayName: string;
   role: UserRole;
-  createdAt: Timestamp;
+  createdAt: string;
   settings: {
     showResultAfterEach: boolean;
   };
@@ -20,7 +18,7 @@ export interface SubjectModel {
   name: string;
   description?: string;
   order: number;
-  createdAt: Timestamp;
+  createdAt: string;
   questionCount?: number;
 }
 
@@ -29,7 +27,7 @@ export interface TopicModel {
   subjectId: string;
   name: string;
   order: number;
-  createdAt: Timestamp;
+  createdAt: string;
   questionCount?: number;
 }
 
@@ -61,8 +59,8 @@ export interface QuestionModel {
   explanation: string;
   explanationImageUrl?: string | null;
   createdBy: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: string;
+  updatedAt: string;
   isActive: boolean;
   stats: QuestionStats;
 }
@@ -93,8 +91,8 @@ export interface ExerciseSet {
   questionIds: string[];
   currentIndex: number;
   status: ExerciseStatus;
-  startedAt: Timestamp;
-  completedAt?: Timestamp;
+  startedAt: string;
+  completedAt?: string;
   correctCount: number;
   totalQuestions: number;
   totalTimeSpent: number;
@@ -105,7 +103,7 @@ export interface ExerciseResponse {
   selectedAnswer: OptionId;
   isCorrect: boolean;
   timeSpent: number;
-  answeredAt: Timestamp;
+  answeredAt: string;
 }
 
 // --- PROGRESS ---
@@ -121,7 +119,7 @@ export interface StudentProgress {
   totalQuestionsAttempted: number;
   totalCorrect: number;
   totalTimeSpent: number;
-  lastActivityAt: Timestamp;
+  lastActivityAt: string;
   subjectStats: Record<string, SubjectStats>;
 }
 
@@ -138,8 +136,8 @@ export interface QuestionReport {
   status: ReportStatus;
   adminNotes?: string;
   reviewedBy?: string;
-  createdAt: Timestamp;
-  resolvedAt?: Timestamp;
+  createdAt: string;
+  resolvedAt?: string;
 }
 
 // --- LEGACY TYPES (Keep until refactor complete) ---

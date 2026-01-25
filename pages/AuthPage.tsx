@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../firebase';
+import { supabase } from '../supabase';
 import Button from '../components/shared/Button';
 import { AlertCircle } from 'lucide-react';
 
@@ -20,25 +19,21 @@ const AuthPage: React.FC = () => {
 
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
       }
       navigate('/dashboard');
     } catch (err: any) {
-      // Handle known errors gracefully
-      if (err.code === 'auth/email-already-in-use') {
+      if (err?.message?.toLowerCase().includes('already')) {
         setError("This email is already registered. Please sign in instead.");
-      } else if (
-        err.code === 'auth/invalid-credential' || 
-        err.code === 'auth/wrong-password' || 
-        err.code === 'auth/user-not-found' ||
-        err.code === 'auth/invalid-email'
-      ) {
+      } else if (err?.message?.toLowerCase().includes('invalid')) {
         setError("Invalid email or password.");
-      } else if (err.code === 'auth/weak-password') {
+      } else if (err?.message?.toLowerCase().includes('password')) {
         setError("Password should be at least 6 characters.");
-      } else if (err.code === 'auth/operation-not-allowed') {
+      } else if (err?.message?.toLowerCase().includes('provider')) {
         setError("Login method not enabled.");
       } else {
         console.error("Auth Error:", err);
@@ -53,16 +48,17 @@ const AuthPage: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      navigate('/dashboard');
+      const redirectUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${redirectUrl}/auth/callback`
+        }
+      });
+      if (error) throw error;
     } catch (err: any) {
-      if (err.code === 'auth/popup-closed-by-user') {
-         // Ignore
-      } else {
-         console.error("Google Auth Error:", err);
-         setError("Failed to sign in with Google.");
-      }
+      console.error('Google Auth Error:', err);
+      setError('Failed to sign in with Google.');
     } finally {
       setLoading(false);
     }
