@@ -93,6 +93,12 @@ const DashboardPage: React.FC = () => {
               <p className="text-gray-600 text-sm mb-4">Start a new generated exercise set.</p>
               <Button variant="outline" className="bg-white" size="sm" onClick={() => router.push('/practice')}>Start Practice</Button>
             </div>
+
+            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+              <h2 className="text-lg font-bold text-primary mb-2">Timed Test</h2>
+              <p className="text-gray-600 text-sm mb-4">Take a full timed assessment with sections.</p>
+              <Button variant="outline" className="bg-white" size="sm" onClick={() => router.push('/timed-test')}>Start Test</Button>
+            </div>
           </div>
         </div>
       </main>

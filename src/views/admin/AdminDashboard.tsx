@@ -192,6 +192,15 @@ const AdminDashboard: React.FC = () => {
             </div>
             <span className="font-medium text-gray-900">View Reports</span>
           </Link>
+          <Link
+            href="/admin/templates"
+            className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-all"
+          >
+            <div className="p-2 bg-indigo-50 rounded-lg">
+              <FileText className="w-5 h-5 text-indigo-600" />
+            </div>
+            <span className="font-medium text-gray-900">Test Templates</span>
+          </Link>
         </div>
 
         {/* Management Cards */}
@@ -229,6 +238,12 @@ const AdminDashboard: React.FC = () => {
             desc="Import multiple questions via CSV file."
             icon={Upload}
             link="/admin/questions/import"
+          />
+          <AdminCard
+            title="Test Templates"
+            desc="Create and manage timed test templates."
+            icon={FileText}
+            link="/admin/templates"
           />
         </div>
       </main>
