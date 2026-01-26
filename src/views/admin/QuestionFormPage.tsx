@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
 import Button from '@/components/shared/Button';
@@ -6,7 +6,7 @@ import { createQuestion, getQuestion, updateQuestion, getSubjects, getTopics } f
 import { QuestionModel, SubjectModel, TopicModel, QuestionDifficulty, OptionId } from '@/types';
 import LaTeXRenderer from '@/components/shared/LaTeXRenderer';
 import ImageUpload from '@/components/shared/ImageUpload';
-import { ArrowLeft, Save, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Save, AlertTriangle, ToggleLeft, ToggleRight, Upload, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const isUuid = (value?: string) =>
@@ -41,6 +41,101 @@ const QuestionFormPage: React.FC = () => {
     correctAnswer: 'a',
     tags: []
   });
+
+  // Parse Mode state
+  const [parseMode, setParseMode] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
+  const [parsePreview, setParsePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const parseInputRef = useRef<HTMLInputElement>(null);
+
+  // Parse image handler
+  const handleParseImage = async (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file (PNG or JPG)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be smaller than 5MB');
+      return;
+    }
+
+    setError('');
+    setIsParsing(true);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string;
+      setParsePreview(dataUrl);
+
+      try {
+        // Get auth token
+        const { data: { session } } = await (await import('@/lib/supabase/client')).supabase.auth.getSession();
+        if (!session?.access_token) {
+          setError('You must be signed in to use Parse Mode');
+          setIsParsing(false);
+          setParsePreview(null);
+          return;
+        }
+
+        const response = await fetch('/api/admin/questions/parse', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ imageDataUrl: dataUrl })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || 'Failed to parse image. Please try again or enter manually.');
+          setIsParsing(false);
+          setParsePreview(null);
+          return;
+        }
+
+        // Update form with parsed data
+        const parsed = data.question;
+        setFormData(prev => ({
+          ...prev,
+          questionText: parsed.questionText || prev.questionText,
+          options: parsed.options || prev.options,
+          correctAnswer: parsed.correctAnswer || prev.correctAnswer,
+          explanation: parsed.explanation || prev.explanation
+        }));
+
+        setParsePreview(null);
+      } catch (err: any) {
+        setError('Failed to parse image. Please try again or enter manually.');
+        setParsePreview(null);
+      } finally {
+        setIsParsing(false);
+        if (parseInputRef.current) {
+          parseInputRef.current.value = '';
+        }
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleParseFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleParseImage(file);
+  };
+
+  const handleParseDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleParseImage(file);
+  };
 
   // Fetch initial data
   useEffect(() => {
@@ -186,10 +281,75 @@ const QuestionFormPage: React.FC = () => {
             </div>
         )}
 
+        {/* Parse Mode Toggle */}
+        <div className="mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setParseMode(!parseMode)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                parseMode ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-500'
+              }`}
+            >
+              {parseMode ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+              <span className="font-medium text-sm">Parse Mode</span>
+            </button>
+            <span className="text-xs text-gray-400">
+              {parseMode ? 'Upload a screenshot to auto-fill question fields' : 'Toggle to enable image parsing'}
+            </span>
+          </div>
+
+          {/* Parse Upload Zone */}
+          {parseMode && (
+            <div className="mt-4">
+              <div
+                onClick={() => !isParsing && parseInputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleParseDrop}
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  isParsing || isDragging
+                    ? 'border-primary/50 bg-primary/5'
+                    : 'border-gray-300 hover:border-primary/50 hover:bg-gray-50 cursor-pointer'
+                } ${isParsing ? 'cursor-not-allowed' : ''}`}
+              >
+                {isParsing ? (
+                  <div className="flex flex-col items-center gap-3">
+                    {parsePreview && (
+                      <img src={parsePreview} alt="Parsing..." className="w-32 h-32 object-contain rounded-lg border border-gray-200" />
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                      <span className="text-sm text-gray-600">Parsing image...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="p-3 bg-gray-100 rounded-full">
+                      <Upload className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Drag & drop a screenshot here</p>
+                      <p className="text-xs text-gray-500">or click to browse (PNG, JPG up to 5MB)</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <input
+                ref={parseInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg"
+                onChange={handleParseFileChange}
+                className="hidden"
+              />
+            </div>
+          )}
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-8">
             {/* FORM COLUMN */}
             <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                
+              <fieldset disabled={isParsing} className={`space-y-6 ${isParsing ? 'opacity-50' : ''}`}>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
@@ -302,9 +462,10 @@ const QuestionFormPage: React.FC = () => {
                     folder="explanations"
                     label="Explanation Image"
                 />
+              </fieldset>
 
                 <div className="pt-4 border-t border-gray-100">
-                    <Button type="submit" isLoading={loading} className="w-full flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
+                    <Button type="submit" isLoading={loading || isParsing} className="w-full flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
                         <Save className="w-4 h-4" />
                         Save Question
                     </Button>

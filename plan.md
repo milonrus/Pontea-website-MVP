@@ -213,7 +213,7 @@ Geometry,easy,"What is the area of a circle with radius 5?","25π","10π","5π",
 - [x] RLS policies for all tables
 - [x] AuthContext with role-based access (ProtectedRoute, AdminRoute, PublicRoute)
 
-### Phase 2: Test Engine - ⚠️ 85% COMPLETE
+### Phase 2: Test Engine - ✅ COMPLETE
 **Implemented:**
 - [x] API routes: `/api/test/start`, `/api/test/answer`, `/api/test/sync`, `/api/test/next-section`, `/api/test/resume`, `/api/test/complete`
 - [x] Timer manager (`src/lib/test/timer-manager.ts`) with server sync and drift detection
@@ -222,14 +222,14 @@ Geometry,easy,"What is the area of a circle with radius 5?","25π","10π","5π",
 - [x] Test UI components (Timer, QuestionDisplay, AnswerOptions, Navigation)
 
 **Missing (Critical):**
-- [ ] **Tab blocking** - BroadcastChannel + localStorage NOT implemented
-- [ ] **Per-section time limits** - Missing `section_started_at` tracking in DB
-- [ ] **Auto-advance on section expiry** - Only auto-completes entire test, not per-section
-- [ ] **Section locking** - No enforcement preventing navigation to previous sections
+- [x] **Tab blocking** - ✅ Implemented in `src/hooks/use-tab-blocking.ts` using BroadcastChannel + sessionStorage
+- [x] **Per-section time limits** - ✅ Implemented with `attempt_sections.time_limit_seconds` and section timers
+- [x] **Auto-advance on section expiry** - ✅ Implemented via `autoAdvanceOnSectionExpiry` in `use-test-session.ts`
+- [x] **Section locking** - ✅ Implemented via `completedSections` tracking and navigation guards
 
-**Architecture Issue:**1
-- Current `TestSessionPage.tsx` uses legacy practice-mode code (`getExerciseSet`, `submitAnswer` from `/lib/test.ts`)
-- The proper test engine (`use-test-session.ts` + `/api/test/*` routes) exists but is NOT wired up to the UI
+**Architecture:** ✅ Resolved
+- `TimedTestPage.tsx` now uses the proper test engine (`use-test-session.ts` + `/api/test/*` routes)
+- Template-based tests with admin UI at `/admin/templates`
 
 ### Phase 3: Practice Mode - ✅ COMPLETE
 - [x] Practice API routes (`/api/practice/start`, `/api/practice/answer`, `/api/practice/complete`)
@@ -238,18 +238,18 @@ Geometry,easy,"What is the area of a circle with radius 5?","25π","10π","5π",
 - [x] Practice results summary
 - [x] Exercise history with filtering
 
-### Phase 4: Admin Interface - ⚠️ 90% COMPLETE
+### Phase 4: Admin Interface - ⚠️ 95% COMPLETE
 **Implemented:**
 - [x] Admin dashboard with stats (questions, students, weekly additions, pending reports)
 - [x] Question CRUD (`/admin/questions/`) with LaTeX preview
 - [x] CSV bulk import (`/admin/questions/import/`)
 - [x] Test template builder UI (`TestBuilder.tsx`)
+- [x] Test template management (`/admin/templates/`) with full CRUD APIs
 - [x] Student management (`/admin/students/`) with role editing
 - [x] Subject/topic management
 - [x] Question reports management
 
 **Missing:**
-- [ ] **Test template API endpoints** - Missing create/update/publish APIs
 - [ ] **Full test preview** - Cannot preview test before publishing
 
 ### Phase 5: Polish & Launch - ⚠️ 50% COMPLETE
@@ -290,26 +290,27 @@ Geometry,easy,"What is the area of a circle with radius 5?","25π","10π","5π",
 
 | Component | Location | Status |
 |-----------|----------|--------|
-| Test Session Hook | `src/hooks/use-test-session.ts` | ✅ Exists, NOT integrated |
+| Test Session Hook | `src/hooks/use-test-session.ts` | ✅ Complete, integrated |
 | Timer Manager | `src/lib/test/timer-manager.ts` | ✅ Complete |
 | Scoring | `src/lib/test/scoring.ts` | ✅ Complete |
-| Test Page (current) | `src/views/student/TestSessionPage.tsx` | ⚠️ Uses legacy code |
+| Test Page (timed) | `src/views/student/TimedTestPage.tsx` | ✅ Complete |
+| Tab Blocking | `src/hooks/use-tab-blocking.ts` | ✅ Complete |
 | Test API - start | `src/app/api/test/start/route.ts` | ✅ Complete |
-| Test API - answer | `src/app/api/test/answer/route.ts` | ⚠️ Needs section validation |
-| Test API - sync | `src/app/api/test/sync/route.ts` | ⚠️ Needs section timing |
-| Test API - next-section | `src/app/api/test/next-section/route.ts` | ⚠️ Needs `started_at` |
+| Test API - answer | `src/app/api/test/answer/route.ts` | ✅ Complete |
+| Test API - sync | `src/app/api/test/sync/route.ts` | ✅ Complete |
+| Test API - next-section | `src/app/api/test/next-section/route.ts` | ✅ Complete |
+| Test API - results | `src/app/api/test/results/route.ts` | ✅ Complete |
 | Practice Setup | `src/components/practice/PracticeSetup.tsx` | ✅ Complete |
 | Admin Dashboard | `src/views/admin/AdminDashboard.tsx` | ✅ Complete |
 | Test Builder | `src/components/admin/TestBuilder.tsx` | ✅ UI exists |
 
 ---
 
-## Next Priority: Test Engine Reliability
+## Next Priority: Phase 5 Completion
 
-The following features are required to complete Phase 2:
+Phase 2 (Test Engine) is now complete. Remaining work:
 
-1. **Wire up proper test engine** - Create new `TimedTestPage.tsx` using `use-test-session.ts`
-2. **Tab blocking** - New `use-tab-blocking.ts` hook
-3. **Per-section timing** - Add `started_at` to `attempt_sections`, update APIs
-4. **Auto-advance** - Timer callback triggers section advance on expiry
-5. **Section locking** - Server + UI enforcement to prevent going back
+1. **Signup page** - Implement `/auth/signup/` view
+2. **Test preview** - Add preview functionality in admin template editor
+3. **Comprehensive QA** - Run through verification plan
+4. **Production deployment** - Final deployment verification

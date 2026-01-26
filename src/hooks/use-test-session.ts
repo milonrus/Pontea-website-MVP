@@ -116,6 +116,14 @@ export function useTestSession({
   const isMountedRef = useRef(true);
   const sectionExpiryCalledRef = useRef<Set<number>>(new Set());
 
+  // Refs for callbacks to avoid stale closures in effects
+  const onSectionExpiryRef = useRef(onSectionExpiry);
+  const onTestExpiryRef = useRef(onTestExpiry);
+
+  // Keep refs updated
+  onSectionExpiryRef.current = onSectionExpiry;
+  onTestExpiryRef.current = onTestExpiry;
+
   // Get auth token for API calls
   const getAuthToken = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -329,7 +337,7 @@ export function useTestSession({
 
       // Auto-submit on expiry
       if (info.isExpired && autoSubmitOnExpiry) {
-        onTestExpiry?.();
+        onTestExpiryRef.current?.();
         completeTest();
       }
     };
@@ -342,28 +350,37 @@ export function useTestSession({
         clearInterval(timerIntervalRef.current);
       }
     };
-  }, [timerState, autoSubmitOnExpiry, onTestExpiry]);
+  }, [timerState, autoSubmitOnExpiry]);
+
+  // Ref for currentSectionIndex to avoid stale closure in interval
+  const currentSectionIndexRef = useRef(currentSectionIndex);
+  currentSectionIndexRef.current = currentSectionIndex;
 
   // Section timer update interval
   useEffect(() => {
     if (!sectionTimerState) return;
 
-    const updateSectionTimer = () => {
-      const info = getTimeInfo(sectionTimerState);
-      setSectionTimeInfo(info);
+    // Initial update - only update display, don't auto-advance
+    const info = getTimeInfo(sectionTimerState);
+    setSectionTimeInfo(info);
 
-      // Auto-advance on section expiry
-      if (info.isExpired && autoAdvanceOnSectionExpiry) {
+    // Interval callback - update display AND handle auto-advance
+    const updateSectionTimer = () => {
+      const currentInfo = getTimeInfo(sectionTimerState);
+      setSectionTimeInfo(currentInfo);
+
+      // Auto-advance on section expiry (only in interval, not initial call)
+      if (currentInfo.isExpired && autoAdvanceOnSectionExpiry) {
+        const sectionIdx = currentSectionIndexRef.current;
         // Prevent calling multiple times for the same section
-        if (!sectionExpiryCalledRef.current.has(currentSectionIndex)) {
-          sectionExpiryCalledRef.current.add(currentSectionIndex);
-          onSectionExpiry?.(currentSectionIndex);
+        if (!sectionExpiryCalledRef.current.has(sectionIdx)) {
+          sectionExpiryCalledRef.current.add(sectionIdx);
+          onSectionExpiryRef.current?.(sectionIdx);
           advanceSection();
         }
       }
     };
 
-    updateSectionTimer(); // Initial update
     sectionTimerIntervalRef.current = setInterval(updateSectionTimer, 1000);
 
     return () => {
@@ -371,7 +388,7 @@ export function useTestSession({
         clearInterval(sectionTimerIntervalRef.current);
       }
     };
-  }, [sectionTimerState, autoAdvanceOnSectionExpiry, currentSectionIndex, onSectionExpiry]);
+  }, [sectionTimerState, autoAdvanceOnSectionExpiry]);
 
   // Sync interval
   useEffect(() => {

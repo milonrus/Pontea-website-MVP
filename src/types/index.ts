@@ -65,12 +65,53 @@ export interface QuestionModel {
   stats: QuestionStats;
 }
 
-// --- BULK IMPORT ---
+// --- BULK IMPORT (CSV) ---
 export interface ParsedQuestion {
   rowNumber: number;
   data: Omit<QuestionModel, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>;
   isValid: boolean;
   errors: string[];
+}
+
+// --- BULK IMAGE IMPORT ---
+export type ImageParseStatus = 'pending' | 'parsing' | 'success' | 'error';
+
+export interface ImageParseItem {
+  id: string;
+  file: File;
+  dataUrl: string;
+  status: ImageParseStatus;
+  error?: string;
+  parsedQuestion?: ParsedImageQuestion;
+}
+
+export interface ParsedImageQuestion {
+  questionText: string;
+  options: QuestionOption[];
+  correctAnswer: string;
+  explanation: string;
+  // Metadata fields (user-assigned)
+  subjectId?: string;
+  topicId?: string | null;
+  difficulty?: QuestionDifficulty;
+}
+
+export interface BulkParseRequest {
+  images: Array<{
+    id: string;
+    dataUrl: string;
+  }>;
+}
+
+export interface BulkParseResult {
+  id: string;
+  success: boolean;
+  question?: ParsedImageQuestion;
+  error?: string;
+}
+
+export interface BulkParseResponse {
+  results: BulkParseResult[];
 }
 
 // --- EXERCISES ---

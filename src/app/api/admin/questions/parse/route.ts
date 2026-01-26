@@ -69,8 +69,12 @@ export async function POST(request: NextRequest) {
     const systemPrompt = [
       'You extract a multiple-choice question from a screenshot.',
       'Return JSON only, matching the provided schema.',
-      'Use $$...$$ for LaTeX expressions.',
-      'Options must be lowercase a-d and must not include the letter label.',
+      'IMPORTANT: Wrap ALL mathematical expressions, variables, and formulas in LaTeX delimiters.',
+      'Use $...$ for inline math (e.g., $x^2$, $\\frac{1}{2}$, $\\sqrt{2}$).',
+      'Use $$...$$ for display/block math equations.',
+      'This applies to questionText, ALL option texts, and explanation.',
+      'Examples: "$x = 5$", "$\\frac{a}{b}$", "$x^2 + y^2 = r^2$".',
+      'Options must be lowercase a-d and must not include the letter label (a, b, c, d) in the text.',
       'If a field is missing, use an empty string.',
       'If the correct answer is not visible, return an empty string for correctAnswer.'
     ].join(' ');
@@ -82,7 +86,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-mini',
         temperature: 0,
         max_output_tokens: 800,
         input: [
@@ -98,9 +102,9 @@ export async function POST(request: NextRequest) {
             ]
           }
         ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
+        text: {
+          format: {
+            type: 'json_schema',
             name: 'parsed_question',
             strict: true,
             schema: {
