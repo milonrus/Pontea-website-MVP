@@ -52,6 +52,11 @@ const QuestionsPage: React.FC = () => {
                 <Upload className="w-4 h-4" /> Import CSV
               </Button>
             </Link>
+            <Link href="/admin/questions/import-images">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Upload className="w-4 h-4" /> Import Images
+              </Button>
+            </Link>
             <Link href="/admin/questions/new">
               <Button className="flex items-center gap-2">
                 <Plus className="w-4 h-4" /> Add Question

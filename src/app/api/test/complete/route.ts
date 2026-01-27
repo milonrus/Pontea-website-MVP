@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, getAuthUser } from '@/lib/supabase/server';
+import { calculateScore } from '@/lib/test/scoring';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,26 +41,21 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('attempt_id', attemptId);
 
-    // Calculate score with +1/-0.25/0 scoring
-    let correctCount = 0;
-    let incorrectCount = 0;
-    let unansweredCount = 0;
-    const totalQuestions = answers?.length || 0;
+    // Use actual total from attempt.question_ids (handles missing rows from unanswered questions)
+    const totalQuestions = attempt.question_ids?.length || 0;
 
-    answers?.forEach(answer => {
-      if (answer.selected_answer === null) {
-        unansweredCount++;
-      } else if (answer.is_correct) {
-        correctCount++;
-      } else {
-        incorrectCount++;
-      }
-    });
+    // Convert DB format to AttemptQuestion format for calculateScore function
+    const convertedAnswers = (answers || []).map((answer: any) => ({
+      id: answer.id,
+      attemptId: answer.attempt_id,
+      questionId: answer.question_id,
+      selectedAnswer: answer.selected_answer,
+      isCorrect: answer.is_correct,
+      timeSpent: answer.time_spent || 0
+    }));
 
-    // Score: +1 for correct, -0.25 for incorrect, 0 for unanswered
-    const rawScore = correctCount - (incorrectCount * 0.25);
-    const maxScore = totalQuestions;
-    const percentageScore = maxScore > 0 ? Math.round((rawScore / maxScore) * 100) : 0;
+    // Calculate score using the proper scoring function (accounts for unanswered questions)
+    const scoreResult = calculateScore(convertedAnswers, totalQuestions);
 
     // Calculate total time spent
     const totalTimeSpent = answers?.reduce((sum, a) => sum + (a.time_spent || 0), 0) || 0;
@@ -70,11 +66,11 @@ export async function POST(request: NextRequest) {
       .update({
         status: 'completed',
         completed_at: serverTime,
-        score: rawScore,
-        percentage_score: percentageScore,
-        correct_count: correctCount,
-        incorrect_count: incorrectCount,
-        unanswered_count: unansweredCount,
+        score: scoreResult.raw,
+        percentage_score: scoreResult.percentage,
+        correct_count: scoreResult.correct,
+        incorrect_count: scoreResult.incorrect,
+        unanswered_count: scoreResult.unanswered,
         total_time_spent: totalTimeSpent
       })
       .eq('id', attemptId)
@@ -90,11 +86,11 @@ export async function POST(request: NextRequest) {
       success: true,
       serverTime,
       score: {
-        raw: rawScore,
-        percentage: percentageScore,
-        correct: correctCount,
-        incorrect: incorrectCount,
-        unanswered: unansweredCount,
+        raw: scoreResult.raw,
+        percentage: scoreResult.percentage,
+        correct: scoreResult.correct,
+        incorrect: scoreResult.incorrect,
+        unanswered: scoreResult.unanswered,
         total: totalQuestions
       },
       attempt: updatedAttempt

@@ -114,8 +114,8 @@ const ImageParseProgress: React.FC<ImageParseProgressProps> = ({
               </div>
             </div>
             {item.error && (
-              <div className="absolute bottom-0 left-0 right-0 bg-red-500/90 px-2 py-1">
-                <p className="text-xs text-white truncate" title={item.error}>
+              <div className="absolute bottom-0 left-0 right-0 bg-red-500/90 px-2 py-1 max-h-20 overflow-y-auto">
+                <p className="text-xs text-white whitespace-normal break-words">
                   {item.error}
                 </p>
               </div>

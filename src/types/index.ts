@@ -33,7 +33,7 @@ export interface TopicModel {
 
 // --- QUESTIONS ---
 export type QuestionDifficulty = 'easy' | 'medium' | 'hard';
-export type OptionId = 'a' | 'b' | 'c' | 'd';
+export type OptionId = 'a' | 'b' | 'c' | 'd' | 'e';
 
 export interface QuestionOption {
   id: OptionId;
@@ -71,6 +71,18 @@ export interface ParsedQuestion {
   data: Omit<QuestionModel, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>;
   isValid: boolean;
   errors: string[];
+  sourceFormat?: 'pontea' | 'learnworlds';
+  metadata?: {
+    originalGroup?: string;
+    questionType?: string;
+  };
+}
+
+export interface CSVImportConfig {
+  format: 'pontea' | 'learnworlds';
+  defaultSubjectId?: string;
+  defaultTopicId?: string | null;
+  detectDifficulty?: boolean;
 }
 
 // --- BULK IMAGE IMPORT ---
@@ -90,10 +102,13 @@ export interface ParsedImageQuestion {
   options: QuestionOption[];
   correctAnswer: string;
   explanation: string;
-  // Metadata fields (user-assigned)
+  // Metadata fields (can be auto-detected or user-assigned)
   subjectId?: string;
   topicId?: string | null;
   difficulty?: QuestionDifficulty;
+  // Auto-detection tracking flags
+  isSubjectAutoDetected?: boolean;
+  isDifficultyAutoDetected?: boolean;
 }
 
 export interface BulkParseRequest {
@@ -112,6 +127,32 @@ export interface BulkParseResult {
 
 export interface BulkParseResponse {
   results: BulkParseResult[];
+}
+
+// --- SSE STREAMING TYPES ---
+export interface SSEStartEvent {
+  sessionId: string;
+  totalImages: number;
+  concurrency: number;
+}
+
+export interface SSEProgressEvent {
+  id: string;
+  status: 'parsing' | 'success' | 'error';
+  question?: ParsedImageQuestion;
+  error?: string;
+  completed: number;
+  total: number;
+}
+
+export interface SSECompleteEvent {
+  successCount: number;
+  errorCount: number;
+  results: BulkParseResult[];
+}
+
+export interface SSEErrorEvent {
+  message: string;
 }
 
 // --- EXERCISES ---

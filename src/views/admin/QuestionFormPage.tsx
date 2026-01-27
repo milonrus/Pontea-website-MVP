@@ -37,6 +37,7 @@ const QuestionFormPage: React.FC = () => {
         { id: 'b', text: '' },
         { id: 'c', text: '' },
         { id: 'd', text: '' },
+        { id: 'e', text: '' },
     ],
     correctAnswer: 'a',
     tags: []
@@ -228,6 +229,29 @@ const QuestionFormPage: React.FC = () => {
             return;
         }
 
+        // Validate options: filter out empty option E and ensure 4-5 options
+        const validOptions = formData.options?.filter(opt =>
+          opt.text?.trim()
+        );
+
+        if (!validOptions || validOptions.length < 4) {
+          setError("At least 4 options (A-D) are required.");
+          setLoading(false);
+          return;
+        }
+        if (validOptions.length > 5) {
+          setError("Maximum 5 options allowed.");
+          setLoading(false);
+          return;
+        }
+
+        // Ensure correctAnswer is one of the valid options
+        if (!validOptions.find(opt => opt.id === formData.correctAnswer)) {
+          setError("Correct answer must be one of the provided options.");
+          setLoading(false);
+          return;
+        }
+
         // Sanitize payload
         const payload: any = {
             subjectId: formData.subjectId,
@@ -236,7 +260,7 @@ const QuestionFormPage: React.FC = () => {
             difficulty: formData.difficulty || 'medium',
             questionText: formData.questionText,
             questionImageUrl: formData.questionImageUrl || null,
-            options: formData.options,
+            options: validOptions,
             correctAnswer: formData.correctAnswer,
             explanation: formData.explanation || '',
             explanationImageUrl: formData.explanationImageUrl || null,
@@ -422,9 +446,9 @@ const QuestionFormPage: React.FC = () => {
                 <div className="space-y-3">
                     <label className="block text-sm font-medium text-gray-700">Options *</label>
                     {formData.options?.map((opt) => (
-                        <div key={opt.id} className="flex gap-2 items-center">
+                        <div key={opt.id} className={`flex gap-2 items-center ${opt.id === 'e' ? 'opacity-75' : ''}`}>
                             <div className="flex items-center h-full">
-                                <input 
+                                <input
                                     type="radio"
                                     name="correctAnswer"
                                     checked={formData.correctAnswer === opt.id}
@@ -432,18 +456,21 @@ const QuestionFormPage: React.FC = () => {
                                     className="w-4 h-4 text-primary focus:ring-primary cursor-pointer"
                                 />
                             </div>
-                            <span className="font-bold w-6 uppercase text-gray-500 text-center">{opt.id}</span>
-                            <input 
+                            <span className="font-bold w-6 uppercase text-gray-500 text-center flex items-center gap-1">
+                              {opt.id}
+                              {opt.id === 'e' && <span className="text-xs text-gray-400 ml-0.5">(Opt)</span>}
+                            </span>
+                            <input
                                 type="text"
                                 className="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                                 value={opt.text}
                                 onChange={e => handleOptionChange(opt.id, e.target.value)}
-                                required
-                                placeholder={`Option ${opt.id.toUpperCase()}`}
+                                required={opt.id !== 'e'}
+                                placeholder={`Option ${opt.id.toUpperCase()}${opt.id === 'e' ? ' (Optional)' : ''}`}
                             />
                         </div>
                     ))}
-                    <p className="text-xs text-gray-400 pl-8">Select the radio button next to the correct answer.</p>
+                    <p className="text-xs text-gray-400 pl-8">Select the radio button next to the correct answer. Option E is optional.</p>
                 </div>
 
                 <div>

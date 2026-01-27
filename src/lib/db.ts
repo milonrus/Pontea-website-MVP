@@ -234,8 +234,28 @@ export const batchCreateQuestions = async (
     updated_at: now
   }));
 
+  console.log('Attempting to insert questions:', {
+    count: rows.length,
+    sample: rows[0]
+  });
+
+  // Log each question's options and correctAnswer for debugging
+  rows.forEach((row, idx) => {
+    console.log(`Question ${idx}:`, {
+      text: row.question_text?.substring(0, 50),
+      correctAnswer: row.correct_answer,
+      optionsCount: row.options?.length,
+      optionIds: row.options?.map((o: any) => o.id),
+      fullOptions: JSON.stringify(row.options)
+    });
+  });
+
   const { error } = await supabase.from('questions').insert(rows);
-  if (error) throw error;
+  if (error) {
+    console.error('Supabase insert error:', error);
+    console.error('Failed row sample:', rows[0]);
+    throw new Error(`Failed to insert questions: ${error.message}`);
+  }
 };
 
 // --- EXTENDED SUBJECT CRUD ---

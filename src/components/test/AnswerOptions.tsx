@@ -11,7 +11,7 @@ interface AnswerOptionsProps {
   correctAnswer?: OptionId;
   isSubmitted?: boolean;
   disabled?: boolean;
-  onSelect: (optionId: OptionId) => void;
+  onSelect: (optionId: OptionId | null) => void;
   className?: string;
 }
 
@@ -56,7 +56,16 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
         return (
           <button
             key={option.id}
-            onClick={() => !disabled && onSelect(option.id)}
+            onClick={() => {
+              if (!disabled) {
+                // Toggle: if already selected, deselect; otherwise select
+                if (selectedAnswer === option.id) {
+                  onSelect(null);
+                } else {
+                  onSelect(option.id);
+                }
+              }
+            }}
             disabled={disabled || isSubmitted}
             className={`
               w-full text-left p-4 rounded-xl border-2 transition-all

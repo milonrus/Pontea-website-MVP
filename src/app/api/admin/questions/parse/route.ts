@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, getAuthUser } from '@/lib/supabase/server';
+import { getParsingPrompt } from '@/data/prompts';
 
-const optionOrder = ['a', 'b', 'c', 'd'] as const;
+const optionOrder = ['a', 'b', 'c', 'd', 'e'] as const;
 
 type ParsedOption = {
   id?: string;
@@ -16,12 +17,19 @@ type ParsedQuestion = {
 };
 
 const normalizeParsedQuestion = (parsed: ParsedQuestion) => {
-  const options = optionOrder.map((id) => {
+  // Build options from parsed data
+  const options = [];
+  for (const id of optionOrder) {
     const match = parsed.options?.find((opt) => opt?.id === id);
-    return { id, text: typeof match?.text === 'string' ? match.text : '' };
-  });
+    if (match && typeof match.text === 'string' && match.text.trim()) {
+      options.push({ id: id as any, text: match.text });
+    }
+  }
 
-  const correctAnswer = optionOrder.includes(parsed.correctAnswer as typeof optionOrder[number])
+  // Strict validation: must have 4-5 options (no padding)
+
+  const validOptions = options.map(o => o.id);
+  const correctAnswer = validOptions.includes(parsed.correctAnswer as any)
     ? parsed.correctAnswer
     : '';
 
@@ -34,12 +42,17 @@ const normalizeParsedQuestion = (parsed: ParsedQuestion) => {
 };
 
 export async function POST(request: NextRequest) {
+  console.log('[PARSE_ROUTE] 🟢 POST /api/admin/questions/parse called');
   try {
+    console.log('[PARSE_ROUTE] Step 1: Authenticating user');
     const user = await getAuthUser(request);
     if (!user) {
+      console.log('[PARSE_ROUTE] ❌ Authentication failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.log('[PARSE_ROUTE] ✅ User authenticated:', user.id);
 
+    console.log('[PARSE_ROUTE] Step 2: Checking admin role');
     const supabase = createServerClient();
     const { data: profile } = await supabase
       .from('users')
@@ -48,63 +61,71 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (profile?.role !== 'admin') {
+      console.log('[PARSE_ROUTE] ❌ User is not admin');
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+    console.log('[PARSE_ROUTE] ✅ Admin role confirmed');
 
+    console.log('[PARSE_ROUTE] Step 3: Parsing request body');
     const body = await request.json();
     const imageDataUrl = body?.imageDataUrl;
     if (!imageDataUrl || typeof imageDataUrl !== 'string') {
+      console.log('[PARSE_ROUTE] ❌ Missing imageDataUrl');
       return NextResponse.json({ error: 'imageDataUrl is required' }, { status: 400 });
     }
+    console.log('[PARSE_ROUTE] ✅ Image data received, size:', imageDataUrl.length);
 
     if (!imageDataUrl.startsWith('data:image/')) {
+      console.log('[PARSE_ROUTE] ❌ Invalid image format');
       return NextResponse.json({ error: 'Invalid image format' }, { status: 400 });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
+      console.log('[PARSE_ROUTE] ❌ OpenAI API key not configured');
       return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
     }
 
-    const systemPrompt = [
-      'You extract a multiple-choice question from a screenshot.',
-      'Return JSON only, matching the provided schema.',
-      'IMPORTANT: Wrap ALL mathematical expressions, variables, and formulas in LaTeX delimiters.',
-      'Use $...$ for inline math (e.g., $x^2$, $\\frac{1}{2}$, $\\sqrt{2}$).',
-      'Use $$...$$ for display/block math equations.',
-      'This applies to questionText, ALL option texts, and explanation.',
-      'Examples: "$x = 5$", "$\\frac{a}{b}$", "$x^2 + y^2 = r^2$".',
-      'Options must be lowercase a-d and must not include the letter label (a, b, c, d) in the text.',
-      'If a field is missing, use an empty string.',
-      'If the correct answer is not visible, return an empty string for correctAnswer.'
-    ].join(' ');
+    console.log('[PARSE_ROUTE] Step 4: Loading parsing prompt');
+    const systemPrompt = getParsingPrompt();
+    console.log('[PARSE_ROUTE] ✅ System prompt loaded, length:', systemPrompt.length);
+    console.log('[PARSE_ROUTE] ✅ Prompt preview (first 150 chars):', systemPrompt.substring(0, 150));
 
-    const response = await fetch('https://api.openai.com/v1/responses', {
+    console.log('[PARSE_ROUTE] Step 5: Sending request to OpenAI');
+    console.log('[PARSE_ROUTE] Using systemPrompt in request with length:', systemPrompt.length);
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        temperature: 0,
-        max_output_tokens: 800,
-        input: [
-          { role: 'system', content: [{ type: 'input_text', text: systemPrompt }] },
+        model: 'gpt-5-mini',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
           {
             role: 'user',
             content: [
               {
-                type: 'input_text',
+                type: 'text',
                 text: 'Parse the question and return the structured fields.'
               },
-              { type: 'input_image', image_url: imageDataUrl }
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageDataUrl
+                }
+              }
             ]
           }
         ],
-        text: {
-          format: {
-            type: 'json_schema',
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
             name: 'parsed_question',
             strict: true,
             schema: {
@@ -116,18 +137,18 @@ export async function POST(request: NextRequest) {
                 options: {
                   type: 'array',
                   minItems: 4,
-                  maxItems: 4,
+                  maxItems: 5,
                   items: {
                     type: 'object',
                     additionalProperties: false,
                     required: ['id', 'text'],
                     properties: {
-                      id: { type: 'string', enum: ['a', 'b', 'c', 'd'] },
+                      id: { type: 'string', enum: ['a', 'b', 'c', 'd', 'e'] },
                       text: { type: 'string' }
                     }
                   }
                 },
-                correctAnswer: { type: 'string', enum: ['a', 'b', 'c', 'd', ''] },
+                correctAnswer: { type: 'string', enum: ['a', 'b', 'c', 'd', 'e', ''] },
                 explanation: { type: 'string' }
               }
             }
@@ -136,34 +157,39 @@ export async function POST(request: NextRequest) {
       })
     });
 
+    console.log('[PARSE_ROUTE] OpenAI response status:', response.status);
+
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
       const message = errorBody?.error?.message || 'Failed to parse question';
-      console.error('OpenAI parse error:', message);
+      console.error('[PARSE_ROUTE] ❌ OpenAI parse error:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
 
+    console.log('[PARSE_ROUTE] ✅ OpenAI response OK');
     const data = await response.json();
-    const outputText =
-      data.output_text ||
-      data.output?.[0]?.content?.[0]?.text ||
-      data.output?.[0]?.content?.[0]?.output_text;
+    const outputText = data.choices?.[0]?.message?.content;
 
     if (!outputText || typeof outputText !== 'string') {
+      console.log('[PARSE_ROUTE] ❌ No output text in response');
       return NextResponse.json({ error: 'Invalid response from parser' }, { status: 500 });
     }
+
+    console.log('[PARSE_ROUTE] ✅ Output text extracted, length:', outputText.length);
 
     let parsed: ParsedQuestion;
     try {
       parsed = JSON.parse(outputText);
+      console.log('[PARSE_ROUTE] ✅ JSON parsed successfully');
     } catch (error) {
-      console.error('Failed to parse OpenAI JSON output:', error);
+      console.error('[PARSE_ROUTE] ❌ Failed to parse OpenAI JSON output:', error);
       return NextResponse.json({ error: 'Failed to parse parser output' }, { status: 500 });
     }
 
+    console.log('[PARSE_ROUTE] ✅ Question parsed successfully, returning result');
     return NextResponse.json({ question: normalizeParsedQuestion(parsed) });
   } catch (error) {
-    console.error('Error in admin/questions/parse POST:', error);
+    console.error('[PARSE_ROUTE] ❌ Error in admin/questions/parse POST:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

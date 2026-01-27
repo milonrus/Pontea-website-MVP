@@ -12,25 +12,26 @@
     "test:e2e:install": "playwright install"
   },
   "dependencies": {
-    "react": "^19.2.3",
-    "framer-motion": "^12.26.2",
-    "lucide-react": "^0.562.0",
-    "react-dom": "^19.2.3",
-    "next": "^15.2.0",
     "@supabase/supabase-js": "^2.49.1",
-    "katex": "0.16.9",
-    "papaparse": "5.4.1",
     "clsx": "2.1.0",
+    "framer-motion": "^12.26.2",
+    "katex": "0.16.9",
+    "lucide-react": "^0.562.0",
+    "next": "^15.2.0",
+    "openai": "^6.16.0",
+    "papaparse": "5.4.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "tailwind-merge": "2.2.1"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.21",
+    "@playwright/test": "^1.49.0",
     "@types/node": "^22.14.0",
-    "typescript": "~5.8.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "@playwright/test": "^1.49.0"
+    "typescript": "~5.8.2"
   }
 }

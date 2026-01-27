@@ -161,6 +161,8 @@ export const QuestionNavigator: React.FC<QuestionNavigatorProps> = ({
         const isInCurrentSection = currentSectionIndex === undefined || questionSection === currentSectionIndex;
         const isLocked = isInCompletedSection && !isCurrent;
         const isSectionStart = sectionBoundaries.includes(i);
+        // Unanswered in current section gets special styling
+        const isUnansweredInCurrentSection = !isAnswered && isInCurrentSection && !isCurrent;
 
         return (
           <React.Fragment key={i}>
@@ -171,7 +173,7 @@ export const QuestionNavigator: React.FC<QuestionNavigatorProps> = ({
             <button
               onClick={() => !isLocked && onNavigate(i)}
               disabled={isLocked}
-              title={isLocked ? 'Section completed - cannot navigate back' : undefined}
+              title={isLocked ? 'Section completed - cannot navigate back' : isUnansweredInCurrentSection ? 'Unanswered question' : undefined}
               className={`
                 w-8 h-8 rounded-lg flex items-center justify-center
                 text-sm font-medium transition-all relative
@@ -181,9 +183,11 @@ export const QuestionNavigator: React.FC<QuestionNavigatorProps> = ({
                     ? 'bg-primary text-white ring-2 ring-primary ring-offset-2'
                     : isAnswered
                       ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                      : isInCurrentSection
-                        ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        : 'bg-gray-50 text-gray-400'
+                      : isUnansweredInCurrentSection
+                        ? 'bg-amber-50 text-amber-700 border-2 border-amber-300 hover:bg-amber-100'
+                        : isInCurrentSection
+                          ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-gray-50 text-gray-400'
                 }
               `}
             >

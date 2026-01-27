@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, getAuthUser } from '@/lib/supabase/server';
 import { getSubjects } from '@/lib/db';
-import { BulkParseRequest, BulkParseResponse, BulkParseResult, ParsedImageQuestion, SubjectModel, QuestionDifficulty } from '@/types';
+import {
+  BulkParseRequest,
+  ParsedImageQuestion,
+  SubjectModel,
+  QuestionDifficulty,
+  SSEStartEvent,
+  SSEProgressEvent,
+  SSECompleteEvent,
+  BulkParseResult
+} from '@/types';
 import { buildBatchParsingPrompt } from '@/data/prompts';
 
 const MAX_IMAGES = 50;
@@ -82,9 +91,6 @@ const normalizeParsedQuestion = (
     }
   }
 
-  // Strict validation: must have 4-5 options (no padding)
-  // If <4 or >5, the question will fail validation in ParsedQuestionEditor
-
   const validOptions = options.map(o => o.id);
   const correctAnswer = validOptions.includes(parsed.correctAnswer as any)
     ? parsed.correctAnswer!
@@ -114,7 +120,6 @@ const normalizeParsedQuestion = (
     isDifficultyAutoDetected: !!difficulty
   };
 };
-
 
 const buildJsonSchema = (subjects: SubjectModel[]) => {
   const subjectNames = subjects.map(s => s.name);
@@ -163,13 +168,20 @@ async function parseImageWithRetry(
   systemPrompt: string,
   jsonSchema: any,
   subjectMap: Map<string, string>,
+  signal: AbortSignal,
   retries = MAX_RETRIES
 ): Promise<{ success: boolean; question?: ParsedImageQuestion; error?: string }> {
-  console.log('[PARSE_IMAGE] 🔄 Starting to parse image, will retry up to', retries, 'times');
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
+      if (signal.aborted) {
+        throw new Error('Request aborted');
+      }
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_PER_IMAGE);
+
+      // Link the parent signal to the controller
+      const linkedSignal = AbortSignal.any([signal, controller.signal]);
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -177,9 +189,9 @@ async function parseImageWithRetry(
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        signal: controller.signal,
+        signal: linkedSignal,
         body: JSON.stringify({
-          model: 'gpt-5-mini',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
@@ -232,12 +244,10 @@ async function parseImageWithRetry(
       }
 
       const parsed: OpenAIParsedQuestion = JSON.parse(content);
-      console.log('[PARSE_IMAGE] ✅ Successfully parsed image on attempt', attempt);
       return { success: true, question: normalizeParsedQuestion(parsed, subjectMap) };
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        if (attempt < retries) continue;
-        return { success: false, error: 'Request timed out' };
+      if (error.name === 'AbortError' || error.message === 'Request aborted') {
+        return { success: false, error: 'Request cancelled' };
       }
 
       if (attempt < retries) {
@@ -250,24 +260,76 @@ async function parseImageWithRetry(
     }
   }
 
-  console.log('[PARSE_IMAGE] ❌ All', retries, 'attempts failed');
   return { success: false, error: 'Max retries exceeded' };
 }
 
-async function processWithConcurrency<T, R>(
-  items: T[],
-  processor: (item: T) => Promise<R>,
-  concurrency: number
-): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let currentIndex = 0;
+interface ImageItem {
+  id: string;
+  dataUrl: string;
+}
 
-  async function worker() {
+async function processWithConcurrencyAndProgress<T extends ImageItem>(
+  items: T[],
+  processor: (item: T, signal: AbortSignal) => Promise<BulkParseResult>,
+  concurrency: number,
+  onProgress: (event: SSEProgressEvent) => void,
+  signal: AbortSignal
+): Promise<BulkParseResult[]> {
+  const results: BulkParseResult[] = new Array(items.length);
+  let currentIndex = 0;
+  let completedCount = 0;
+  const activelyParsing = new Set<string>();
+
+  const worker = async () => {
     while (currentIndex < items.length) {
+      if (signal.aborted) break;
+
       const index = currentIndex++;
-      results[index] = await processor(items[index]);
+      const item = items[index];
+      const imageId = item.id;
+
+      // Send 'parsing' event when worker picks up the image
+      activelyParsing.add(imageId);
+      onProgress({
+        id: imageId,
+        status: 'parsing',
+        completed: completedCount,
+        total: items.length
+      });
+
+      try {
+        results[index] = await processor(item, signal);
+        const result = results[index];
+
+        // Send 'success' or 'error' event when complete
+        completedCount++;
+        activelyParsing.delete(imageId);
+        onProgress({
+          id: imageId,
+          status: result.success ? 'success' : 'error',
+          question: result.question,
+          error: result.error,
+          completed: completedCount,
+          total: items.length
+        });
+      } catch (error: any) {
+        completedCount++;
+        activelyParsing.delete(imageId);
+        results[index] = {
+          id: imageId,
+          success: false,
+          error: error.message || 'Processing failed'
+        };
+        onProgress({
+          id: imageId,
+          status: 'error',
+          error: error.message || 'Processing failed',
+          completed: completedCount,
+          total: items.length
+        });
+      }
     }
-  }
+  };
 
   const workers = Array(Math.min(concurrency, items.length))
     .fill(null)
@@ -278,17 +340,14 @@ async function processWithConcurrency<T, R>(
 }
 
 export async function POST(request: NextRequest) {
-  console.log('[BATCH_PARSE] 🟢 POST /api/admin/questions/parse-batch called');
   try {
-    console.log('[BATCH_PARSE] Step 1: Authenticating user');
+    // Authenticate user
     const user = await getAuthUser(request);
     if (!user) {
-      console.log('[BATCH_PARSE] ❌ Authentication failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.log('[BATCH_PARSE] ✅ User authenticated:', user.id);
 
-    console.log('[BATCH_PARSE] Step 2: Checking admin role');
+    // Check admin role
     const supabase = createServerClient();
     const { data: profile } = await supabase
       .from('users')
@@ -297,21 +356,17 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (profile?.role !== 'admin') {
-      console.log('[BATCH_PARSE] ❌ User is not admin');
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-    console.log('[BATCH_PARSE] ✅ Admin role confirmed');
 
-    console.log('[BATCH_PARSE] Step 3: Parsing request body');
+    // Parse request body
     const body: BulkParseRequest = await request.json();
 
     if (!body.images || !Array.isArray(body.images)) {
-      console.log('[BATCH_PARSE] ❌ Missing images array');
       return NextResponse.json({ error: 'images array is required' }, { status: 400 });
     }
 
     if (body.images.length > MAX_IMAGES) {
-      console.log(`[BATCH_PARSE] ❌ Too many images: ${body.images.length}`);
       return NextResponse.json(
         { error: `Maximum ${MAX_IMAGES} images allowed per batch` },
         { status: 400 }
@@ -319,85 +374,122 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.images.length === 0) {
-      console.log('[BATCH_PARSE] ❌ No images provided');
       return NextResponse.json({ error: 'At least one image is required' }, { status: 400 });
     }
 
-    console.log('[BATCH_PARSE] ✅ Got', body.images.length, 'images to parse');
-
-    // Validate each image
+    // Validate images
     for (const img of body.images) {
       if (!img.id || !img.dataUrl) {
-        console.log('[BATCH_PARSE] ❌ Image missing id or dataUrl');
         return NextResponse.json(
           { error: 'Each image must have id and dataUrl' },
           { status: 400 }
         );
       }
       if (!img.dataUrl.startsWith('data:image/')) {
-        console.log('[BATCH_PARSE] ❌ Invalid image format for id', img.id);
         return NextResponse.json(
           { error: `Invalid image format for id ${img.id}` },
           { status: 400 }
         );
       }
     }
-    console.log('[BATCH_PARSE] ✅ All images valid');
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      console.log('[BATCH_PARSE] ❌ OpenAI API key not configured');
       return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
     }
 
-    console.log('[BATCH_PARSE] Step 4: Fetching subjects from database');
-    // Fetch subjects from database
+    // Fetch subjects
     const subjects = await getSubjects();
     if (subjects.length === 0) {
-      console.log('[BATCH_PARSE] ❌ No subjects found in database');
       return NextResponse.json(
         { error: 'No subjects found. Please add subjects first.' },
         { status: 500 }
       );
     }
-    console.log('[BATCH_PARSE] ✅ Found', subjects.length, 'subjects:', subjects.map(s => s.name).join(', '));
 
     const subjectList = subjects.map(s => s.name).join(', ');
     const subjectMap = new Map(subjects.map(s => [s.name.toLowerCase(), s.id]));
-    console.log('[BATCH_PARSE] Building system prompt with subjects:', subjectList.substring(0, 50));
     const systemPrompt = buildBatchParsingPrompt(subjectList);
-    console.log('[BATCH_PARSE] System prompt loaded, length:', systemPrompt.length);
     const jsonSchema = buildJsonSchema(subjects);
 
-    console.log('[BATCH_PARSE] Step 5: Processing', body.images.length, 'images with concurrency limit', CONCURRENCY_LIMIT);
-    const results = await processWithConcurrency(
-      body.images,
-      async (img): Promise<BulkParseResult> => {
-        const result = await parseImageWithRetry(
-          img.dataUrl,
-          apiKey,
-          systemPrompt,
-          jsonSchema,
-          subjectMap
-        );
-        return {
-          id: img.id,
-          success: result.success,
-          question: result.question,
-          error: result.error
-        };
-      },
-      CONCURRENCY_LIMIT
-    );
+    const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    const successCount = results.filter(r => r.success).length;
-    const failureCount = results.length - successCount;
-    console.log('[BATCH_PARSE] ✅ Processing complete: ', successCount, 'success,', failureCount, 'failed');
+    // Create SSE stream
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
 
-    const response: BulkParseResponse = { results };
-    return NextResponse.json(response);
+        try {
+          // Send start event
+          const startEvent: SSEStartEvent = {
+            sessionId,
+            totalImages: body.images.length,
+            concurrency: CONCURRENCY_LIMIT
+          };
+          controller.enqueue(
+            encoder.encode(`event: start\ndata: ${JSON.stringify(startEvent)}\n\n`)
+          );
+
+          // Process images with progress events
+          const results = await processWithConcurrencyAndProgress(
+            body.images,
+            async (img, signal): Promise<BulkParseResult> => {
+              const result = await parseImageWithRetry(
+                img.dataUrl,
+                apiKey,
+                systemPrompt,
+                jsonSchema,
+                subjectMap,
+                signal
+              );
+              return {
+                id: img.id,
+                success: result.success,
+                question: result.question,
+                error: result.error
+              };
+            },
+            CONCURRENCY_LIMIT,
+            (progressEvent) => {
+              controller.enqueue(
+                encoder.encode(`event: progress\ndata: ${JSON.stringify(progressEvent)}\n\n`)
+              );
+            },
+            request.signal
+          );
+
+          // Send complete event
+          const successCount = results.filter(r => r.success).length;
+          const errorCount = results.length - successCount;
+          const completeEvent: SSECompleteEvent = {
+            successCount,
+            errorCount,
+            results
+          };
+          controller.enqueue(
+            encoder.encode(`event: complete\ndata: ${JSON.stringify(completeEvent)}\n\n`)
+          );
+
+          controller.close();
+        } catch (error: any) {
+          const errorMessage = error.message || 'Processing failed';
+          controller.enqueue(
+            encoder.encode(`event: error\ndata: ${JSON.stringify({ message: errorMessage })}\n\n`)
+          );
+          controller.close();
+        }
+      }
+    });
+
+    return new NextResponse(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+      }
+    });
   } catch (error) {
-    console.error('[BATCH_PARSE] ❌ Error in admin/questions/parse-batch POST:', error);
+    console.error('[STREAM_PARSE] Error in admin/questions/parse-batch/stream POST:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

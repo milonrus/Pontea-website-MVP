@@ -58,7 +58,7 @@ interface UseTestSessionReturn {
   sectionTimeInfo: TimeInfo | null;
 
   // Actions
-  selectAnswer: (questionId: string, answer: OptionId) => Promise<void>;
+  selectAnswer: (questionId: string, answer: OptionId | null) => Promise<void>;
   goToQuestion: (index: number) => void;
   goToNextQuestion: () => void;
   goToPreviousQuestion: () => void;
@@ -72,6 +72,7 @@ interface UseTestSessionReturn {
   isLastQuestionInSection: boolean;
   currentSectionConfig: SectionConfig | null;
   sectionBoundaries: number[];
+  getUnansweredQuestionsInSection: (sectionIndex: number) => number[];
 }
 
 const SYNC_INTERVAL_MS = 30000; // 30 seconds
@@ -423,7 +424,7 @@ export function useTestSession({
   }, [syncWithServer]);
 
   // Actions
-  const selectAnswer = async (questionId: string, selectedAnswer: OptionId) => {
+  const selectAnswer = async (questionId: string, selectedAnswer: OptionId | null) => {
     try {
       const token = await getAuthToken();
       const startTime = answers.get(questionId)?.timeSpent || 0;
@@ -615,6 +616,20 @@ export function useTestSession({
     : false;
   const sectionBoundaries = sections.map(s => s.questionStartIndex);
 
+  // Get unanswered question indices in a given section (for warning modal)
+  const getUnansweredQuestionsInSection = useCallback((sectionIndex: number): number[] => {
+    const section = sections.find(s => s.index === sectionIndex);
+    if (!section) return [];
+
+    const unanswered: number[] = [];
+    for (let i = section.questionStartIndex; i <= section.questionEndIndex; i++) {
+      if (!answers.has(questions[i]?.id)) {
+        unanswered.push(i); // 0-based index
+      }
+    }
+    return unanswered;
+  }, [sections, answers, questions]);
+
   return {
     attempt,
     questions,
@@ -638,6 +653,7 @@ export function useTestSession({
     isLastQuestion,
     isLastQuestionInSection,
     currentSectionConfig,
-    sectionBoundaries
+    sectionBoundaries,
+    getUnansweredQuestionsInSection
   };
 }

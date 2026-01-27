@@ -11,6 +11,7 @@ import { QuestionDisplay } from '@/components/test/QuestionDisplay';
 import { AnswerOptions } from '@/components/test/AnswerOptions';
 import Button from '@/components/shared/Button';
 import ReportQuestionModal from '@/components/student/ReportQuestionModal';
+import SectionCompletionWarning from '@/components/test/SectionCompletionWarning';
 import { OptionId } from '@/types';
 import { Loader2, AlertTriangle, X, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +36,10 @@ const TimedTestPage: React.FC = () => {
 
   // Report modal
   const [showReportModal, setShowReportModal] = useState(false);
+
+  // Section completion warning modal
+  const [showSectionWarning, setShowSectionWarning] = useState(false);
+  const [unansweredInSection, setUnansweredInSection] = useState<number[]>([]);
 
   // Loading answer submission
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
@@ -62,7 +67,8 @@ const TimedTestPage: React.FC = () => {
     progress,
     isLastQuestion,
     isLastQuestionInSection,
-    sectionBoundaries
+    sectionBoundaries,
+    getUnansweredQuestionsInSection
   } = useTestSession({
     attemptId,
     userId: currentUser?.id || '',
@@ -89,14 +95,19 @@ const TimedTestPage: React.FC = () => {
     }
   }, [currentQuestionIndex, currentQuestion, answers]);
 
-  // Handle answer selection
-  const handleSelectAnswer = (optionId: OptionId) => {
+  // Handle answer selection (or deselection if optionId is null)
+  const handleSelectAnswer = (optionId: OptionId | null) => {
     setSelectedAnswer(optionId);
   };
 
   // Handle answer submission (saves to server, no immediate feedback)
+  // Can be null to unselect/clear an answer
   const handleSubmitAnswer = async () => {
-    if (!currentQuestion || !selectedAnswer) return;
+    if (!currentQuestion) return;
+
+    // Only submit if the answer has changed from what's saved
+    const existingAnswer = answers.get(currentQuestion.id);
+    if (existingAnswer?.selectedAnswer === selectedAnswer) return;
 
     setSubmittingAnswer(true);
     try {
@@ -108,12 +119,9 @@ const TimedTestPage: React.FC = () => {
 
   // Handle next question
   const handleNext = async () => {
-    // Submit current answer first if not already saved
-    if (currentQuestion && selectedAnswer) {
-      const existingAnswer = answers.get(currentQuestion.id);
-      if (!existingAnswer || existingAnswer.selectedAnswer !== selectedAnswer) {
-        await handleSubmitAnswer();
-      }
+    // Submit current answer state first if it has changed (including deselections)
+    if (currentQuestion) {
+      await handleSubmitAnswer();
     }
     goToNextQuestion();
   };
@@ -123,26 +131,28 @@ const TimedTestPage: React.FC = () => {
     goToPreviousQuestion();
   };
 
-  // Handle section advance
+  // Handle section advance (with warning for unanswered questions)
   const handleAdvanceSection = async () => {
-    // Submit current answer first if not already saved
-    if (currentQuestion && selectedAnswer) {
-      const existingAnswer = answers.get(currentQuestion.id);
-      if (!existingAnswer || existingAnswer.selectedAnswer !== selectedAnswer) {
-        await handleSubmitAnswer();
-      }
+    // Submit current answer state first if it has changed (including deselections)
+    if (currentQuestion) {
+      await handleSubmitAnswer();
     }
-    await advanceSection();
+
+    // Check for unanswered questions in current section
+    const unanswered = getUnansweredQuestionsInSection(currentSectionIndex);
+    if (unanswered.length > 0) {
+      setUnansweredInSection(unanswered.map(idx => idx + 1)); // Convert to 1-based
+      setShowSectionWarning(true);
+    } else {
+      await advanceSection();
+    }
   };
 
   // Handle test completion
   const handleFinish = async () => {
-    // Submit current answer first if not already saved
-    if (currentQuestion && selectedAnswer) {
-      const existingAnswer = answers.get(currentQuestion.id);
-      if (!existingAnswer || existingAnswer.selectedAnswer !== selectedAnswer) {
-        await handleSubmitAnswer();
-      }
+    // Submit current answer state first if it has changed (including deselections)
+    if (currentQuestion) {
+      await handleSubmitAnswer();
     }
     await completeTest();
   };
@@ -387,6 +397,17 @@ const TimedTestPage: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Section completion warning modal */}
+      <SectionCompletionWarning
+        isOpen={showSectionWarning}
+        onClose={() => setShowSectionWarning(false)}
+        sectionName={sections.find(s => s.index === currentSectionIndex)?.name || `Section ${currentSectionIndex + 1}`}
+        unansweredQuestions={unansweredInSection}
+        onContinue={async () => {
+          await advanceSection();
+        }}
+      />
 
       {/* Report question modal */}
       <ReportQuestionModal
