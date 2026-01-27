@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedSelectedAnswer = typeof selectedAnswer === 'string' && selectedAnswer.trim()
-      ? selectedAnswer.trim().toUpperCase()
+      ? selectedAnswer.trim().toLowerCase()
       : null;
 
     // Get the question to check the answer
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     const normalizedCorrectAnswer = typeof question?.correct_answer === 'string' && question.correct_answer.trim()
-      ? question.correct_answer.trim().toUpperCase()
+      ? question.correct_answer.trim().toLowerCase()
       : null;
     const isCorrect = normalizedSelectedAnswer !== null
       && normalizedCorrectAnswer !== null

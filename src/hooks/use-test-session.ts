@@ -58,7 +58,7 @@ interface UseTestSessionReturn {
   sectionTimeInfo: TimeInfo | null;
 
   // Actions
-  selectAnswer: (questionId: string, answer: OptionId | null) => Promise<void>;
+  selectAnswer: (questionId: string, answer: OptionId | null) => Promise<boolean>;
   goToQuestion: (index: number) => void;
   goToNextQuestion: () => void;
   goToPreviousQuestion: () => void;
@@ -428,7 +428,7 @@ export function useTestSession({
   }, [syncWithServer]);
 
   // Actions
-  const selectAnswer = async (questionId: string, selectedAnswer: OptionId | null) => {
+  const selectAnswer = async (questionId: string, selectedAnswer: OptionId | null): Promise<boolean> => {
     const previousAnswer = answers.get(questionId);
     try {
       const token = await getAuthToken();
@@ -485,6 +485,7 @@ export function useTestSession({
           });
           return newMap;
         });
+        return true;
       } else if (response.status === 400 && data.error?.includes('section')) {
         // Section is locked, show error
         setError(data.error);
@@ -497,6 +498,7 @@ export function useTestSession({
           }
           return newMap;
         });
+        return false;
       } else if (!response.ok) {
         setAnswers(prev => {
           const newMap = new Map(prev);
@@ -507,6 +509,7 @@ export function useTestSession({
           }
           return newMap;
         });
+        return false;
       }
     } catch (err) {
       console.error('Answer submission error:', err);
@@ -519,7 +522,9 @@ export function useTestSession({
         }
         return newMap;
       });
+      return false;
     }
+    return false;
   };
 
   const updatePosition = useCallback(async (questionIndex: number) => {

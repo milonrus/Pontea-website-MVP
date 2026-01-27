@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedSelectedAnswer = typeof selectedAnswer === 'string' && selectedAnswer.trim()
-      ? selectedAnswer.trim().toUpperCase()
+      ? selectedAnswer.trim().toLowerCase()
       : null;
 
     // Get the question to check the answer
@@ -46,13 +46,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     const normalizedCorrectAnswer = typeof question?.correct_answer === 'string' && question.correct_answer.trim()
-      ? question.correct_answer.trim().toUpperCase()
+      ? question.correct_answer.trim().toLowerCase()
       : null;
     const isCorrect = normalizedSelectedAnswer !== null
       && normalizedCorrectAnswer !== null
       && normalizedCorrectAnswer === normalizedSelectedAnswer;
 
     // Save the answer
+    const timeSpentValue = Number.isFinite(Number(timeSpent)) ? Math.round(Number(timeSpent)) : 0;
     const { error: answerError } = await supabase
       .from('practice_answers')
       .upsert({
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
         question_id: questionId,
         selected_answer: normalizedSelectedAnswer,
         is_correct: isCorrect,
-        time_spent: Number.isFinite(Number(timeSpent)) ? Math.round(Number(timeSpent)) : 0,
+        time_spent: timeSpentValue,
         answered_at: serverTime
       }, {
         onConflict: 'session_id,question_id'

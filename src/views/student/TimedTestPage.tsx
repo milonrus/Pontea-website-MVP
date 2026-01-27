@@ -43,6 +43,8 @@ const TimedTestPage: React.FC = () => {
 
   // Loading answer submission
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const saveRequestIdRef = useRef(0);
 
   // Test session hook
   const {
@@ -95,15 +97,43 @@ const TimedTestPage: React.FC = () => {
       const nextAnswer = existingAnswer?.selectedAnswer ?? null;
       setSelectedAnswer(nextAnswer);
       selectedAnswerRef.current = nextAnswer;
+      setSaveStatus('idle');
     }
-  }, [currentQuestionIndex, currentQuestion, answers]);
+  }, [currentQuestion?.id]);
+
+  // Keep UI selection in sync with saved answers without resetting save status
+  useEffect(() => {
+    if (!currentQuestion) return;
+    const savedAnswer = answers.get(currentQuestion.id)?.selectedAnswer ?? null;
+    if (savedAnswer !== selectedAnswerRef.current) {
+      setSelectedAnswer(savedAnswer);
+      selectedAnswerRef.current = savedAnswer;
+    }
+  }, [answers, currentQuestion]);
+
+  const showSavedStatus = () => {
+    setSaveStatus('saved');
+  };
+
+  const persistAnswer = async (questionId: string, optionId: OptionId | null) => {
+    const requestId = ++saveRequestIdRef.current;
+    setSaveStatus('saving');
+    const ok = await selectAnswer(questionId, optionId);
+    if (saveRequestIdRef.current !== requestId) return ok;
+    if (ok) {
+      showSavedStatus();
+    } else {
+      setSaveStatus('error');
+    }
+    return ok;
+  };
 
   // Handle answer selection (or deselection if optionId is null)
-  const handleSelectAnswer = (optionId: OptionId | null) => {
+  const handleSelectAnswer = async (optionId: OptionId | null) => {
     setSelectedAnswer(optionId);
     selectedAnswerRef.current = optionId;
     if (currentQuestion) {
-      void selectAnswer(currentQuestion.id, optionId);
+      void persistAnswer(currentQuestion.id, optionId);
     }
   };
 
@@ -119,7 +149,7 @@ const TimedTestPage: React.FC = () => {
 
     setSubmittingAnswer(true);
     try {
-      await selectAnswer(currentQuestion.id, pendingAnswer);
+      await persistAnswer(currentQuestion.id, pendingAnswer);
     } finally {
       setSubmittingAnswer(false);
     }
@@ -177,10 +207,9 @@ const TimedTestPage: React.FC = () => {
   }, [answers, questions]);
 
   // Check if current question has been answered
-  const isAnswerSaved = currentQuestion
-    ? answers.get(currentQuestion.id)?.selectedAnswer !== null
-      && answers.get(currentQuestion.id)?.selectedAnswer !== undefined
-    : false;
+  const isSavingAnswer = saveStatus === 'saving' || submittingAnswer;
+  const isAnswerSaved = saveStatus === 'saved';
+  const isSaveError = saveStatus === 'error';
 
   // Tab blocking overlay
   if (isBlocked && otherTabActive) {
@@ -375,10 +404,18 @@ const TimedTestPage: React.FC = () => {
             />
 
             {/* Answer status indicator */}
-            {isAnswerSaved && (
-              <div className="mt-4 text-sm text-green-600 flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                Answer saved
+            {(isSavingAnswer || isAnswerSaved || isSaveError) && (
+              <div
+                className={`mt-4 text-sm flex items-center gap-2 ${
+                  isSaveError ? 'text-red-600' : isSavingAnswer ? 'text-amber-600' : 'text-green-600'
+                }`}
+              >
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    isSaveError ? 'bg-red-500' : isSavingAnswer ? 'bg-amber-500' : 'bg-green-500'
+                  }`}
+                />
+                {isSaveError ? 'Failed to save' : isSavingAnswer ? 'Saving answer...' : 'Answer saved'}
               </div>
             )}
           </div>
