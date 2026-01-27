@@ -1,5 +1,6 @@
 import Papa from 'papaparse';
 import { QuestionModel, QuestionDifficulty, OptionId, ParsedQuestion } from '@/types';
+import { normalizeLearnWorldsHeader, normalizePonteaHeader } from '@/utils/csvHeaders';
 
 interface CSVRow {
   subjectId: string;
@@ -35,6 +36,7 @@ export const parseQuestionsCSV = (file: File): Promise<ParsedQuestion[]> => {
     Papa.parse<CSVRow>(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: normalizePonteaHeader,
       complete: (results) => {
         const questions: ParsedQuestion[] = results.data.map((row, index) => {
           const errors: string[] = [];
@@ -115,6 +117,7 @@ export const parseLearnWorldsCSV = async (
     Papa.parse<LearnWorldsCSVRow>(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: normalizeLearnWorldsHeader,
       complete: async (results) => {
         const questions: ParsedQuestion[] = [];
 

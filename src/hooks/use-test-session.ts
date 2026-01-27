@@ -177,10 +177,14 @@ export function useTestSession({
 
         // Update indices if server reports different position
         if (data.currentSectionIndex !== undefined) {
-          setCurrentSectionIndex(data.currentSectionIndex);
+          setCurrentSectionIndex(prev =>
+            data.currentSectionIndex > prev ? data.currentSectionIndex : prev
+          );
         }
         if (data.currentQuestionIndex !== undefined) {
-          setCurrentQuestionIndex(data.currentQuestionIndex);
+          setCurrentQuestionIndex(prev =>
+            data.currentQuestionIndex > prev ? data.currentQuestionIndex : prev
+          );
         }
 
         // Update completed sections
@@ -425,10 +429,29 @@ export function useTestSession({
 
   // Actions
   const selectAnswer = async (questionId: string, selectedAnswer: OptionId | null) => {
+    const previousAnswer = answers.get(questionId);
     try {
       const token = await getAuthToken();
-      const startTime = answers.get(questionId)?.timeSpent || 0;
-      const questionSection = getQuestionSection(currentQuestionIndex);
+      const startTime = previousAnswer?.timeSpent || 0;
+      const questionIndex = questions.findIndex(q => q.id === questionId);
+      const questionSection = previousAnswer?.sectionIndex
+        ?? (questionIndex !== -1 ? getQuestionSection(questionIndex) : getQuestionSection(currentQuestionIndex));
+
+      // Optimistically update local state so navigation doesn't lose selection
+      setAnswers(prev => {
+        const newMap = new Map(prev);
+        newMap.set(questionId, {
+          id: previousAnswer?.id || '',
+          attemptId,
+          questionId,
+          selectedAnswer,
+          isCorrect: previousAnswer?.isCorrect,
+          timeSpent: startTime,
+          answeredAt: new Date().toISOString(),
+          sectionIndex: questionSection
+        });
+        return newMap;
+      });
 
       const response = await fetch('/api/test/answer', {
         method: 'POST',
@@ -440,7 +463,7 @@ export function useTestSession({
           attemptId,
           questionId,
           selectedAnswer,
-          timeSpent: startTime + (timeInfo?.elapsedMs || 0) / 1000,
+          timeSpent: Math.round(startTime + (timeInfo?.elapsedMs || 0) / 1000),
           questionSectionIndex: questionSection
         })
       });
@@ -451,7 +474,7 @@ export function useTestSession({
         setAnswers(prev => {
           const newMap = new Map(prev);
           newMap.set(questionId, {
-            id: '',
+            id: previousAnswer?.id || '',
             attemptId,
             questionId,
             selectedAnswer,
@@ -465,11 +488,59 @@ export function useTestSession({
       } else if (response.status === 400 && data.error?.includes('section')) {
         // Section is locked, show error
         setError(data.error);
+        setAnswers(prev => {
+          const newMap = new Map(prev);
+          if (previousAnswer) {
+            newMap.set(questionId, previousAnswer);
+          } else {
+            newMap.delete(questionId);
+          }
+          return newMap;
+        });
+      } else if (!response.ok) {
+        setAnswers(prev => {
+          const newMap = new Map(prev);
+          if (previousAnswer) {
+            newMap.set(questionId, previousAnswer);
+          } else {
+            newMap.delete(questionId);
+          }
+          return newMap;
+        });
       }
     } catch (err) {
       console.error('Answer submission error:', err);
+      setAnswers(prev => {
+        const newMap = new Map(prev);
+        if (previousAnswer) {
+          newMap.set(questionId, previousAnswer);
+        } else {
+          newMap.delete(questionId);
+        }
+        return newMap;
+      });
     }
   };
+
+  const updatePosition = useCallback(async (questionIndex: number) => {
+    try {
+      const token = await getAuthToken();
+      await fetch('/api/test/position', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          attemptId,
+          currentQuestionIndex: questionIndex,
+          currentSectionIndex
+        })
+      });
+    } catch (err) {
+      console.error('Position update error:', err);
+    }
+  }, [attemptId, currentSectionIndex]);
 
   // Helper to get which section a question belongs to
   const getQuestionSection = useCallback((questionIndex: number): number => {
@@ -497,6 +568,7 @@ export function useTestSession({
   const goToQuestion = (index: number) => {
     if (index >= 0 && index < questions.length && canNavigateToQuestion(index)) {
       setCurrentQuestionIndex(index);
+      void updatePosition(index);
     }
   };
 
@@ -504,6 +576,7 @@ export function useTestSession({
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex < questions.length && canNavigateToQuestion(nextIndex)) {
       setCurrentQuestionIndex(nextIndex);
+      void updatePosition(nextIndex);
     }
   };
 
@@ -511,6 +584,7 @@ export function useTestSession({
     const prevIndex = currentQuestionIndex - 1;
     if (prevIndex >= 0 && canNavigateToQuestion(prevIndex)) {
       setCurrentQuestionIndex(prevIndex);
+      void updatePosition(prevIndex);
     }
   };
 
@@ -600,7 +674,9 @@ export function useTestSession({
 
   // Computed values
   const currentQuestion = questions[currentQuestionIndex] || null;
-  const answeredCount = answers.size;
+  const answeredCount = Array.from(answers.values()).filter(
+    answer => answer.selectedAnswer !== null && answer.selectedAnswer !== undefined
+  ).length;
   const totalQuestions = questions.length;
   const progress = {
     answered: answeredCount,
@@ -623,7 +699,8 @@ export function useTestSession({
 
     const unanswered: number[] = [];
     for (let i = section.questionStartIndex; i <= section.questionEndIndex; i++) {
-      if (!answers.has(questions[i]?.id)) {
+      const answer = answers.get(questions[i]?.id);
+      if (!answer || answer.selectedAnswer === null || answer.selectedAnswer === undefined) {
         unanswered.push(i); // 0-based index
       }
     }

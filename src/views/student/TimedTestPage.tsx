@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTestSession } from '@/hooks/use-test-session';
@@ -86,18 +86,25 @@ const TimedTestPage: React.FC = () => {
 
   // Track selected answer for current question (local state before submission)
   const [selectedAnswer, setSelectedAnswer] = useState<OptionId | null>(null);
+  const selectedAnswerRef = useRef<OptionId | null>(null);
 
   // Reset selected answer when question changes
   useEffect(() => {
     if (currentQuestion) {
       const existingAnswer = answers.get(currentQuestion.id);
-      setSelectedAnswer(existingAnswer?.selectedAnswer || null);
+      const nextAnswer = existingAnswer?.selectedAnswer ?? null;
+      setSelectedAnswer(nextAnswer);
+      selectedAnswerRef.current = nextAnswer;
     }
   }, [currentQuestionIndex, currentQuestion, answers]);
 
   // Handle answer selection (or deselection if optionId is null)
   const handleSelectAnswer = (optionId: OptionId | null) => {
     setSelectedAnswer(optionId);
+    selectedAnswerRef.current = optionId;
+    if (currentQuestion) {
+      void selectAnswer(currentQuestion.id, optionId);
+    }
   };
 
   // Handle answer submission (saves to server, no immediate feedback)
@@ -107,11 +114,12 @@ const TimedTestPage: React.FC = () => {
 
     // Only submit if the answer has changed from what's saved
     const existingAnswer = answers.get(currentQuestion.id);
-    if (existingAnswer?.selectedAnswer === selectedAnswer) return;
+    const pendingAnswer = selectedAnswerRef.current;
+    if (existingAnswer?.selectedAnswer === pendingAnswer) return;
 
     setSubmittingAnswer(true);
     try {
-      await selectAnswer(currentQuestion.id, selectedAnswer);
+      await selectAnswer(currentQuestion.id, pendingAnswer);
     } finally {
       setSubmittingAnswer(false);
     }
@@ -160,7 +168,8 @@ const TimedTestPage: React.FC = () => {
   // Get answered question indices for navigator
   const answeredQuestions = useMemo(() => {
     const indices = new Set<number>();
-    answers.forEach((_, questionId) => {
+    answers.forEach((answer, questionId) => {
+      if (answer.selectedAnswer === null || answer.selectedAnswer === undefined) return;
       const idx = questions.findIndex(q => q.id === questionId);
       if (idx !== -1) indices.add(idx);
     });
@@ -168,7 +177,10 @@ const TimedTestPage: React.FC = () => {
   }, [answers, questions]);
 
   // Check if current question has been answered
-  const isAnswerSaved = currentQuestion ? answers.has(currentQuestion.id) : false;
+  const isAnswerSaved = currentQuestion
+    ? answers.get(currentQuestion.id)?.selectedAnswer !== null
+      && answers.get(currentQuestion.id)?.selectedAnswer !== undefined
+    : false;
 
   // Tab blocking overlay
   if (isBlocked && otherTabActive) {

@@ -57,6 +57,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const normalizedSelectedAnswer = typeof selectedAnswer === 'string' && selectedAnswer.trim()
+      ? selectedAnswer.trim().toUpperCase()
+      : null;
+
     // Get the question to check the answer
     const { data: question } = await supabase
       .from('questions')
@@ -64,7 +68,17 @@ export async function POST(request: NextRequest) {
       .eq('id', questionId)
       .single();
 
-    const isCorrect = question?.correct_answer === selectedAnswer;
+    const normalizedCorrectAnswer = typeof question?.correct_answer === 'string' && question.correct_answer.trim()
+      ? question.correct_answer.trim().toUpperCase()
+      : null;
+    const isCorrect = normalizedSelectedAnswer !== null
+      && normalizedCorrectAnswer !== null
+      && normalizedCorrectAnswer === normalizedSelectedAnswer;
+
+    const parsedTimeSpent = typeof timeSpent === 'number' ? timeSpent : Number(timeSpent);
+    const safeTimeSpent = Number.isFinite(parsedTimeSpent)
+      ? Math.round(parsedTimeSpent)
+      : 0;
 
     // Save or update the answer
     const { data: answer, error: answerError } = await supabase
@@ -72,9 +86,9 @@ export async function POST(request: NextRequest) {
       .upsert({
         attempt_id: attemptId,
         question_id: questionId,
-        selected_answer: selectedAnswer,
+        selected_answer: normalizedSelectedAnswer,
         is_correct: isCorrect,
-        time_spent: timeSpent || 0,
+        time_spent: safeTimeSpent,
         answered_at: serverTime
       }, {
         onConflict: 'attempt_id,question_id'

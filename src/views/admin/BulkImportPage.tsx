@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Papa from 'papaparse';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
 import Button from '@/components/shared/Button';
@@ -26,6 +27,17 @@ const BulkImportPage: React.FC = () => {
   const [subjects, setSubjects] = useState<SubjectModel[]>([]);
   const [topics, setTopics] = useState<TopicModel[]>([]);
 
+  const getCSVHeaders = (file: File): Promise<string[]> =>
+    new Promise((resolve, reject) => {
+      Papa.parse(file, {
+        header: true,
+        preview: 1,
+        skipEmptyLines: true,
+        complete: (results) => resolve(results.meta.fields ?? []),
+        error: (parseError) => reject(parseError)
+      });
+    });
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -47,10 +59,7 @@ const BulkImportPage: React.FC = () => {
     setError(null);
 
     try {
-      // Read first line to get headers
-      const text = await file.text();
-      const firstLine = text.split('\n')[0];
-      const headers = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      const headers = await getCSVHeaders(file);
 
       // Detect format
       const format = detectCSVFormat(headers);

@@ -34,6 +34,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session is not in progress' }, { status: 400 });
     }
 
+    const normalizedSelectedAnswer = typeof selectedAnswer === 'string' && selectedAnswer.trim()
+      ? selectedAnswer.trim().toUpperCase()
+      : null;
+
     // Get the question to check the answer
     const { data: question } = await supabase
       .from('questions')
@@ -41,7 +45,12 @@ export async function POST(request: NextRequest) {
       .eq('id', questionId)
       .single();
 
-    const isCorrect = question?.correct_answer === selectedAnswer;
+    const normalizedCorrectAnswer = typeof question?.correct_answer === 'string' && question.correct_answer.trim()
+      ? question.correct_answer.trim().toUpperCase()
+      : null;
+    const isCorrect = normalizedSelectedAnswer !== null
+      && normalizedCorrectAnswer !== null
+      && normalizedCorrectAnswer === normalizedSelectedAnswer;
 
     // Save the answer
     const { error: answerError } = await supabase
@@ -49,9 +58,9 @@ export async function POST(request: NextRequest) {
       .upsert({
         session_id: sessionId,
         question_id: questionId,
-        selected_answer: selectedAnswer,
+        selected_answer: normalizedSelectedAnswer,
         is_correct: isCorrect,
-        time_spent: timeSpent || 0,
+        time_spent: Number.isFinite(Number(timeSpent)) ? Math.round(Number(timeSpent)) : 0,
         answered_at: serverTime
       }, {
         onConflict: 'session_id,question_id'

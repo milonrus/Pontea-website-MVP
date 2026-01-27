@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       attemptId: q.attempt_id,
       questionId: q.question_id,
       sectionIndex: q.section_index,
-      selectedAnswer: q.selected_answer,
+      selectedAnswer: typeof q.selected_answer === 'string' ? q.selected_answer.toLowerCase() : q.selected_answer,
       isCorrect: q.is_correct,
       timeSpent: q.time_spent || 0,
       answeredAt: q.answered_at

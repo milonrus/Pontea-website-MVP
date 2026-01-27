@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
           correctAnswer: question?.correct_answer || '',
           explanation: question?.explanation || '',
           explanationImageUrl: question?.explanation_image_url ?? null,
-          selectedAnswer: q.selected_answer ?? null,
+          selectedAnswer: typeof q.selected_answer === 'string' ? q.selected_answer.toLowerCase() : q.selected_answer ?? null,
           isCorrect: q.is_correct ?? null,
           timeSpent: q.time_spent || 0
         };
