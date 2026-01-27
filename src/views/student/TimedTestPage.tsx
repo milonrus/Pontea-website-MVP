@@ -367,24 +367,6 @@ const TimedTestPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Question navigator (collapsible on mobile) */}
-          <details className="mb-6 bg-white rounded-xl p-4 border border-gray-200">
-            <summary className="cursor-pointer text-sm font-medium text-gray-700">
-              Question Navigator
-            </summary>
-            <div className="mt-4">
-              <QuestionNavigator
-                totalQuestions={questions.length}
-                currentIndex={currentQuestionIndex}
-                answeredQuestions={answeredQuestions}
-                onNavigate={goToQuestion}
-                sectionBoundaries={sectionBoundaries}
-                currentSectionIndex={currentSectionIndex}
-                completedSections={completedSections}
-              />
-            </div>
-          </details>
-
           {/* Question display */}
           <QuestionDisplay
             question={currentQuestion}
@@ -423,27 +405,46 @@ const TimedTestPage: React.FC = () => {
       </main>
 
       {/* Bottom navigation */}
-      <div className="fixed bottom-0 w-full bg-white border-t border-gray-200 p-4 z-20">
+      <div className="fixed bottom-0 w-full bg-white border-t border-gray-200 p-3 z-20">
         <div className="max-w-3xl mx-auto">
-          <Navigation
-            currentIndex={currentQuestionIndex}
-            totalQuestions={questions.length}
-            canGoBack={currentQuestionIndex > 0 && !completedSections.includes(currentSectionIndex - 1)}
-            canGoForward={true}
-            isLastQuestion={isLastQuestion}
-            isSubmitted={true} // Always allow navigation in timed mode
-            selectedAnswer={selectedAnswer}
-            isLoading={submittingAnswer}
-            onPrevious={handlePrevious}
-            onNext={handleNext}
-            onSubmit={handleSubmitAnswer}
-            onFinish={handleFinish}
-            currentSectionIndex={currentSectionIndex}
-            totalSections={sections.length || 1}
-            isLastQuestionInSection={isLastQuestionInSection}
-            completedSections={completedSections}
-            onAdvanceSection={handleAdvanceSection}
-          />
+          <div className="flex items-center gap-4">
+            <div className="flex-none w-fit max-w-full bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 overflow-x-auto">
+              <QuestionNavigator
+                totalQuestions={questions.length}
+                currentIndex={currentQuestionIndex}
+                answeredQuestions={answeredQuestions}
+                onNavigate={goToQuestion}
+                sectionBoundaries={sectionBoundaries}
+                currentSectionIndex={currentSectionIndex}
+                completedSections={completedSections}
+                className="flex-nowrap items-center min-w-max"
+              />
+            </div>
+            <div className="shrink-0">
+              <Navigation
+                currentIndex={currentQuestionIndex}
+                totalQuestions={questions.length}
+                canGoBack={currentQuestionIndex > 0 && !completedSections.includes(currentSectionIndex - 1)}
+                canGoForward={true}
+                isLastQuestion={isLastQuestion}
+                isSubmitted={true} // Always allow navigation in timed mode
+                selectedAnswer={selectedAnswer}
+                isLoading={submittingAnswer}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+                onSubmit={handleSubmitAnswer}
+                onFinish={handleFinish}
+                buttonSize="sm"
+                showProgress={false}
+                alignRight={true}
+                currentSectionIndex={currentSectionIndex}
+                totalSections={sections.length || 1}
+                isLastQuestionInSection={isLastQuestionInSection}
+                completedSections={completedSections}
+                onAdvanceSection={handleAdvanceSection}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

@@ -116,6 +116,9 @@ export function useTestSession({
   const sectionTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
   const sectionExpiryCalledRef = useRef<Set<number>>(new Set());
+  const currentQuestionIdRef = useRef<string | null>(null);
+  const questionStartAtRef = useRef<number>(Date.now());
+  const questionBaseTimeRef = useRef<number>(0);
 
   // Refs for callbacks to avoid stale closures in effects
   const onSectionExpiryRef = useRef(onSectionExpiry);
@@ -332,6 +335,16 @@ export function useTestSession({
     };
   }, [attemptId]);
 
+  // Track per-question timing based on when the question becomes active
+  useEffect(() => {
+    const questionId = questions[currentQuestionIndex]?.id ?? null;
+    if (!questionId || questionId === currentQuestionIdRef.current) return;
+
+    currentQuestionIdRef.current = questionId;
+    questionBaseTimeRef.current = answers.get(questionId)?.timeSpent || 0;
+    questionStartAtRef.current = Date.now();
+  }, [currentQuestionIndex, questions]);
+
   // Overall timer update interval
   useEffect(() => {
     if (!timerState) return;
@@ -432,7 +445,11 @@ export function useTestSession({
     const previousAnswer = answers.get(questionId);
     try {
       const token = await getAuthToken();
-      const startTime = previousAnswer?.timeSpent || 0;
+      const baseTime = previousAnswer?.timeSpent || 0;
+      const elapsedSeconds = questionId === currentQuestionIdRef.current
+        ? Math.max(0, Math.round((Date.now() - questionStartAtRef.current) / 1000))
+        : 0;
+      const totalTimeSpent = baseTime + elapsedSeconds;
       const questionIndex = questions.findIndex(q => q.id === questionId);
       const questionSection = previousAnswer?.sectionIndex
         ?? (questionIndex !== -1 ? getQuestionSection(questionIndex) : getQuestionSection(currentQuestionIndex));
@@ -446,7 +463,7 @@ export function useTestSession({
           questionId,
           selectedAnswer,
           isCorrect: previousAnswer?.isCorrect,
-          timeSpent: startTime,
+          timeSpent: totalTimeSpent,
           answeredAt: new Date().toISOString(),
           sectionIndex: questionSection
         });
@@ -463,7 +480,7 @@ export function useTestSession({
           attemptId,
           questionId,
           selectedAnswer,
-          timeSpent: Math.round(startTime + (timeInfo?.elapsedMs || 0) / 1000),
+          timeSpent: totalTimeSpent,
           questionSectionIndex: questionSection
         })
       });
@@ -479,7 +496,7 @@ export function useTestSession({
             questionId,
             selectedAnswer,
             isCorrect: data.isCorrect,
-            timeSpent: startTime,
+            timeSpent: totalTimeSpent,
             answeredAt: new Date().toISOString(),
             sectionIndex: questionSection
           });

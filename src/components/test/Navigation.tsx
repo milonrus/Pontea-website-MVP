@@ -18,6 +18,9 @@ interface NavigationProps {
   onSubmit: () => void;
   onFinish: () => void;
   className?: string;
+  buttonSize?: 'sm' | 'md' | 'lg';
+  showProgress?: boolean;
+  alignRight?: boolean;
   // Section-aware props
   currentSectionIndex?: number;
   totalSections?: number;
@@ -40,6 +43,9 @@ export const Navigation: React.FC<NavigationProps> = ({
   onSubmit,
   onFinish,
   className = '',
+  buttonSize = 'md',
+  showProgress = true,
+  alignRight = false,
   currentSectionIndex,
   totalSections,
   isLastQuestionInSection = false,
@@ -48,73 +54,96 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const hasAnswer = selectedAnswer !== null && selectedAnswer !== undefined;
   const showSectionInfo = currentSectionIndex !== undefined && totalSections !== undefined;
+  const filledButtonClass = 'border-2 border-transparent';
+  const previousButton = canGoBack && currentIndex > 0 ? (
+    <Button
+      variant="outline"
+      onClick={onPrevious}
+      disabled={isLoading}
+      size={buttonSize}
+      className="whitespace-nowrap"
+    >
+      <ArrowLeft className="w-4 h-4 mr-2" />
+      Previous
+    </Button>
+  ) : null;
+  const primaryButton = !isSubmitted ? (
+    <Button
+      onClick={onSubmit}
+      disabled={!hasAnswer || isLoading}
+      isLoading={isLoading}
+      size={buttonSize}
+      className={`${filledButtonClass} whitespace-nowrap`}
+    >
+      Submit Answer
+    </Button>
+  ) : isLastQuestion ? (
+    <Button
+      onClick={onFinish}
+      className={`group ${filledButtonClass} whitespace-nowrap`}
+      disabled={isLoading}
+      size={buttonSize}
+    >
+      <CheckCircle className="w-4 h-4 mr-2" />
+      Finish Test
+    </Button>
+  ) : isLastQuestionInSection && onAdvanceSection ? (
+    <Button
+      onClick={onAdvanceSection}
+      className={`group ${filledButtonClass} whitespace-nowrap`}
+      disabled={isLoading}
+      size={buttonSize}
+    >
+      Next Section
+      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+    </Button>
+  ) : (
+    <Button
+      onClick={onNext}
+      className={`group ${filledButtonClass} whitespace-nowrap`}
+      disabled={!canGoForward || isLoading}
+      size={buttonSize}
+    >
+      Next Question
+      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+    </Button>
+  );
+
+  if (alignRight) {
+    return (
+      <div className={`flex items-center justify-end gap-3 ${className}`}>
+        {previousButton}
+        {primaryButton}
+      </div>
+    );
+  }
 
   return (
     <div className={`flex items-center justify-between ${className}`}>
       {/* Previous Button */}
       <div className="flex-1">
-        {canGoBack && currentIndex > 0 && (
-          <Button
-            variant="outline"
-            onClick={onPrevious}
-            disabled={isLoading}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Previous
-          </Button>
-        )}
+        {previousButton}
       </div>
 
       {/* Question Indicator */}
       <div className="flex-1 flex flex-col items-center">
-        <span className="text-sm text-gray-500 font-medium">
-          {currentIndex + 1} / {totalQuestions}
-        </span>
-        {showSectionInfo && (
-          <span className="text-xs text-gray-400">
-            Section {currentSectionIndex + 1} of {totalSections}
-          </span>
-        )}
+        {showProgress ? (
+          <>
+            <span className="text-sm text-gray-500 font-medium">
+              {currentIndex + 1} / {totalQuestions}
+            </span>
+            {showSectionInfo && (
+              <span className="text-xs text-gray-400">
+                Section {currentSectionIndex + 1} of {totalSections}
+              </span>
+            )}
+          </>
+        ) : null}
       </div>
 
       {/* Next/Submit/Finish Button */}
       <div className="flex-1 flex justify-end">
-        {!isSubmitted ? (
-          <Button
-            onClick={onSubmit}
-            disabled={!hasAnswer || isLoading}
-            isLoading={isLoading}
-          >
-            Submit Answer
-          </Button>
-        ) : isLastQuestion ? (
-          <Button
-            onClick={onFinish}
-            className="group"
-            disabled={isLoading}
-          >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Finish Test
-          </Button>
-        ) : isLastQuestionInSection && onAdvanceSection ? (
-          <Button
-            onClick={onAdvanceSection}
-            className="group"
-            disabled={isLoading}
-          >
-            Next Section
-            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
-        ) : (
-          <Button
-            onClick={onNext}
-            className="group"
-            disabled={!canGoForward || isLoading}
-          >
-            Next Question
-            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
-        )}
+        {primaryButton}
       </div>
     </div>
   );
@@ -152,7 +181,7 @@ export const QuestionNavigator: React.FC<QuestionNavigatorProps> = ({
   };
 
   return (
-    <div className={`flex flex-wrap gap-2 ${className}`}>
+    <div className={`flex flex-wrap gap-2 py-1 overflow-visible ${className}`}>
       {Array.from({ length: totalQuestions }, (_, i) => {
         const isAnswered = answeredQuestions.has(i);
         const isCurrent = currentIndex === i;
