@@ -97,7 +97,7 @@ const Header: React.FC = () => {
               </Button>
             </Link>
           ) : (
-            <Link href="/login">
+            <Link href="/auth/login">
               <span className="text-sm font-medium text-gray-600 hover:text-primary transition-colors cursor-pointer">
                 Login
               </span>
@@ -152,7 +152,7 @@ const Header: React.FC = () => {
                 <span className="text-xl font-display font-bold text-primary">Dashboard</span>
               </Link>
             ) : (
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
                 <span className="text-xl font-display font-bold text-primary">Login</span>
               </Link>
             )}
