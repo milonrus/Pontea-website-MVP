@@ -32,15 +32,30 @@ const AuthCallbackPage: React.FC = () => {
           }
           console.log('[Callback] Session established:', !!data.session);
         } else if (accessToken) {
-          // Implicit flow - session should already be set
-          console.log('[Callback] Using implicit flow');
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-          if (sessionError || !session) {
-            console.error('[Callback] Session error:', sessionError);
-            setError('Failed to establish session');
+          // Implicit flow - manually set session from hash params
+          console.log('[Callback] Using implicit flow - setting session from hash');
+
+          const refreshToken = hashParams.get('refresh_token');
+          if (!refreshToken) {
+            console.error('[Callback] No refresh token in hash');
+            setError('Invalid authentication response');
             return;
           }
-          console.log('[Callback] Session found:', !!session);
+
+          // Set the session using the tokens from the URL
+          console.log('[Callback] Setting session with tokens...');
+          const { data, error: setSessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+
+          if (setSessionError || !data.session) {
+            console.error('[Callback] Failed to set session:', setSessionError);
+            setError('Failed to establish session. Please try again.');
+            return;
+          }
+
+          console.log('[Callback] Session established successfully');
         } else {
           console.error('[Callback] No auth data in URL');
           setError('No authentication data found');
