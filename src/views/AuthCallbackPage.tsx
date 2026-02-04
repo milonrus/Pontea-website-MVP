@@ -9,35 +9,53 @@ const AuthCallbackPage: React.FC = () => {
   useEffect(() => {
     const finalizeSignIn = async () => {
       try {
+        console.log('[Callback] Starting auth finalization');
+        console.log('[Callback] Full URL:', window.location.href);
+
         // Check if there's a code in the URL (PKCE flow)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
         const code = queryParams.get('code');
+        const accessToken = hashParams.get('access_token');
+
+        console.log('[Callback] Code:', code);
+        console.log('[Callback] Access token present:', !!accessToken);
 
         if (code) {
           // PKCE flow - exchange code for session
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
+          console.log('[Callback] Using PKCE flow');
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) {
+            console.error('[Callback] Exchange error:', exchangeError);
             setError(exchangeError.message);
             return;
           }
-        } else if (hashParams.get('access_token')) {
-          // Implicit flow - session is already set by Supabase client
-          // Just verify the session exists
+          console.log('[Callback] Session established:', !!data.session);
+        } else if (accessToken) {
+          // Implicit flow - session should already be set
+          console.log('[Callback] Using implicit flow');
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           if (sessionError || !session) {
+            console.error('[Callback] Session error:', sessionError);
             setError('Failed to establish session');
             return;
           }
+          console.log('[Callback] Session found:', !!session);
         } else {
+          console.error('[Callback] No auth data in URL');
           setError('No authentication data found');
           return;
         }
 
+        // Wait a moment for the auth state to propagate
+        console.log('[Callback] Waiting for auth state...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         // Successfully authenticated, redirect to dashboard
+        console.log('[Callback] Redirecting to dashboard');
         router.replace('/dashboard');
       } catch (err: any) {
-        console.error('Auth callback error:', err);
+        console.error('[Callback] Auth callback error:', err);
         setError(err.message || 'Authentication failed');
       }
     };
