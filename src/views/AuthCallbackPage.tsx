@@ -57,9 +57,18 @@ const AuthCallbackPage: React.FC = () => {
 
           console.log('[Callback] Session established successfully');
         } else {
-          console.error('[Callback] No auth data in URL');
-          setError('No authentication data found');
-          return;
+          // No code or token in URL - check if session already exists
+          console.log('[Callback] No auth data in URL, checking existing session...');
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+          if (session) {
+            console.log('[Callback] Session already established by auto-detection');
+            // Session exists, proceed to redirect
+          } else {
+            console.error('[Callback] No session found');
+            setError('No authentication data found');
+            return;
+          }
         }
 
         // Wait a moment for the auth state to propagate
