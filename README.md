@@ -1,20 +1,42 @@
 # Pontea
 
-Pontea is a Next.js-based educational platform for students and admins. Students can take practice sessions and timed tests, while admins manage question content and bulk imports. The app is built with React 19, TypeScript, Tailwind CSS, and Supabase for auth and data.
+> **Note**: This is the **main branch** containing the MVP landing page. For the full educational platform, see the [develop branch](https://github.com/milonrus/Pontea-website-MVP/tree/develop).
 
-## Features
-- Student practice sessions and timed, proctored-style tests
-- Server-synced timers with drift detection and section locking
-- Admin question management with CSV and image-based imports
-- Supabase-backed auth and role-based access (admin vs student)
-- App Router routes for auth, dashboard, tests, and admin tools
+Pontea MVP is a minimal landing page built with Next.js 15, React 19, TypeScript, and Tailwind CSS. This branch contains only the public-facing marketing pages without authentication or database dependencies.
+
+## Branch Strategy
+
+This repository uses a **branch-based deployment approach**:
+
+- **`main` branch** (you are here) → Production landing page at `pontea.com`
+  - Landing page with hero, features, pricing
+  - Methodology page explaining the exam prep approach
+  - Consultation booking page for lead capture
+  - No authentication, no database, minimal dependencies
+
+- **`develop` branch** → Full platform at `pontea-dev.vercel.app`
+  - Complete educational platform with auth, tests, admin dashboard
+  - Student practice sessions and timed tests
+  - Question management and bulk imports
+  - Supabase backend for data and authentication
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment instructions.
+
+## Features (Main Branch)
+
+- Responsive landing page with hero section
+- Pricing tiers with feature comparison
+- Team showcase
+- FAQ section
+- Methodology page explaining exam preparation approach
+- Consultation booking form
 
 ## Tech Stack
+
 - Next.js 15 (App Router) + React 19
 - TypeScript
-- Tailwind CSS
-- Supabase (database, auth)
-- Playwright for end-to-end tests
+- Tailwind CSS (custom theme with Pontea branding)
+- No database or authentication on this branch
 
 ## Getting Started
 
@@ -23,21 +45,14 @@ Pontea is a Next.js-based educational platform for students and admins. Students
 npm install
 ```
 
-### 2) Configure environment
-Create a `.env.local` file in the repo root:
-```bash
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=... # optional, server-side admin tasks
-GEMINI_API_KEY=...            # optional, image parsing
-```
-
-### 3) Run the dev server
+### 2) Run the dev server
 ```bash
 npm run dev
 ```
 
 App will be available at `http://localhost:3000`.
+
+**Note**: This branch does not require environment variables for local development.
 
 ## Scripts
 ```bash
