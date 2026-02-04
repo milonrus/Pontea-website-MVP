@@ -1,17 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Button from './Button';
-import { useAuth } from '@/contexts/AuthContext';
 
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { currentUser, isAdmin } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,7 +71,7 @@ const Header: React.FC = () => {
                 {link.label}
               </Link>
             ) : (
-              <button 
+              <button
                 key={link.label}
                 onClick={() => scrollToSection(link.id!)}
                 className="text-sm font-medium text-gray-600 hover:text-primary transition-colors"
@@ -82,30 +80,9 @@ const Header: React.FC = () => {
               </button>
             )
           ))}
-          
-          {isAdmin && (
-            <Link href="/admin" className="text-sm font-bold text-primary hover:text-accent transition-colors">
-              Admin
-            </Link>
-          )}
 
-          {currentUser ? (
-            <Link href="/dashboard">
-              <Button size="sm" variant="outline" className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Dashboard
-              </Button>
-            </Link>
-          ) : (
-            <Link href="/login">
-              <span className="text-sm font-medium text-gray-600 hover:text-primary transition-colors cursor-pointer">
-                Login
-              </span>
-            </Link>
-          )}
-
-          <Link href="/assessment">
-            <Button size="sm" variant="primary">Free Assessment</Button>
+          <Link href="/consultation">
+            <Button size="sm" variant="primary">Book Consultation</Button>
           </Link>
         </nav>
 
@@ -131,7 +108,7 @@ const Header: React.FC = () => {
                   {link.label}
                 </Link>
                ) : (
-                <button 
+                <button
                   key={link.label}
                   onClick={() => scrollToSection(link.id!)}
                   className="text-xl font-display font-bold text-primary"
@@ -141,24 +118,8 @@ const Header: React.FC = () => {
                )
             ))}
 
-            {isAdmin && (
-              <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
-                <span className="text-xl font-display font-bold text-accent">Admin Portal</span>
-              </Link>
-            )}
-             
-            {currentUser ? (
-              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                <span className="text-xl font-display font-bold text-primary">Dashboard</span>
-              </Link>
-            ) : (
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                <span className="text-xl font-display font-bold text-primary">Login</span>
-              </Link>
-            )}
-
-            <Link href="/assessment" onClick={() => setMobileMenuOpen(false)}>
-              <Button size="lg" variant="primary">Start Assessment</Button>
+            <Link href="/consultation" onClick={() => setMobileMenuOpen(false)}>
+              <Button size="lg" variant="primary">Book Consultation</Button>
             </Link>
           </div>
         )}
