@@ -19,3 +19,9 @@ h1, h2, h3, h4, h5, h6 {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@layer utilities {
+  .section-padding {
+    @apply py-20 lg:py-24;
+  }
+}

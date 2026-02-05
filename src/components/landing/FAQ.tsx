@@ -29,7 +29,7 @@ const FAQ: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-24 bg-gray-50">
+    <section id="faq" className="section-padding bg-gray-50">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-primary text-xs font-bold uppercase tracking-wider mb-4 border border-blue-100">
@@ -43,7 +43,7 @@ const FAQ: React.FC = () => {
 
         <div className="space-y-4">
           {FAQS.map((faq, idx) => (
-            <div 
+            <div
               key={idx}
               className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:border-blue-200 transition-colors"
             >
@@ -61,7 +61,7 @@ const FAQ: React.FC = () => {
                   {openIndex === idx ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 </span>
               </button>
-              
+
               <AnimatePresence>
                 {openIndex === idx && (
                   <motion.div

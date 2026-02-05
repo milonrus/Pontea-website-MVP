@@ -11,7 +11,7 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!loading && !currentUser) {
-      router.replace('/auth');
+      router.replace('/auth/login');
     }
   }, [loading, currentUser, router]);
 

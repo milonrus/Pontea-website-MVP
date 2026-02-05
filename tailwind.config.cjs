@@ -15,7 +15,10 @@ module.exports = {
         accent: "#FFC857",
         secondary: "#00154a",
         highlight: "#2563eb",
-        teal: "#4ecca3"
+        teal: "#4ecca3",
+        "brand-green": "#ECF8B4",
+        "brand-purple": "#E0DFF8",
+        "brand-pink": "#FCEAEB"
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', "sans-serif"],
