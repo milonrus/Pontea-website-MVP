@@ -28,7 +28,7 @@ const TEACHERS = [
 
 const Teachers: React.FC = () => {
   return (
-    <section id="team" className="py-24 bg-white">
+    <section id="team" className="section-padding bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-primary text-xs font-bold uppercase tracking-wider mb-4 border border-blue-100">
@@ -56,28 +56,28 @@ const Teachers: React.FC = () => {
               <div className="absolute inset-0 bg-primary rounded-2xl transform rotate-1 transition-transform group-hover:rotate-2 opacity-5"></div>
               <div className="relative bg-white border border-gray-100 p-2 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300">
                 <div className="aspect-[4/3] overflow-hidden rounded-xl mb-6 relative">
-                  <img 
-                    src={teacher.image} 
+                  <img
+                    src={teacher.image}
                     alt={teacher.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-                     <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/20">
-                        <Award className="w-3 h-3 text-accent" />
-                        {teacher.stats}
-                     </span>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-white/20 backdrop-blur-md text-white text-xs font-bold border border-white/20">
+                      <Award className="w-3 h-3 text-accent" />
+                      {teacher.stats}
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="px-4 pb-4 text-center">
-                    <h3 className="text-xl font-bold text-primary mb-1 font-display">{teacher.name}</h3>
-                    <div className="text-sm font-bold text-accent mb-3 uppercase tracking-wide">{teacher.role}</div>
-                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                        {teacher.bio}
-                    </p>
-                    <div className="pt-4 border-t border-gray-50 flex justify-center gap-4 text-gray-400">
-                        <GraduationCap className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
-                    </div>
+                  <h3 className="text-xl font-bold text-primary mb-1 font-display">{teacher.name}</h3>
+                  <div className="text-sm font-bold text-accent mb-3 uppercase tracking-wide">{teacher.role}</div>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                    {teacher.bio}
+                  </p>
+                  <div className="pt-4 border-t border-gray-50 flex justify-center gap-4 text-gray-400">
+                    <GraduationCap className="w-5 h-5 hover:text-primary transition-colors cursor-pointer" />
+                  </div>
                 </div>
               </div>
             </motion.div>

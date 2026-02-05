@@ -30,7 +30,7 @@ const Pricing: React.FC = () => {
   const [selectedTier, setSelectedTier] = useState<PlanTier | null>(null);
 
   return (
-    <section id="pricing" className="py-20 bg-gray-50">
+    <section id="pricing" className="section-padding bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-primary mb-4">Choose Your Path to Italy</h2>
@@ -39,7 +39,7 @@ const Pricing: React.FC = () => {
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {TIERS.map((tier) => (
-            <div 
+            <div
               key={tier.name}
               className={`
                 relative bg-white rounded-2xl p-8 transition-all duration-300
@@ -57,12 +57,12 @@ const Pricing: React.FC = () => {
                 <span className="text-4xl font-bold text-primary">€{tier.price}</span>
                 <span className="text-gray-500 ml-2">/ total</span>
               </div>
-              
+
               <p className="text-sm text-gray-500 mb-6 italic">approx. €{(tier.price / 4).toFixed(0)}/month for 4 months</p>
 
-              <Button 
-                variant={tier.recommended ? 'primary' : 'outline'} 
-                fullWidth 
+              <Button
+                variant={tier.recommended ? 'primary' : 'outline'}
+                fullWidth
                 onClick={() => setSelectedTier(tier)}
                 className="mb-8"
               >
@@ -93,10 +93,10 @@ const Pricing: React.FC = () => {
       </div>
 
       {selectedTier && (
-        <PaymentModal 
-          isOpen={!!selectedTier} 
-          onClose={() => setSelectedTier(null)} 
-          tierName={selectedTier.name} 
+        <PaymentModal
+          isOpen={!!selectedTier}
+          onClose={() => setSelectedTier(null)}
+          tierName={selectedTier.name}
           price={selectedTier.price}
         />
       )}
