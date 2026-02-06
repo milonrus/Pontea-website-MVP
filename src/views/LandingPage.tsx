@@ -5,16 +5,14 @@ import { motion } from 'framer-motion';
 import Header from '@/components/shared/Header';
 import Hero from '@/components/landing/Hero';
 import Testimonials from '@/components/landing/Testimonials';
-import StressManagement from '@/components/landing/StressManagement';
 import StressManagementTimeline from '@/components/landing/StressManagementTimeline';
-import SchoolShowcase from '@/components/landing/SchoolShowcase';
 import Pricing from '@/components/landing/Pricing';
-import Teachers from '@/components/landing/Teachers';
 import FAQ from '@/components/landing/FAQ';
-import FeaturesGrid from '@/components/landing/FeaturesGrid';
 import Button from '@/components/shared/Button';
 import ExperienceBanner from '@/components/landing/ExperienceBanner';
 import ThoughtfulPreparation from '@/components/landing/ThoughtfulPreparation';
+import Teachers from '@/components/landing/Teachers';
+import MentorSupport from '@/components/landing/MentorSupport';
 import { TrendingUp, ArrowUpRight, CheckCircle2, HelpCircle, ArrowRight } from 'lucide-react';
 
 // Progress Tracking Section
@@ -296,16 +294,11 @@ const LandingPage: React.FC = () => {
       <Hero />
       <ExperienceBanner />
       <Testimonials />
-      <StressManagement />
       <StressManagementTimeline />
-      <div className="w-full h-px bg-gray-100" />
-      <ThoughtfulPreparation />
-      <MethodologyPreview />
-      <SchoolShowcase />
-      <ProgressTracking />
-      <FeaturesGrid />
-      <Pricing />
       <Teachers />
+      <ThoughtfulPreparation />
+      <MentorSupport />
+      <Pricing />
       <FAQ />
 
       {/* Footer */}

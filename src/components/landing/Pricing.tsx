@@ -6,22 +6,22 @@ import { PlanTier } from '@/types';
 
 const TIERS: PlanTier[] = [
   {
-    name: 'Study Guide',
+    name: 'База',
     price: 690,
-    features: ['Theory summaries (250+ pages)', '1000+ practice questions', 'Practice exams'],
-    missingFeatures: ['Video lectures', 'Live seminars', 'Progress tracking', 'Support chat', '1-on-1 Lessons'],
+    features: ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены'],
+    missingFeatures: ['Видеолекции', 'Живые семинары', 'Отслеживание прогресса', 'Чат с поддержкой', 'Индивидуальные занятия 1-на-1'],
   },
   {
-    name: 'Full Course',
+    name: 'Полный курс',
     price: 1190,
     recommended: true,
-    features: ['Theory summaries (250+ pages)', '1000+ practice questions', 'Practice exams', '40+ hours video lectures', 'Weekly live seminars', 'Progress monitoring', 'Group support chat'],
-    missingFeatures: ['Personalized study program', '1-on-1 Lessons'],
+    features: ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены', '40+ часов видеолекций', 'Еженедельные живые семинары', 'Мониторинг прогресса', 'Групповой чат поддержки'],
+    missingFeatures: ['Персональная программа подготовки', 'Индивидуальные занятия 1-на-1'],
   },
   {
     name: 'VIP',
     price: 2750,
-    features: ['Everything in Full Course', 'Personalized study program', '1-on-1 lessons with teachers', '3 consultations with founders', 'Priority Support'],
+    features: ['Все из тарифа «Полный курс»', 'Персональная программа подготовки', 'Индивидуальные занятия с преподавателями 1-на-1', '3 консультации с основателями', 'Приоритетная поддержка'],
     missingFeatures: [],
   }
 ];
@@ -33,8 +33,7 @@ const Pricing: React.FC = () => {
     <section id="pricing" className="section-padding bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-primary mb-4">Choose Your Path to Italy</h2>
-          <p className="text-lg text-gray-600">Invest in your future with a plan that suits your learning style. Installment plans available for all tiers.</p>
+          <h2 className="text-3xl md:text-4xl font-display font-bold text-primary">Выбери свой способ подготовки</h2>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -47,18 +46,15 @@ const Pricing: React.FC = () => {
               `}
             >
               {tier.recommended && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent text-primary font-bold px-4 py-1 rounded-full text-sm">
-                  MOST POPULAR
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent text-primary font-bold px-6 py-1.5 rounded-full text-sm whitespace-nowrap">
+                  Самый популярный
                 </div>
               )}
 
               <h3 className="text-2xl font-display font-bold text-primary mb-2">{tier.name}</h3>
               <div className="flex items-baseline mb-6">
                 <span className="text-4xl font-bold text-primary">€{tier.price}</span>
-                <span className="text-gray-500 ml-2">/ total</span>
               </div>
-
-              <p className="text-sm text-gray-500 mb-6 italic">approx. €{(tier.price / 4).toFixed(0)}/month for 4 months</p>
 
               <Button
                 variant={tier.recommended ? 'primary' : 'outline'}
@@ -66,7 +62,7 @@ const Pricing: React.FC = () => {
                 onClick={() => setSelectedTier(tier)}
                 className="mb-8"
               >
-                {tier.name === 'VIP' ? 'Apply for VIP' : 'Get Started'}
+                Купить
               </Button>
 
               <div className="space-y-4">

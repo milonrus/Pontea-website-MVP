@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
+import Button from '@/components/shared/Button';
 
 const WORRIES = [
     {
@@ -79,8 +81,6 @@ const WavyPath = () => {
 };
 
 const StressManagementTimeline = () => {
-    const [hoveredId, setHoveredId] = useState<number | null>(null);
-
     return (
         <section className="relative py-24 lg:py-32 overflow-hidden bg-gradient-to-b from-white via-blue-50/20 to-white">
             {/* Animated background elements */}
@@ -128,25 +128,17 @@ const StressManagementTimeline = () => {
                     </motion.p>
                 </div>
 
-                {/* Timeline - Desktop: Using flexbox with proper spacing */}
+                {/* Timeline - Desktop */}
                 <div className="hidden lg:block">
-                    <div className="relative mx-auto" style={{ width: '1280px', height: '700px', maxWidth: '100%' }}>
-                        {/* Card positioning with exact pixel values */}
-                        <div className="absolute" style={{ left: '0px', top: '40px', width: '300px' }}>
-                            <WorryCardWrapper worry={WORRIES[0]} index={0} hoveredId={hoveredId} setHoveredId={setHoveredId} />
-                        </div>
-
-                        <div className="absolute" style={{ left: '360px', top: '200px', width: '300px' }}>
-                            <WorryCardWrapper worry={WORRIES[1]} index={1} hoveredId={hoveredId} setHoveredId={setHoveredId} />
-                        </div>
-
-                        <div className="absolute" style={{ left: '700px', top: '50px', width: '300px' }}>
-                            <WorryCardWrapper worry={WORRIES[2]} index={2} hoveredId={hoveredId} setHoveredId={setHoveredId} />
-                        </div>
-
-                        <div className="absolute" style={{ left: '1060px', top: '180px', width: '300px' }}>
-                            <WorryCardWrapper worry={WORRIES[3]} index={3} hoveredId={hoveredId} setHoveredId={setHoveredId} />
-                        </div>
+                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-6 xl:gap-8 items-start">
+                        {WORRIES.map((worry, index) => (
+                            <div
+                                key={worry.id}
+                                className={index % 2 === 1 ? 'lg:mt-10 xl:mt-16' : ''}
+                            >
+                                <WorryCardWrapper worry={worry} index={index} />
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -155,141 +147,128 @@ const StressManagementTimeline = () => {
                     {WORRIES.map((worry, index) => (
                         <motion.div
                             key={worry.id}
-                            initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
+                            initial={{ opacity: 0, y: 24 }}
+                            whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            transition={{ duration: 0.6, delay: index * 0.1 }}
+                            transition={{ duration: 0.45, delay: index * 0.06 }}
                         >
-                            <WorryCard worry={worry} index={index} isHovered={false} isNeighbor={false} />
+                            <WorryCard worry={worry} index={index} />
                         </motion.div>
                     ))}
                 </div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="mt-14 lg:mt-16"
+                >
+                    <div className="relative overflow-hidden rounded-[2rem] border border-blue-100/90 bg-gradient-to-br from-[#f6fbff] via-white to-[#fff9ef] shadow-[0_22px_60px_-38px_rgba(1,39,139,0.55)]">
+                        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/20 via-accent/60 to-primary/10" />
+                        <div className="absolute -top-16 -right-14 w-44 h-44 rounded-full bg-primary/5 blur-2xl pointer-events-none" />
+                        <div className="absolute -bottom-20 -left-10 w-52 h-52 rounded-full bg-accent/20 blur-3xl pointer-events-none" />
+
+                        <div className="relative z-10 px-6 py-8 md:px-10 md:py-10 lg:px-12 lg:py-12">
+                            <div className="grid gap-7 lg:gap-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                                <div className="max-w-3xl text-center lg:text-left mx-auto lg:mx-0">
+                                    <p className="text-2xl md:text-3xl lg:text-[2rem] font-display font-bold text-primary leading-tight">
+                                        Оцени свой уровень и начни подготовку без хаоса
+                                    </p>
+                                    <p className="text-sm md:text-base text-slate-600 mt-3">
+                                        Короткая диагностика даст персональный план на ближайшие 4 месяца
+                                    </p>
+                                </div>
+
+                                <div className="flex justify-center lg:justify-end">
+                                    <Link href="/assessment" className="block w-full max-w-[320px] lg:w-auto">
+                                        <Button
+                                            size="lg"
+                                            variant="primary"
+                                            className="h-14 w-full lg:w-auto lg:min-w-[280px] px-8 md:px-10 !rounded-xl shadow-[0_14px_32px_-16px_rgba(255,200,87,0.8)]"
+                                        >
+                                            Пройти опрос
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
             </div>
         </section>
     );
 };
 
-// Wrapper to handle hover state management
 const WorryCardWrapper = ({
     worry,
-    index,
-    hoveredId,
-    setHoveredId
+    index
 }: {
     worry: typeof WORRIES[0];
     index: number;
-    hoveredId: number | null;
-    setHoveredId: (id: number | null) => void;
 }) => {
-    const isHovered = hoveredId === worry.id;
-    const isNeighbor = hoveredId !== null && Math.abs(WORRIES.findIndex(w => w.id === hoveredId) - index) === 1;
-
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 50 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{
-                duration: 0.6,
-                delay: index * 0.2,
-                ease: [0.22, 1, 0.36, 1]
+                duration: 0.45,
+                delay: index * 0.08,
+                ease: "easeOut"
             }}
-            onMouseEnter={() => setHoveredId(worry.id)}
-            onMouseLeave={() => setHoveredId(null)}
-            style={{ zIndex: isHovered ? 50 : isNeighbor ? 30 : 10 }}
         >
-            <WorryCard
-                worry={worry}
-                index={index}
-                isHovered={isHovered}
-                isNeighbor={isNeighbor}
-            />
+            <WorryCard worry={worry} index={index} />
         </motion.div>
     );
 };
 
 const WorryCard = ({
     worry,
-    index,
-    isHovered,
-    isNeighbor
+    index
 }: {
     worry: typeof WORRIES[0];
     index: number;
-    isHovered: boolean;
-    isNeighbor: boolean;
 }) => {
-    // Цвет границы для визуального разнообразия
+    // Цвет рамки для визуального разнообразия
     const getBorderColor = (color: string) => {
         const colors = {
-            blue: 'border-blue-200 hover:border-blue-300',
-            orange: 'border-orange-200 hover:border-orange-300',
-            yellow: 'border-yellow-200 hover:border-yellow-300',
-            green: 'border-green-200 hover:border-green-300',
-            teal: 'border-teal-200 hover:border-teal-300',
+            blue: 'border-blue-200',
+            orange: 'border-orange-200',
+            yellow: 'border-yellow-200',
+            green: 'border-green-200',
+            teal: 'border-teal-200',
         };
-        return colors[color as keyof typeof colors] || 'border-blue-200 hover:border-blue-300';
-    };
-
-    const getGlowColor = (color: string) => {
-        const colors = {
-            blue: 'shadow-blue-200/50',
-            orange: 'shadow-orange-200/50',
-            yellow: 'shadow-yellow-200/50',
-            green: 'shadow-green-200/50',
-            teal: 'shadow-teal-200/50',
-        };
-        return colors[color as keyof typeof colors] || 'shadow-blue-200/50';
+        return colors[color as keyof typeof colors] || 'border-blue-200';
     };
 
     return (
-        <motion.div
-            animate={{
-                scale: isHovered ? 1.03 : isNeighbor ? 1.01 : 1,
-                y: isHovered ? -6 : 0,
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        <div
             className={`
-                relative bg-white rounded-2xl p-8 border-2 transition-all duration-300
+                relative bg-white rounded-2xl p-8 border-2 shadow-sm
                 ${getBorderColor(worry.color)}
-                ${isHovered ? `shadow-2xl ${getGlowColor(worry.color)}` : 'shadow-lg'}
-                ${isNeighbor ? 'ring-2 ring-accent/30' : ''}
             `}
         >
             {/* Step number */}
-            <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-base shadow-lg">
+            <div className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm shadow-md">
                 {index + 1}
             </div>
 
             {/* Image */}
             <div className="relative h-56 mb-4 rounded-xl overflow-hidden">
-                <motion.img
+                <img
                     src={worry.image}
                     alt={worry.tag}
                     className="w-full h-full object-contain p-2 mix-blend-multiply"
-                    animate={isHovered ? { scale: 1.08, rotate: 2 } : { scale: 1, rotate: 0 }}
-                    transition={{ duration: 0.3 }}
                 />
-
-                {/* Animated glow on hover */}
-                {isHovered && (
-                    <motion.div
-                        className="absolute inset-0 bg-gradient-to-br from-accent/20 to-transparent"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                    />
-                )}
             </div>
 
             {/* Tag */}
-            <motion.div
+            <div
                 className="inline-block bg-accent/15 text-secondary text-sm font-semibold px-3 py-1.5 rounded-lg mb-2"
-                animate={isHovered ? { scale: 1.02 } : { scale: 1 }}
-                transition={{ type: "spring", stiffness: 300 }}
             >
                 {worry.tag}
-            </motion.div>
+            </div>
 
             {/* Title */}
             <h3 className="text-xl font-display font-bold text-gray-900 mb-2 leading-tight">
@@ -300,17 +279,7 @@ const WorryCard = ({
             <p className="text-gray-600 text-base leading-relaxed">
                 {worry.description}
             </p>
-
-            {/* Connection indicator for neighbors */}
-            {isNeighbor && (
-                <motion.div
-                    className="absolute inset-0 border-2 border-accent/50 rounded-2xl pointer-events-none"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                />
-            )}
-        </motion.div>
+        </div>
     );
 };
 

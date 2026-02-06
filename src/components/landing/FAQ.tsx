@@ -4,24 +4,24 @@ import { Plus, Minus, HelpCircle } from 'lucide-react';
 
 const FAQS = [
   {
-    question: "Is this course for the Italian or English exam?",
-    answer: "Both! We provide specific study tracks for the Italian exam (Test di Architettura) and the English exam (Architecture Design). You can switch between languages in your dashboard at any time."
+    question: "Этот курс для итальянского или английского экзамена?",
+    answer: "Для обоих. Мы даем отдельные треки подготовки для итальянского экзамена (Test di Architettura) и для английского экзамена (Architecture Design). Переключаться между языками можно в личном кабинете в любой момент."
   },
   {
-    question: "How does the 'Knowledge Matrix' work?",
-    answer: "Unlike traditional courses that just give you a score, we track your proficiency across 5 domains. We identify exactly which 'Knowledge Blocks' (e.g., Art History Renaissance, Logical Implications) you are missing so you can fix them efficiently."
+    question: "Как работает «Knowledge Matrix»?",
+    answer: "В отличие от обычных курсов, где вы видите только общий балл, мы отслеживаем ваш уровень по 5 направлениям. Мы точно показываем, какие «блоки знаний» (например, Ренессанс в истории искусства или логические импликации) у вас проседают, чтобы вы закрывали пробелы точечно и быстрее."
   },
   {
-    question: "Can I pay in installments?",
-    answer: "Yes. For the Full Course and VIP tiers, we offer a 3-month or 4-month installment plan via Klarna or PayPal Pay Later, with no extra interest."
+    question: "Можно ли платить в рассрочку?",
+    answer: "Да. Для тарифов «Полный курс» и VIP доступна рассрочка на 3 или 4 месяца через Klarna или PayPal Pay Later без дополнительной переплаты."
   },
   {
-    question: "What if I don't pass the exam?",
-    answer: "If you complete 90% of the course material and don't pass, we offer a 'Second Chance' guarantee. You'll get free access to the platform for the next academic year's preparation cycle."
+    question: "Что будет, если я не сдам экзамен?",
+    answer: "Если вы проходите 90% материалов курса и не сдаете экзамен, действует гарантия «Second Chance». Вы получаете бесплатный доступ к платформе на следующий цикл подготовки."
   },
   {
-    question: "Do I need to buy textbooks?",
-    answer: "No. Our platform includes comprehensive digital notes, summaries, and formula sheets (250+ pages) that cover the entire syllabus defined by the Ministry (MUR)."
+    question: "Нужно ли покупать учебники?",
+    answer: "Нет. На платформе уже есть подробные цифровые конспекты, саммари и листы с формулами (250+ страниц), которые покрывают всю программу, утвержденную министерством (MUR)."
   }
 ];
 
@@ -34,10 +34,10 @@ const FAQ: React.FC = () => {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-primary text-xs font-bold uppercase tracking-wider mb-4 border border-blue-100">
             <HelpCircle className="w-3 h-3" />
-            Support
+            Поддержка
           </div>
           <h2 className="text-3xl md:text-5xl font-display font-bold text-primary mb-6">
-            Common Questions
+            Частые вопросы
           </h2>
         </div>
 

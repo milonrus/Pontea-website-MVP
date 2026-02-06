@@ -14,10 +14,7 @@ const ExperienceBanner = () => {
                     <h2 className="text-3xl md:text-5xl font-display font-bold text-primary leading-tight">
                         5 лет готовим к поступлению
                         <br />
-                        <span className="relative inline-block mt-2">
-                            <span className="relative z-10">в Лучшие архитектурные вузы</span>
-                            <span className="absolute inset-0 bg-[#FDE047]/30 -rotate-1 scale-110 z-0 rounded-lg"></span>
-                        </span>
+                        <span className="inline-block mt-2">в лучшие архитектурные вузы Италии</span>
                     </h2>
 
                     <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-80 mt-12 mb-8">
