@@ -115,7 +115,7 @@ Tailwind CSS with custom theme colors:
 - Highlight: `#2563eb` (bright blue)
 - Teal: `#4ecca3`
 
-Custom fonts: "Plus Jakarta Sans" (sans), "Outfit" (display).
+Custom font: "Mulish" (sans and display).
 
 ## Common Tasks
 

@@ -21,8 +21,8 @@ module.exports = {
         "brand-pink": "#FCEAEB"
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', "sans-serif"],
-        display: ['"Outfit"', "sans-serif"]
+        sans: ['"Mulish"', "sans-serif"],
+        display: ['"Mulish"', "sans-serif"]
       }
     }
   },
