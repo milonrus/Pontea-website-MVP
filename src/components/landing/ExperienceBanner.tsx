@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const ExperienceBanner = () => {
     return (
-        <section className="pt-20 pb-8 bg-white">
+        <section className="pt-4 md:pt-6 pb-14 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -11,13 +11,7 @@ const ExperienceBanner = () => {
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
                 >
-                    <h2 className="text-3xl md:text-5xl font-display font-bold text-primary leading-tight">
-                        5 лет готовим к поступлению
-                        <br />
-                        <span className="inline-block mt-2">в лучшие архитектурные вузы Италии</span>
-                    </h2>
-
-                    <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-80 mt-12 mb-8">
+                    <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10 opacity-80 mb-10 md:mb-12">
                         {[
                             { name: 'Politecnico di Milano', src: '/universities/polimi.png' },
                             { name: 'University of Bologna', src: '/universities/unibo.png' },
@@ -32,7 +26,7 @@ const ExperienceBanner = () => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.1 }}
-                                className="w-24 h-24 md:w-32 md:h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300"
+                                className="w-24 h-20 md:w-32 md:h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300"
                             >
                                 <img
                                     src={uni.src}
@@ -43,7 +37,13 @@ const ExperienceBanner = () => {
                         ))}
                     </div>
 
-                    <p className="mt-8 text-gray-500 text-lg">
+                    <h2 className="text-3xl md:text-5xl font-display font-bold text-primary leading-tight mb-6">
+                        5 лет готовим к поступлению
+                        <br />
+                        <span className="inline-block mt-2">в лучшие архитектурные вузы Италии</span>
+                    </h2>
+
+                    <p className="text-gray-500 text-lg">
                         Наши ученики — такие же, как ты,
                         <br />
                         И у них получилось!
