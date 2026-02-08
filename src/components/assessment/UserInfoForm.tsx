@@ -6,7 +6,7 @@ const UserInfoForm: React.FC<{ onSubmit: (data: UserInfo) => void }> = ({ onSubm
   const [formData, setFormData] = useState<UserInfo>({
     name: '',
     email: '',
-    targetUniversity: 'Not sure yet'
+    targetUniversity: 'Пока не определился(лась)'
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -15,29 +15,29 @@ const UserInfoForm: React.FC<{ onSubmit: (data: UserInfo) => void }> = ({ onSubm
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+    <div className="flex items-center justify-center p-4 py-12">
       <div className="w-full max-w-md">
-        <h2 className="text-2xl font-display font-bold text-primary mb-2 text-center">Tell us about yourself</h2>
-        <p className="text-gray-500 mb-8 text-center">We need this to personalize your study roadmap.</p>
+        <h2 className="text-2xl font-display font-bold text-primary mb-2 text-center">Расскажите о себе</h2>
+        <p className="text-gray-500 mb-8 text-center">Это нужно для персонального плана подготовки.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-            <input 
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ваше имя</label>
+            <input
               required
-              type="text" 
+              type="text"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent outline-none"
-              placeholder="Your name"
+              placeholder="Имя"
               value={formData.name}
               onChange={e => setFormData({...formData, name: e.target.value})}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <input 
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
               required
-              type="email" 
+              type="email"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent outline-none"
               placeholder="you@example.com"
               value={formData.email}
@@ -46,21 +46,21 @@ const UserInfoForm: React.FC<{ onSubmit: (data: UserInfo) => void }> = ({ onSubm
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Target University</label>
-            <select 
+            <label className="block text-sm font-medium text-gray-700 mb-1">Целевой университет</label>
+            <select
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent outline-none bg-white"
               value={formData.targetUniversity}
               onChange={e => setFormData({...formData, targetUniversity: e.target.value})}
             >
-              <option>Not sure yet</option>
+              <option>Пока не определился(лась)</option>
               <option>Politecnico di Milano (ARCHED)</option>
               <option>Politecnico di Torino (TIL-A)</option>
-              <option>Both</option>
+              <option>Оба</option>
             </select>
           </div>
 
           <Button type="submit" fullWidth className="mt-4">
-            Start Quiz
+            Начать тест
           </Button>
         </form>
       </div>

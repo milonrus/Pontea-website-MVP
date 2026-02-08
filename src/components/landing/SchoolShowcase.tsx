@@ -183,7 +183,7 @@ export default function SchoolShowcase() {
                             </div>
 
                             <div className="mt-4 hidden lg:block">
-                                <Link href="/assessment">
+                                <Link href="/ru/assessment">
                                     <Button size="lg" variant="primary" className="w-full shadow-xl shadow-accent/20">
                                         Try it Free
                                         <ArrowRight className="ml-2 w-5 h-5" />
@@ -407,7 +407,7 @@ export default function SchoolShowcase() {
                         </div>
 
                         <div className="lg:hidden col-span-12 mt-4">
-                            <Link href="/assessment">
+                            <Link href="/ru/assessment">
                                 <Button size="lg" className="w-full shadow-xl shadow-accent/20">
                                     Try it Free
                                     <ArrowRight className="ml-2 w-5 h-5" />

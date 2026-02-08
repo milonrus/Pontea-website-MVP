@@ -61,7 +61,7 @@ const Hero: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 mb-8 max-w-2xl items-start">
               <div className="w-full sm:w-[360px]">
-                <Link href="/assessment" className="block">
+                <Link href="/ru/assessment" className="block">
                   <Button
                     size="lg"
                     variant="primary"

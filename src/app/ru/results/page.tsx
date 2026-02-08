@@ -2,8 +2,6 @@
 
 import ResultsPage from '@/views/ResultsPage';
 
-const Page = () => {
+export default function Page() {
   return <ResultsPage />;
-};
-
-export default Page;
+}

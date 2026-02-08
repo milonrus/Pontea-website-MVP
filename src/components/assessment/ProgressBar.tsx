@@ -4,8 +4,8 @@ const ProgressBar: React.FC<{ current: number; total: number }> = ({ current, to
   const progress = (current / total) * 100;
   
   return (
-    <div className="w-full mb-8">
-      <div className="flex justify-between text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+    <div className="w-full mb-4">
+      <div className="flex justify-between text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">
         <span>Progress</span>
         <span>{current} / {total}</span>
       </div>

@@ -13,8 +13,8 @@ import ExperienceBanner from '@/components/landing/ExperienceBanner';
 import ThoughtfulPreparation from '@/components/landing/ThoughtfulPreparation';
 import Teachers from '@/components/landing/Teachers';
 import MentorSupport from '@/components/landing/MentorSupport';
-import PlatformShowcaseDemo from '@/components/landing/PlatformShowcaseVariations';
-import ColorSchemeDemo from '@/components/ColorSchemeDemo';
+import PlatformShowcase from '@/components/landing/PlatformShowcaseVariations';
+
 import { TrendingUp, ArrowUpRight, CheckCircle2, HelpCircle, ArrowRight } from 'lucide-react';
 
 // Progress Tracking Section
@@ -66,7 +66,7 @@ const ProgressTracking = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Link href="/assessment">
+              <Link href="/ru/assessment">
                 <Button size="lg" className="shadow-lg shadow-primary/20 group w-full sm:w-auto">
                   Get Your Personal Matrix
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -294,11 +294,10 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-white">
       <Header />
       <Hero />
-      <ColorSchemeDemo />
+      <PlatformShowcase />
       <ExperienceBanner />
       <Testimonials />
       <StressManagementTimeline />
-      <PlatformShowcaseDemo />
       <Teachers />
       <ThoughtfulPreparation />
       <MentorSupport />

@@ -1,134 +1,244 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Question, UserInfo, QuestionResult } from '@/types';
-import { QUESTIONS } from '@/data/questions';
+import {
+  OptionId,
+  AssessmentAnswer,
+  AssessmentOption,
+  MicroCheckQuestion,
+  SelfAssessmentQuestion,
+  DomainResult,
+} from '@/types';
+import {
+  ALL_ASSESSMENT_QUESTIONS,
+  TOTAL_QUESTIONS,
+} from '@/data/assessmentQuestions';
+import {
+  getDifficultyForScore,
+  computeDomainResults,
+  getWeakestDomains,
+  generateStudyPlan,
+} from '@/lib/assessment/scoring';
 import IntroScreen from './IntroScreen';
-import UserInfoForm from './UserInfoForm';
 import QuestionCard from './QuestionCard';
 import ProgressBar from './ProgressBar';
+import PostQuizEmailForm from './PostQuizEmailForm';
+
+type Step = 'intro' | 'quiz' | 'email' | 'submitting';
+
+interface ComputedResults {
+  answers: AssessmentAnswer[];
+  domainResults: DomainResult[];
+  weakestDomains: DomainResult[];
+  studyPlan: DomainResult[];
+}
+
+function getResolvedQuestion(
+  index: number,
+  answers: AssessmentAnswer[]
+): {
+  questionId: string;
+  prompt: string;
+  options: AssessmentOption[];
+  label?: string;
+  correctOptionId?: OptionId;
+} {
+  const qDef = ALL_ASSESSMENT_QUESTIONS[index];
+
+  if (qDef.type === 'self_assessment') {
+    const q = qDef as SelfAssessmentQuestion;
+    return { questionId: q.id, prompt: q.prompt, options: q.options };
+  }
+
+  const q = qDef as MicroCheckQuestion;
+  // Look up the self-assessment answer for the same domain
+  const selfAnswer = answers.find(
+    (a) => a.domain === q.domain && a.type === 'self_assessment'
+  );
+  const selfScore = selfAnswer?.selfAssessmentScore ?? 0;
+  const difficulty = getDifficultyForScore(selfScore);
+  const variant = q.variants.find((v) => v.difficulty === difficulty) ?? q.variants[0];
+
+  return {
+    questionId: q.id,
+    prompt: variant.prompt,
+    options: variant.options,
+    label: q.label,
+    correctOptionId: variant.correctOptionId,
+  };
+}
 
 const AssessmentFlow: React.FC = () => {
   const router = useRouter();
-  const [step, setStep] = useState<'intro' | 'info' | 'quiz'>('intro');
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  
-  // Quiz State
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [history, setHistory] = useState<QuestionResult[]>([]);
+  const [step, setStep] = useState<Step>('intro');
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
+  const [selectedOptionId, setSelectedOptionId] = useState<OptionId | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
-  
-  // Feedback State
-  const [isFeedbackMode, setIsFeedbackMode] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  
-  const activeQuestion = QUESTIONS[currentQuestionIndex];
 
-  const handleOptionSelect = (optionIndex: number) => {
-    if (isFeedbackMode || !activeQuestion) return;
-    
-    const timeTaken = Date.now() - questionStartTime;
-    setSelectedOption(optionIndex);
-    setIsFeedbackMode(true);
+  const [computedResults, setComputedResults] = useState<ComputedResults | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const isCorrect = optionIndex === activeQuestion.correctAnswer;
-    
-    // Record history immediately
-    setHistory(prev => [...prev, { 
-      questionId: activeQuestion.id, 
-      correct: isCorrect, 
-      difficulty: activeQuestion.difficulty,
-      category: activeQuestion.category,
-      timeTaken: timeTaken
-    }]);
+  const resolved = step === 'quiz' ? getResolvedQuestion(currentIndex, answers) : null;
+
+  const handleSelect = (optionId: OptionId) => {
+    if (selectedOptionId !== null) return;
+    setSelectedOptionId(optionId);
   };
 
   const handleNext = () => {
-    const nextIndex = currentQuestionIndex + 1;
-    
-    if (nextIndex < QUESTIONS.length) {
-      setCurrentQuestionIndex(nextIndex);
-      setQuestionStartTime(Date.now()); // Reset timer for next Q
-      setIsFeedbackMode(false);
-      setSelectedOption(null);
+    if (selectedOptionId === null || !resolved) return;
+
+    const qDef = ALL_ASSESSMENT_QUESTIONS[currentIndex];
+    const timeMs = Date.now() - questionStartTime;
+
+    const answer: AssessmentAnswer = {
+      questionId: qDef.id,
+      domain: qDef.domain,
+      selectedOptionId,
+      timeMs,
+      type: qDef.type,
+    };
+
+    if (qDef.type === 'self_assessment') {
+      const option = (qDef as SelfAssessmentQuestion).options.find(
+        (o) => o.id === selectedOptionId
+      );
+      answer.selfAssessmentScore = option?.score ?? 0;
     } else {
-      finishQuiz();
+      answer.microCheckCorrect = selectedOptionId === resolved.correctOptionId;
+      const selfAnswer = answers.find(
+        (a) => a.domain === qDef.domain && a.type === 'self_assessment'
+      );
+      answer.microCheckDifficulty = getDifficultyForScore(
+        selfAnswer?.selfAssessmentScore ?? 0
+      );
+    }
+
+    const newAnswers = [...answers, answer];
+    setAnswers(newAnswers);
+
+    const nextIndex = currentIndex + 1;
+    if (nextIndex < TOTAL_QUESTIONS) {
+      setCurrentIndex(nextIndex);
+      setSelectedOptionId(null);
+      setQuestionStartTime(Date.now());
+    } else {
+      finishQuiz(newAnswers);
     }
   };
 
-  const finishQuiz = (finalHistory = history) => {
-    // Calculate Webhook Payload using new structure
-    const score = finalHistory.filter(h => h.correct).length;
-    const total = QUESTIONS.length;
+  const finishQuiz = (finalAnswers: AssessmentAnswer[]) => {
+    const domainResults = computeDomainResults(finalAnswers);
+    const weakestDomains = getWeakestDomains(domainResults);
+    const studyPlan = generateStudyPlan(domainResults);
 
-    // Calculate Median Time (ESL Indicator)
-    const times = finalHistory.map(h => h.timeTaken).sort((a, b) => a - b);
-    const medianTimeMs = times[Math.floor(times.length / 2)] || 0;
+    setComputedResults({
+      answers: finalAnswers,
+      domainResults,
+      weakestDomains,
+      studyPlan,
+    });
+    setStep('email');
+  };
 
-    const payload = {
-      userInfo: userInfo || { name: 'Anonymous', email: '', targetUniversity: '' },
-      score,
-      total,
-      medianTimeSeconds: Math.round(medianTimeMs / 1000),
-      breakdown: {
-        readingComp: finalHistory.filter(h => h.category === 'Reading Comprehension' && h.correct).length,
-        logic: finalHistory.filter(h => h.category === 'Logical Reasoning' && h.correct).length,
-        knowledge: finalHistory.filter(h => h.category === 'Knowledge & History' && h.correct).length,
-        drawing: finalHistory.filter(h => h.category === 'Drawing & Representation' && h.correct).length,
-        math: finalHistory.filter(h => h.category === 'Math & Physics' && h.correct).length,
-      },
-      history: finalHistory,
-      submittedAt: new Date().toISOString()
+  const handleEmailSubmit = async (email: string) => {
+    if (!computedResults) return;
+
+    setIsSubmitting(true);
+    setStep('submitting');
+
+    try {
+      const res = await fetch('/api/assessment/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          answers: computedResults.answers,
+          domainResults: computedResults.domainResults,
+          weakestDomains: computedResults.weakestDomains,
+          studyPlan: computedResults.studyPlan,
+        }),
+      });
+
+      if (res.ok) {
+        const { token } = await res.json();
+        router.push(`/ru/results/${token}`);
+      } else {
+        // Fallback: save to localStorage and redirect to old route
+        saveFallback(email);
+      }
+    } catch {
+      // Fallback: save to localStorage and redirect to old route
+      saveFallback(email);
+    }
+  };
+
+  const saveFallback = (email: string) => {
+    if (!computedResults) return;
+    const result = {
+      version: 2,
+      email,
+      answers: computedResults.answers,
+      domainResults: computedResults.domainResults,
+      weakestDomains: computedResults.weakestDomains,
+      studyPlan: computedResults.studyPlan,
+      submittedAt: new Date().toISOString(),
     };
-
-    // Send to webhook
-    fetch('https://shumiha.app.n8n.cloud/webhook/f501c972-35ca-4300-83bf-dca634f20fb2', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      keepalive: true
-    }).catch(err => console.error('Failed to send results to webhook:', err));
-
-    // Save state to localStorage
-    const results = {
-      userInfo,
-      history: finalHistory,
-      score,
-      total,
-      medianTimeMs
-    };
-    localStorage.setItem('pontea_results', JSON.stringify(results));
-    router.push('/results');
+    localStorage.setItem('pontea_results_v2', JSON.stringify(result));
+    router.push('/ru/results');
   };
 
   if (step === 'intro') {
-    return <IntroScreen onStart={() => setStep('info')} />;
-  }
-
-  if (step === 'info') {
-    return <UserInfoForm onSubmit={(info) => { setUserInfo(info); setStep('quiz'); setQuestionStartTime(Date.now()); }} />;
-  }
-
-  if (step === 'quiz' && activeQuestion) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+      <IntroScreen
+        onStart={() => {
+          setStep('quiz');
+          setQuestionStartTime(Date.now());
+        }}
+      />
+    );
+  }
+
+  if (step === 'email' && computedResults) {
+    return <PostQuizEmailForm onSubmit={handleEmailSubmit} isLoading={isSubmitting} />;
+  }
+
+  if (step === 'submitting') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
+        <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-gray-500 text-sm">Сохраняем ваши результаты...</p>
+      </div>
+    );
+  }
+
+  if (step === 'quiz' && resolved) {
+    return (
+      <div className="flex flex-col items-center justify-center p-4 py-8">
         <div className="w-full max-w-2xl">
-          <ProgressBar current={currentQuestionIndex + 1} total={QUESTIONS.length} />
-          
-          <QuestionCard 
-            question={activeQuestion}
-            onAnswer={handleOptionSelect}
+          <ProgressBar current={currentIndex + 1} total={TOTAL_QUESTIONS} />
+          <QuestionCard
+            questionId={resolved.questionId}
+            prompt={resolved.prompt}
+            options={resolved.options}
+            label={resolved.label}
+            selectedOptionId={selectedOptionId}
+            onSelect={handleSelect}
             onNext={handleNext}
-            currentNumber={currentQuestionIndex + 1}
-            isFeedbackMode={isFeedbackMode}
-            selectedAnswer={selectedOption}
-            isLastQuestion={currentQuestionIndex === QUESTIONS.length - 1}
+            currentNumber={currentIndex + 1}
+            isLastQuestion={currentIndex === TOTAL_QUESTIONS - 1}
           />
         </div>
       </div>
     );
   }
 
-  return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  return (
+    <div className="flex items-center justify-center py-12">
+      Загрузка...
+    </div>
+  );
 };
 
 export default AssessmentFlow;

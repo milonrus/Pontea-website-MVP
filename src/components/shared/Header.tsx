@@ -104,7 +104,7 @@ const Header: React.FC = () => {
             </Link>
           )}
 
-          <Link href="/assessment">
+          <Link href="/ru/assessment">
             <Button size="sm" variant="primary">Free Assessment</Button>
           </Link>
         </nav>
@@ -157,7 +157,7 @@ const Header: React.FC = () => {
               </Link>
             )}
 
-            <Link href="/assessment" onClick={() => setMobileMenuOpen(false)}>
+            <Link href="/ru/assessment" onClick={() => setMobileMenuOpen(false)}>
               <Button size="lg" variant="primary">Start Assessment</Button>
             </Link>
           </div>

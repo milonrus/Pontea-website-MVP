@@ -182,7 +182,7 @@ const StressManagementTimeline = () => {
                                 </div>
 
                                 <div className="flex justify-center lg:justify-end">
-                                    <Link href="/assessment" className="block w-full max-w-[320px] lg:w-auto">
+                                    <Link href="/ru/assessment" className="block w-full max-w-[320px] lg:w-auto">
                                         <Button
                                             size="lg"
                                             variant="primary"

@@ -12,7 +12,8 @@ import {
   TrendingUp,
   FileText,
   Upload,
-  Loader2
+  Loader2,
+  Palette
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -201,6 +202,15 @@ const AdminDashboard: React.FC = () => {
             </div>
             <span className="font-medium text-gray-900">Test Templates</span>
           </Link>
+          <Link
+            href="/admin/color-playground"
+            className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-all"
+          >
+            <div className="p-2 bg-pink-50 rounded-lg">
+              <Palette className="w-5 h-5 text-pink-600" />
+            </div>
+            <span className="font-medium text-gray-900">Color Playground</span>
+          </Link>
         </div>
 
         {/* Management Cards */}
@@ -244,6 +254,12 @@ const AdminDashboard: React.FC = () => {
             desc="Create and manage timed test templates."
             icon={FileText}
             link="/admin/templates"
+          />
+          <AdminCard
+            title="Color Playground"
+            desc="Explore and compare color palettes for the platform."
+            icon={Palette}
+            link="/admin/color-playground"
           />
         </div>
       </main>
