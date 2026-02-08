@@ -80,12 +80,6 @@ const Header: React.FC = () => {
               </button>
             )
           ))}
-          
-          <Link href="/auth/login">
-            <span className="text-sm font-medium text-gray-600 hover:text-primary transition-colors cursor-pointer">
-              Login
-            </span>
-          </Link>
 
           <Link href="/ru/assessment">
             <Button size="sm" variant="primary">Free Assessment</Button>
@@ -123,10 +117,6 @@ const Header: React.FC = () => {
                 </button>
                )
             ))}
-
-            <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
-              <span className="text-xl font-display font-bold text-primary">Login</span>
-            </Link>
 
             <Link href="/ru/assessment" onClick={() => setMobileMenuOpen(false)}>
               <Button size="lg" variant="primary">Start Assessment</Button>
