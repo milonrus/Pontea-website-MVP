@@ -13,6 +13,8 @@ import ExperienceBanner from '@/components/landing/ExperienceBanner';
 import ThoughtfulPreparation from '@/components/landing/ThoughtfulPreparation';
 import Teachers from '@/components/landing/Teachers';
 import MentorSupport from '@/components/landing/MentorSupport';
+import PlatformShowcaseDemo from '@/components/landing/PlatformShowcaseVariations';
+import ColorSchemeDemo from '@/components/ColorSchemeDemo';
 import { TrendingUp, ArrowUpRight, CheckCircle2, HelpCircle, ArrowRight } from 'lucide-react';
 
 // Progress Tracking Section
@@ -292,9 +294,11 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen bg-white">
       <Header />
       <Hero />
+      <ColorSchemeDemo />
       <ExperienceBanner />
       <Testimonials />
       <StressManagementTimeline />
+      <PlatformShowcaseDemo />
       <Teachers />
       <ThoughtfulPreparation />
       <MentorSupport />

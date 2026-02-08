@@ -50,21 +50,8 @@ const Hero: React.FC = () => {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary leading-[1.05] tracking-tight mb-6">
               Онлайн-школа <br />
               подготовки к{' '}
-              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-primary">
+              <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-primary">
                 ARCHED и TIL-A
-                <svg
-                  className="absolute w-full h-3 -bottom-2 left-0 text-accent"
-                  viewBox="0 0 200 9"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M2 7C26 3 83 2.5 198 4"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                </svg>
               </span>
             </h1>
 
