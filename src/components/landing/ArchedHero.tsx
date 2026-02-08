@@ -58,7 +58,7 @@ const ArchedHero: React.FC = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Link href="/assessment">
+              <Link href="/ru/assessment">
                 <Button
                   size="lg"
                   variant="secondary"

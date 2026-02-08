@@ -71,7 +71,7 @@ const Header: React.FC = () => {
                 {link.label}
               </Link>
             ) : (
-              <button
+              <button 
                 key={link.label}
                 onClick={() => scrollToSection(link.id!)}
                 className="text-sm font-medium text-gray-600 hover:text-primary transition-colors"
@@ -80,9 +80,15 @@ const Header: React.FC = () => {
               </button>
             )
           ))}
+          
+          <Link href="/auth/login">
+            <span className="text-sm font-medium text-gray-600 hover:text-primary transition-colors cursor-pointer">
+              Login
+            </span>
+          </Link>
 
-          <Link href="/consultation">
-            <Button size="sm" variant="primary">Book Consultation</Button>
+          <Link href="/ru/assessment">
+            <Button size="sm" variant="primary">Free Assessment</Button>
           </Link>
         </nav>
 
@@ -108,7 +114,7 @@ const Header: React.FC = () => {
                   {link.label}
                 </Link>
                ) : (
-                <button
+                <button 
                   key={link.label}
                   onClick={() => scrollToSection(link.id!)}
                   className="text-xl font-display font-bold text-primary"
@@ -118,8 +124,12 @@ const Header: React.FC = () => {
                )
             ))}
 
-            <Link href="/consultation" onClick={() => setMobileMenuOpen(false)}>
-              <Button size="lg" variant="primary">Book Consultation</Button>
+            <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+              <span className="text-xl font-display font-bold text-primary">Login</span>
+            </Link>
+
+            <Link href="/ru/assessment" onClick={() => setMobileMenuOpen(false)}>
+              <Button size="lg" variant="primary">Start Assessment</Button>
             </Link>
           </div>
         )}

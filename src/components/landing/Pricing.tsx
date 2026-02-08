@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 import Button from '@/components/shared/Button';
 import PaymentModal from '@/components/shared/PaymentModal';
 import { PlanTier } from '@/types';
@@ -8,12 +9,14 @@ const TIERS: PlanTier[] = [
   {
     name: 'База',
     price: 690,
+    priceRub: 75000,
     features: ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены'],
     missingFeatures: ['Видеолекции', 'Живые семинары', 'Отслеживание прогресса', 'Чат с поддержкой', 'Индивидуальные занятия 1-на-1'],
   },
   {
     name: 'Полный курс',
     price: 1190,
+    priceRub: 130000,
     recommended: true,
     features: ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены', '40+ часов видеолекций', 'Еженедельные живые семинары', 'Мониторинг прогресса', 'Групповой чат поддержки'],
     missingFeatures: ['Персональная программа подготовки', 'Индивидуальные занятия 1-на-1'],
@@ -21,6 +24,7 @@ const TIERS: PlanTier[] = [
   {
     name: 'VIP',
     price: 2750,
+    priceRub: 300000,
     features: ['Все из тарифа «Полный курс»', 'Персональная программа подготовки', 'Индивидуальные занятия с преподавателями 1-на-1', '3 консультации с основателями', 'Приоритетная поддержка'],
     missingFeatures: [],
   }
@@ -32,7 +36,7 @@ const Pricing: React.FC = () => {
   return (
     <section id="pricing" className="section-padding bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-12">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-primary">Выбери свой способ подготовки</h2>
         </div>
 
@@ -52,8 +56,15 @@ const Pricing: React.FC = () => {
               )}
 
               <h3 className="text-2xl font-display font-bold text-primary mb-2">{tier.name}</h3>
-              <div className="flex items-baseline mb-6">
-                <span className="text-4xl font-bold text-primary">€{tier.price}</span>
+              <div className="mb-6">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-primary">€{tier.price}</span>
+                  <span className="text-sm text-gray-400">или</span>
+                  <span className="text-lg font-bold text-green-600">€{Math.round(tier.price / 6)}/мес</span>
+                </div>
+                <div className="text-sm text-gray-500 mt-1">
+                  ≈ {tier.priceRub.toLocaleString('ru-RU')}&nbsp;₽ · рассрочка на 6 мес
+                </div>
               </div>
 
               <Button
@@ -85,6 +96,22 @@ const Pricing: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="max-w-xl mx-auto mt-12">
+          <Link
+            href="/consultation"
+            className="flex items-center gap-4 bg-white rounded-2xl px-6 py-4 border border-gray-200 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 group"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
+              <MessageCircle className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-primary">Нужна помощь с выбором или оплатой?</div>
+              <div className="text-xs text-gray-500">Запишись на бесплатную консультацию</div>
+            </div>
+            <span className="text-primary text-lg flex-shrink-0">&rarr;</span>
+          </Link>
         </div>
       </div>
 

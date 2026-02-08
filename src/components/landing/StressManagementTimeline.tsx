@@ -82,7 +82,7 @@ const WavyPath = () => {
 
 const StressManagementTimeline = () => {
     return (
-        <section className="relative py-24 lg:py-32 overflow-hidden bg-gradient-to-b from-white via-blue-50/20 to-white">
+        <section className="relative pt-16 lg:pt-20 pb-20 overflow-hidden bg-gradient-to-b from-white via-blue-50/20 to-white">
             {/* Animated background elements */}
             <div className="absolute inset-0 pointer-events-none">
                 {/* Gradient orbs representing emotional state */}
@@ -173,7 +173,8 @@ const StressManagementTimeline = () => {
                             <div className="grid gap-7 lg:gap-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
                                 <div className="max-w-3xl text-center lg:text-left mx-auto lg:mx-0">
                                     <p className="text-2xl md:text-3xl lg:text-[2rem] font-display font-bold text-primary leading-tight">
-                                        Оцени свой уровень и начни подготовку без хаоса
+                                        Оцени свой уровень и начни подготовку{' '}
+                                        <span className="whitespace-nowrap">без хаоса</span>
                                     </p>
                                     <p className="text-sm md:text-base text-slate-600 mt-3">
                                         Короткая диагностика даст персональный план на ближайшие 4 месяца
@@ -181,7 +182,7 @@ const StressManagementTimeline = () => {
                                 </div>
 
                                 <div className="flex justify-center lg:justify-end">
-                                    <Link href="/assessment" className="block w-full max-w-[320px] lg:w-auto">
+                                    <Link href="/ru/assessment" className="block w-full max-w-[320px] lg:w-auto">
                                         <Button
                                             size="lg"
                                             variant="primary"

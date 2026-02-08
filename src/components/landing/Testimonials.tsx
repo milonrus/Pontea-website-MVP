@@ -156,7 +156,7 @@ const Testimonials = () => {
   };
 
   return (
-    <section className="pt-0 pb-24 bg-white overflow-hidden">
+    <section className="pt-8 md:pt-12 pb-20 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="flex flex-col md:flex-row justify-center items-end mb-8 gap-6">

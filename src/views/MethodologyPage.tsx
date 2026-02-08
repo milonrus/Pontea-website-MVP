@@ -92,7 +92,7 @@ const MethodologyPage: React.FC = () => {
             <p className="text-xl text-gray-300 leading-relaxed mb-8">
               Preparation isn't just about reading books. It's about mastering the exam's unique constraints: section gating, negative marking, and the rigorous Knowledge Matrix.
             </p>
-            <Link href="/assessment">
+            <Link href="/ru/assessment">
               <Button size="lg" variant="primary">Identify Your Level</Button>
             </Link>
           </div>
@@ -394,7 +394,7 @@ const MethodologyPage: React.FC = () => {
              <p className="text-blue-100 mb-8 max-w-xl mx-auto text-lg">
                 Take our free adaptive assessment to see exactly where you stand on the Knowledge Matrix.
              </p>
-             <Link href="/assessment">
+             <Link href="/ru/assessment">
                 <Button size="lg" className="bg-accent text-primary hover:bg-yellow-400 shadow-xl shadow-accent/20 border-transparent font-bold transform hover:scale-105 transition-transform duration-200">
                     Start Free Assessment
                 </Button>
