@@ -10,10 +10,8 @@ import Pricing from '@/components/landing/Pricing';
 import FAQ from '@/components/landing/FAQ';
 import Button from '@/components/shared/Button';
 import ExperienceBanner from '@/components/landing/ExperienceBanner';
-import ThoughtfulPreparation from '@/components/landing/ThoughtfulPreparation';
-import Teachers from '@/components/landing/Teachers';
-import MentorSupport from '@/components/landing/MentorSupport';
 import PlatformShowcase from '@/components/landing/PlatformShowcaseVariations';
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 
 import { TrendingUp, ArrowUpRight, CheckCircle2, HelpCircle, ArrowRight } from 'lucide-react';
 
@@ -298,9 +296,6 @@ const LandingPage: React.FC = () => {
       <ExperienceBanner />
       <Testimonials />
       <StressManagementTimeline />
-      <Teachers />
-      <ThoughtfulPreparation />
-      <MentorSupport />
       <Pricing />
       <FAQ />
 
@@ -317,8 +312,11 @@ const LandingPage: React.FC = () => {
               <a href="#pricing" className="hover:text-white">Pricing</a>
               <a href="#" className="hover:text-white">Contact</a>
             </div>
-            <div className="text-xs text-blue-300">
-              © 2024 Pontea School.
+            <div className="flex flex-col items-center md:items-end gap-3">
+              <LanguageSwitcher className="bg-white/95" />
+              <div className="text-xs text-blue-300">
+                © 2024 Pontea School.
+              </div>
             </div>
           </div>
         </div>

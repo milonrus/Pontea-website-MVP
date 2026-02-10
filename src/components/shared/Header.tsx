@@ -39,7 +39,6 @@ const Header: React.FC = () => {
   const navLinks = [
     { label: 'The Exam & Method', path: '/methodology', type: 'link' },
     { label: 'Pricing', id: 'pricing', type: 'scroll' },
-    { label: 'Team', id: 'team', type: 'scroll' },
     { label: 'FAQ', id: 'faq', type: 'scroll' },
   ];
 

@@ -4,6 +4,7 @@ import './globals.css';
 import Providers from './providers';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://pontea.school'),
   title: 'PONTEA School | Architecture Exam Prep'
 };
 
