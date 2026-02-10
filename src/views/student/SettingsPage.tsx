@@ -53,7 +53,8 @@ const SettingsPage: React.FC = () => {
       await updateUser(currentUser.id, {
         displayName: displayName.trim(),
         settings: {
-          showResultAfterEach
+          showResultAfterEach,
+          language: userProfile?.settings?.language
         }
       });
       await refreshProfile();

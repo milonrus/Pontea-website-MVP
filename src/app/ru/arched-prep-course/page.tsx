@@ -1,9 +1,7 @@
-"use client";
-
-import LandingPage from '@/views/LandingPage';
+import { redirect } from 'next/navigation';
 
 const ArchedPrepCoursePage = () => {
-  return <LandingPage />;
+  redirect('/ru');
 };
 
 export default ArchedPrepCoursePage;

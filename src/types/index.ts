@@ -1,3 +1,5 @@
+import type { CanonicalRoadmapOutput } from '@/lib/roadmap-generator/types';
+
 // --- USER & AUTH ---
 export type UserRole = 'admin' | 'student';
 
@@ -9,6 +11,7 @@ export interface UserProfile {
   createdAt: string;
   settings: {
     showResultAfterEach: boolean;
+    language?: 'en' | 'ru';
   };
 }
 
@@ -344,12 +347,12 @@ export interface ScoreResult {
 
 // --- ADAPTIVE ASSESSMENT (v2) ---
 export type AssessmentDomain = 'reading_en' | 'logic' | 'drawing_spatial' | 'math' | 'physics' | 'humanities';
-export type DomainGrade = 'A' | 'B' | 'C' | 'D';
+export type DomainGrade = 'A' | 'B' | 'C' | 'D' | 'E';
 
 export interface AssessmentOption {
   id: OptionId;
   text: string;
-  score?: number; // only on self-assessment options (0-3)
+  score?: number; // only on self-assessment options (1-5)
 }
 
 export interface SelfAssessmentQuestion {
@@ -383,7 +386,7 @@ export interface AssessmentAnswer {
   selectedOptionId: OptionId;
   timeMs: number;
   type: 'self_assessment' | 'micro_check';
-  selfAssessmentScore?: number;       // 0-3, for self-assessment
+  selfAssessmentScore?: number;       // 1-5, for self-assessment
   microCheckCorrect?: boolean;         // for micro-check
   microCheckDifficulty?: 'easy' | 'medium' | 'hard';
 }
@@ -391,7 +394,7 @@ export interface AssessmentAnswer {
 export interface DomainResult {
   domain: AssessmentDomain;
   domainLabel: string;
-  score: number;  // 0-3
+  score: number;  // 1-5
   grade: DomainGrade;
   selfAssessmentScore: number;
   microCheckAdjustment?: number;
@@ -405,6 +408,7 @@ export interface AssessmentResult {
   domainResults: DomainResult[];
   weakestDomains: DomainResult[];
   studyPlan: DomainResult[];
+  roadmapOutput?: CanonicalRoadmapOutput;
   submittedAt: string;
 }
 

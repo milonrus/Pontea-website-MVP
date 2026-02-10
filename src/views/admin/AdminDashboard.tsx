@@ -13,7 +13,8 @@ import {
   FileText,
   Upload,
   Loader2,
-  Palette
+  Palette,
+  FlaskConical
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -211,6 +212,15 @@ const AdminDashboard: React.FC = () => {
             </div>
             <span className="font-medium text-gray-900">Color Playground</span>
           </Link>
+          <Link
+            href="/admin/roadmap-playground"
+            className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-all"
+          >
+            <div className="p-2 bg-violet-50 rounded-lg">
+              <FlaskConical className="w-5 h-5 text-violet-600" />
+            </div>
+            <span className="font-medium text-gray-900">Roadmap Playground</span>
+          </Link>
         </div>
 
         {/* Management Cards */}
@@ -260,6 +270,12 @@ const AdminDashboard: React.FC = () => {
             desc="Explore and compare color palettes for the platform."
             icon={Palette}
             link="/admin/color-playground"
+          />
+          <AdminCard
+            title="Roadmap Playground"
+            desc="Test and tune deterministic roadmap generation in playground mode."
+            icon={FlaskConical}
+            link="/admin/roadmap-playground"
           />
         </div>
       </main>

@@ -1,9 +1,21 @@
-"use client";
+import type { Metadata } from 'next';
+import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/en/thank-you',
+    languages: {
+      en: '/en/thank-you',
+      ru: '/ru/thank-you'
+    }
+  }
+};
 
 const ThankYouPageEN = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-2xl mx-auto px-4 py-12">
+    <div className="min-h-screen bg-gray-50">
+      <LocalizedPageTopBar />
+      <div className="max-w-2xl mx-auto px-4 py-12 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="text-6xl mb-6">✓</div>
           <h1 className="text-4xl font-bold text-primary mb-4">

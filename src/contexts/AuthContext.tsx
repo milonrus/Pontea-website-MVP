@@ -31,7 +31,13 @@ const mapUserRow = (row: any): UserProfile => ({
   displayName: row.display_name || 'Student',
   role: row.role || 'student',
   createdAt: row.created_at || new Date().toISOString(),
-  settings: row.settings || { showResultAfterEach: false }
+  settings: {
+    showResultAfterEach: row.settings?.showResultAfterEach ?? false,
+    language:
+      row.settings?.language === 'en' || row.settings?.language === 'ru'
+        ? row.settings.language
+        : undefined
+  }
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

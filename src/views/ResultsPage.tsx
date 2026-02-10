@@ -2,25 +2,20 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { AlertTriangle, BookOpen, ArrowRight, BarChart3 } from 'lucide-react';
+import { BarChart3, ArrowRight } from 'lucide-react';
 import Button from '@/components/shared/Button';
-import { AssessmentResult, DomainGrade, DomainResult } from '@/types';
+import Header from '@/components/shared/Header';
+import { AssessmentResult, DomainGrade } from '@/types';
+import RoadmapMatrixView from '@/components/shared/RoadmapMatrixView';
 
 const GRADE_CONFIG: Record<DomainGrade, { label: string; color: string; barColor: string; bg: string }> = {
   A: { label: 'Начальный', color: 'text-red-600', barColor: 'bg-red-500', bg: 'bg-red-50' },
   B: { label: 'Базовый', color: 'text-orange-600', barColor: 'bg-orange-400', bg: 'bg-orange-50' },
   C: { label: 'Средний', color: 'text-yellow-600', barColor: 'bg-yellow-400', bg: 'bg-yellow-50' },
-  D: { label: 'Сильный', color: 'text-green-600', barColor: 'bg-green-500', bg: 'bg-green-50' },
-};
-
-const WEAK_DOMAIN_MESSAGES: Record<string, string> = {
-  reading_en: 'Английский — основа экзамена. Начните с ежедневного чтения академических текстов.',
-  logic: 'Логика тренируется быстро, но требует системного подхода. Мы подберем задачи под ваш уровень.',
-  drawing_spatial: 'Пространственное мышление — навык, который развивается с практикой. Важно начать с основ.',
-  math: 'Математика требует повторения базы и наработки скорости. Мы выстроим прогрессию от простого к сложному.',
-  physics: 'Физика — это формулы + логика применения. Начнем с ключевых законов и типовых задач.',
-  humanities: 'Гуманитарный блок — это запоминание + понимание контекста. Структурируем материал по эпохам.',
+  D: { label: 'Продвинутый', color: 'text-blue-600', barColor: 'bg-blue-400', bg: 'bg-blue-50' },
+  E: { label: 'Сильный', color: 'text-green-600', barColor: 'bg-green-500', bg: 'bg-green-50' },
 };
 
 interface ResultsPageProps {
@@ -43,12 +38,14 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
 
   if (!results) return null;
 
-  const { domainResults, weakestDomains, studyPlan } = results;
+  const { domainResults, roadmapOutput } = results;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <main className="pt-12 max-w-3xl mx-auto px-4 sm:px-6">
-        {/* Header */}
+    <div className="min-h-screen bg-white flex flex-col">
+      <Header />
+
+      <main className="flex-1 pt-28 pb-16 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+        {/* Page heading */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -58,7 +55,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
             Ваш результат готов
           </h1>
           <p className="text-lg text-gray-500">
-            Ниже — ваш текущий уровень по каждой теме экзамена и план действий.
+            Ниже — ваш текущий уровень по каждой теме экзамена.
           </p>
         </motion.div>
 
@@ -67,7 +64,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 mb-8"
+          className="bg-gray-50 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 mb-8"
         >
           <h2 className="text-xl font-bold text-primary mb-6 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-accent" />
@@ -77,14 +74,14 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
           <div className="space-y-4">
             {domainResults.map((dr) => {
               const config = GRADE_CONFIG[dr.grade];
-              const widthPercent = ((dr.score + 1) / 4) * 100; // 0→25%, 1→50%, 2→75%, 3→100%
+              const widthPercent = (dr.score / 5) * 100;
               return (
                 <div key={dr.domain} className="flex items-center gap-4">
                   <div className="w-44 shrink-0">
                     <div className="text-sm font-semibold text-primary">{dr.domainLabel}</div>
                   </div>
                   <div className="flex-1">
-                    <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${widthPercent}%` }}
@@ -93,7 +90,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
                       />
                     </div>
                   </div>
-                  <div className={`w-20 text-right text-sm font-bold ${config.color}`}>
+                  <div className={`w-28 text-right text-sm font-bold ${config.color}`}>
                     {dr.grade} — {config.label}
                   </div>
                 </div>
@@ -101,98 +98,38 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
             })}
           </div>
 
-          <div className="mt-6 flex gap-3 text-xs text-gray-400">
+          <div className="mt-6 flex flex-wrap gap-3 text-xs text-gray-400">
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500 inline-block" /> A — Начальный</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-orange-400 inline-block" /> B — Базовый</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-400 inline-block" /> C — Средний</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500 inline-block" /> D — Сильный</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-400 inline-block" /> D — Продвинутый</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500 inline-block" /> E — Сильный</span>
           </div>
         </motion.div>
 
-        {/* Block 2: Weakest Areas */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 mb-8"
-        >
-          <h2 className="text-xl font-bold text-primary mb-6 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-accent" />
-            2 главных слабых места
-          </h2>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            {weakestDomains.map((wd) => {
-              const config = GRADE_CONFIG[wd.grade];
-              return (
-                <div
-                  key={wd.domain}
-                  className={`p-5 rounded-xl border ${config.bg} border-gray-100`}
-                >
-                  <div className={`text-lg font-bold ${config.color} mb-1`}>
-                    {wd.domainLabel}
-                  </div>
-                  <div className="text-xs font-semibold text-gray-400 uppercase mb-3">
-                    Уровень {wd.grade} — {config.label}
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {WEAK_DOMAIN_MESSAGES[wd.domain]}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* Block 3: Study Plan */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 mb-8"
-        >
-          <h2 className="text-xl font-bold text-primary mb-2 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-accent" />
-            Что делать дальше
-          </h2>
-          <p className="text-gray-500 text-sm mb-6">
-            Начните с этих модулей курса в таком порядке:
-          </p>
-
-          <ol className="space-y-3">
-            {studyPlan.map((sp, idx) => {
-              const config = GRADE_CONFIG[sp.grade];
-              const isPriority = sp.grade === 'A' || sp.grade === 'B';
-              const isMaintenance = sp.grade === 'D';
-
-              return (
-                <li key={sp.domain} className="flex items-center gap-4">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                    isPriority ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {idx + 1}
-                  </span>
-                  <div className="flex-1">
-                    <span className="font-semibold text-primary">{sp.domainLabel}</span>
-                    {isPriority && (
-                      <span className="ml-2 text-xs font-bold text-red-500 uppercase">Приоритет</span>
-                    )}
-                    {isMaintenance && (
-                      <span className="ml-2 text-xs font-bold text-green-600 uppercase">Поддержание и скорость</span>
-                    )}
-                  </div>
-                  <span className={`text-sm font-bold ${config.color}`}>{sp.grade}</span>
-                </li>
-              );
-            })}
-          </ol>
-        </motion.div>
+        {/* Roadmap Matrix View */}
+        {roadmapOutput && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-8"
+          >
+            <h2 className="text-xl font-bold text-primary mb-2">
+              Ваш план подготовки по спринтам
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Прокрутите вправо, чтобы увидеть все спринты →
+            </p>
+            <RoadmapMatrixView roadmap={roadmapOutput} />
+          </motion.div>
+        )}
 
         {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.3 }}
           className="flex flex-col sm:flex-row gap-4"
         >
           <Button size="lg" fullWidth className="shadow-lg shadow-accent/20 group">
@@ -204,6 +141,26 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
           </Button>
         </motion.div>
       </main>
+
+      {/* Footer — matches landing page */}
+      <footer className="bg-primary text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+              <div className="text-2xl font-display font-bold mb-2">PONTEA</div>
+              <p className="text-blue-200 text-sm">Architecture Entrance Prep</p>
+            </div>
+            <div className="flex gap-8 text-sm text-blue-200">
+              <Link href="/methodology" className="hover:text-white transition-colors">Methodology</Link>
+              <Link href="/ru" className="hover:text-white transition-colors">Home</Link>
+              <Link href="/ru/assessment" className="hover:text-white transition-colors">Assessment</Link>
+            </div>
+            <div className="text-xs text-blue-300">
+              &copy; 2024 Pontea School.
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

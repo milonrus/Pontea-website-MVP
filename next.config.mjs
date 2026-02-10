@@ -6,13 +6,13 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/ru',
-        destination: '/ru/arched-prep-course',
+        source: '/ru/arched-prep-course',
+        destination: '/ru',
         permanent: false, // 302 redirect (temporary)
       },
       {
-        source: '/en',
-        destination: '/en/arched-prep-course',
+        source: '/en/arched-prep-course',
+        destination: '/en',
         permanent: false, // 302 redirect (temporary)
       },
     ];

@@ -16,18 +16,19 @@ const ALL_DOMAINS: AssessmentDomain[] = [
 ];
 
 export function scoreToGrade(score: number): DomainGrade {
-  if (score <= 0) return 'A';
-  if (score === 1) return 'B';
-  if (score === 2) return 'C';
-  return 'D';
+  if (score <= 1) return 'A';
+  if (score === 2) return 'B';
+  if (score === 3) return 'C';
+  if (score === 4) return 'D';
+  return 'E';
 }
 
 export function getDifficultyForScore(
   selfScore: number
 ): 'easy' | 'medium' | 'hard' {
-  if (selfScore <= 1) return 'easy';   // A or B
-  if (selfScore === 2) return 'medium'; // C
-  return 'hard';                        // D
+  if (selfScore <= 2) return 'easy';   // A or B
+  if (selfScore === 3) return 'medium'; // C
+  return 'hard';                        // D or E
 }
 
 export function computeDomainResults(
@@ -41,7 +42,7 @@ export function computeDomainResults(
       (a) => a.domain === domain && a.type === 'micro_check'
     );
 
-    const selfScore = selfAnswer?.selfAssessmentScore ?? 0;
+    const selfScore = selfAnswer?.selfAssessmentScore ?? 3;
     let finalScore = selfScore;
     let adjustment: number | undefined;
 
@@ -55,16 +56,16 @@ export function computeDomainResults(
         finalScore = selfScore - 1;
       }
 
-      // D-confirmation rule: if user said D (score 3) but got micro-check wrong,
-      // cap at C (score 2)
-      if (selfScore === 3 && !microAnswer.microCheckCorrect) {
-        finalScore = 2;
+      // High-confidence rule: if user said 5 but got micro-check wrong,
+      // cap at 4
+      if (selfScore === 5 && !microAnswer.microCheckCorrect) {
+        finalScore = 4;
         adjustment = -1;
       }
     }
 
-    // Clamp 0-3
-    finalScore = Math.max(0, Math.min(3, finalScore));
+    // Clamp 1-5
+    finalScore = Math.max(1, Math.min(5, finalScore));
 
     return {
       domain,
@@ -84,4 +85,22 @@ export function getWeakestDomains(results: DomainResult[]): DomainResult[] {
 
 export function generateStudyPlan(results: DomainResult[]): DomainResult[] {
   return [...results].sort((a, b) => a.score - b.score);
+}
+
+export function domainResultsToLevelsBySection(
+  domainResults: DomainResult[]
+): Record<string, number> {
+  const get = (domain: AssessmentDomain) =>
+    domainResults.find((d) => d.domain === domain)?.score ?? 3;
+
+  return {
+    'Text Comprehension': get('reading_en'),
+    'Logical reasoning': get('logic'),
+    'Drawing & Representation': get('drawing_spatial'),
+    'Math': get('math'),
+    'Physics': get('physics'),
+    'General culture': get('humanities'),
+    'History': get('humanities'),
+    'History of Art & Architecture': get('humanities'),
+  };
 }

@@ -5,9 +5,14 @@ import { Menu, X, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Button from './Button';
+import LanguageSwitcher from './LanguageSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  showLanguageSwitcher?: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({ showLanguageSwitcher = true }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -41,7 +46,6 @@ const Header: React.FC = () => {
   const navLinks = [
     { label: 'The Exam & Method', path: '/methodology', type: 'link' },
     { label: 'Pricing', id: 'pricing', type: 'scroll' },
-    { label: 'Team', id: 'team', type: 'scroll' },
     { label: 'FAQ', id: 'faq', type: 'scroll' },
   ];
 
@@ -82,6 +86,8 @@ const Header: React.FC = () => {
               </button>
             )
           ))}
+
+          {showLanguageSwitcher && <LanguageSwitcher />}
           
           {isAdmin && (
             <Link href="/admin" className="text-sm font-bold text-primary hover:text-accent transition-colors">
@@ -120,6 +126,8 @@ const Header: React.FC = () => {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="fixed inset-0 bg-white z-40 flex flex-col items-center justify-center gap-8 md:hidden">
+            {showLanguageSwitcher && <LanguageSwitcher />}
+
             {navLinks.map((link) => (
                link.type === 'link' ? (
                 <Link

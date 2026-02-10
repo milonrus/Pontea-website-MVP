@@ -66,7 +66,13 @@ const mapUser = (row: any): UserProfile => ({
   displayName: row.display_name || 'Student',
   role: row.role,
   createdAt: row.created_at,
-  settings: row.settings || { showResultAfterEach: false }
+  settings: {
+    showResultAfterEach: row.settings?.showResultAfterEach ?? false,
+    language:
+      row.settings?.language === 'en' || row.settings?.language === 'ru'
+        ? row.settings.language
+        : undefined
+  }
 });
 
 const mapStudentProgress = (row: any): StudentProgress => ({
