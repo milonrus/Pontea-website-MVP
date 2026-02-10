@@ -30,6 +30,7 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=... # optional, server-side admin tasks
 GEMINI_API_KEY=...            # optional, image parsing
+SEO_LOCK=true                 # default safety mode (noindex + robots disallow)
 ```
 
 ### 3) Run the dev server
@@ -38,6 +39,17 @@ npm run dev
 ```
 
 App will be available at `http://localhost:3000`.
+
+### SEO Lock Mode (Temporary)
+- Lock mode is **enabled by default** unless you explicitly set `SEO_LOCK=false`.
+- When lock mode is on:
+  - `X-Robots-Tag: noindex, nofollow, noarchive` is added on site responses.
+  - `robots.txt` disallows all crawlers.
+  - `sitemap.xml` is blocked.
+- When you're ready to launch SEO, set:
+```bash
+SEO_LOCK=false
+```
 
 ## Scripts
 ```bash
