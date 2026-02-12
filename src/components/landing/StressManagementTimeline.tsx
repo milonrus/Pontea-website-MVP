@@ -146,7 +146,7 @@ const StressManagementTimeline: React.FC<StressManagementTimelineProps> = ({ loc
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.1 }}
-                        className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary mb-4"
+                        className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary mb-4"
                     >
                         {t.h2}
                     </motion.h2>
@@ -284,7 +284,7 @@ const WorryCard = ({
     return (
         <div
             className={`
-                relative bg-white rounded-2xl p-8 border-2 shadow-sm
+                relative bg-white rounded-2xl p-5 sm:p-8 border-2 shadow-sm
                 ${getBorderColor(worry.color)}
             `}
         >
@@ -294,7 +294,7 @@ const WorryCard = ({
             </div>
 
             {/* Image */}
-            <div className="relative h-56 mb-4 rounded-xl overflow-hidden">
+            <div className="relative h-44 sm:h-56 mb-4 rounded-xl overflow-hidden">
                 <img
                     src={worry.image}
                     alt={worry.tag}

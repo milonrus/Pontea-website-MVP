@@ -91,7 +91,7 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
               {t.badge}
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary leading-[1.05] tracking-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary leading-[1.05] tracking-tight mb-6">
               {t.h1Line1} <br />
               {locale === 'en' ? (
                 <>
@@ -111,12 +111,12 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
               )}
             </h1>
 
-            <p className="text-xl text-slate-600 mb-10 max-w-xl leading-relaxed">
+            <p className="text-lg sm:text-xl text-slate-600 mb-10 max-w-xl leading-relaxed">
               {t.subtitle}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-8 max-w-2xl items-start">
-              <div className="w-full sm:w-[360px]">
+              <div className="w-full sm:w-auto sm:min-w-[280px]">
                 <Link href={`${localePrefix}/assessment`} className="block">
                   <Button
                     size="lg"
@@ -131,7 +131,7 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
                 </p>
               </div>
 
-              <div className="w-full sm:w-[260px]">
+              <div className="w-full sm:w-auto sm:min-w-[220px]">
                 <Link href="#pricing" className="block">
                   <Button
                     size="lg"
@@ -149,7 +149,7 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
           <div className="relative lg:h-[600px] flex items-center justify-center">
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-100/50 to-transparent rounded-[3rem] -rotate-3 transform scale-90" />
 
-            <div className="grid grid-cols-2 gap-5 relative z-10 w-full max-w-lg">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 relative z-10 w-full max-w-lg">
               <motion.div
                 className="space-y-5 pt-12"
                 initial={{ y: 30, opacity: 0 }}

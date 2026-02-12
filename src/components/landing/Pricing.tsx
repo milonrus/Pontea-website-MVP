@@ -83,7 +83,7 @@ const Pricing: React.FC<PricingProps> = ({ locale = 'ru' }) => {
               key={tier.name}
               className={`
                 relative bg-white rounded-2xl p-8 transition-all duration-300
-                ${tier.recommended ? 'border-2 border-accent shadow-xl scale-105 z-10' : 'border border-gray-200 shadow-sm hover:shadow-lg'}
+                ${tier.recommended ? 'border-2 border-accent shadow-xl md:scale-105 z-10' : 'border border-gray-200 shadow-sm hover:shadow-lg'}
               `}
             >
               {tier.recommended && (
