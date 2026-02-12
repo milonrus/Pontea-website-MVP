@@ -59,7 +59,7 @@ const TestimonialCard = ({ testimonial, index }: { testimonial: Testimonial, ind
 
   return (
     <div
-      className="relative w-[340px] h-[480px] perspective-1000 snap-center flex-shrink-0 group cursor-pointer"
+      className="relative w-[calc(100vw-3rem)] sm:w-[340px] h-[440px] sm:h-[480px] perspective-1000 snap-center flex-shrink-0 group cursor-pointer"
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <motion.div

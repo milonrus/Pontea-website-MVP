@@ -28,7 +28,7 @@ const ExperienceBanner: React.FC<ExperienceBannerProps> = ({ locale = 'ru' }) =>
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
             >
-                <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10 opacity-80 mb-10 md:mb-12">
+                <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 md:gap-10 opacity-80 mb-10 md:mb-12">
                     {[
                         { name: 'Politecnico di Milano', src: '/universities/polimi.png' },
                         { name: 'University of Bologna', src: '/universities/unibo.png' },
@@ -54,7 +54,7 @@ const ExperienceBanner: React.FC<ExperienceBannerProps> = ({ locale = 'ru' }) =>
                     ))}
                 </div>
 
-                <h2 className="text-3xl md:text-5xl font-display font-bold text-primary leading-tight mb-6">
+                <h2 className="text-2xl sm:text-3xl md:text-5xl font-display font-bold text-primary leading-tight mb-6">
                     {locale === 'en' ? t.h2 : (
                         <>
                             5 лет готовим к поступлению

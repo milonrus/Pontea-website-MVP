@@ -116,12 +116,12 @@ const FAQ: React.FC<FAQProps> = ({ locale = 'ru' }) => {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_STRUCTURED_DATA) }}
       />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-primary text-xs font-bold uppercase tracking-wider mb-4 border border-blue-100">
             <HelpCircle className="w-3 h-3" />
             {t.badge}
           </div>
-          <h2 id="faq-heading" className="text-3xl md:text-5xl font-display font-bold text-primary mb-6">
+          <h2 id="faq-heading" className="text-2xl sm:text-3xl md:text-5xl font-display font-bold text-primary mb-6">
             {t.heading}
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">

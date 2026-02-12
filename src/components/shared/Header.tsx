@@ -133,7 +133,7 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden z-50 p-2 text-primary"
+          className="md:hidden z-50 p-2 min-w-11 min-h-11 text-primary"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
           {mobileMenuOpen ? <X /> : <Menu />}
@@ -141,14 +141,14 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="fixed inset-0 bg-white z-40 flex flex-col items-center justify-center gap-8 md:hidden">
+          <div className="fixed inset-0 bg-white z-40 flex flex-col items-center justify-center gap-6 md:hidden">
             {navLinks.map((link) => (
                link.type === 'link' ? (
                 <Link
                   key={link.label}
                   href={link.path!}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-xl font-display font-bold text-primary"
+                  className="text-xl font-display font-bold text-primary min-h-11 px-4 flex items-center"
                 >
                   {link.label}
                 </Link>
@@ -156,7 +156,7 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
                 <button
                   key={link.label}
                   onClick={() => scrollToSection(link.id!)}
-                  className="text-xl font-display font-bold text-primary"
+                  className="text-xl font-display font-bold text-primary min-h-11 px-4 flex items-center"
                 >
                   {link.label}
                 </button>

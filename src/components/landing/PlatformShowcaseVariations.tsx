@@ -164,7 +164,7 @@ const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({ locale = 'ru' }) =>
   };
 
   return (
-    <section ref={sectionRef} className="relative py-24 overflow-hidden bg-gradient-to-br from-[#f8faff] via-white to-[#fffbf0]">
+    <section ref={sectionRef} className="relative py-16 sm:py-20 md:py-24 overflow-hidden bg-gradient-to-br from-[#f8faff] via-white to-[#fffbf0]">
       {/* Animated Background Orbs */}
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
@@ -196,7 +196,7 @@ const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({ locale = 'ru' }) =>
           transition={{ duration: 0.7 }}
           className="text-center mb-8"
         >
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold text-primary mb-0 leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-display font-bold text-primary mb-0 leading-tight">
             {locale === 'en' ? 'Everything you need to get in, in one platform' : (
               <>
                 Все необходимое для поступления<br />
@@ -217,7 +217,7 @@ const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({ locale = 'ru' }) =>
         <SelectorPills activeIndex={activeIndex} onSelect={handleCardClick} tabs={PLATFORM_TABS} />
 
         {/* 3D Card Stack */}
-        <div className="relative h-[600px] md:h-[700px] flex items-center justify-center perspective-[2000px]">
+        <div className="relative h-[420px] sm:h-[500px] md:h-[700px] flex items-center justify-center perspective-[2000px]">
           {PLATFORM_TABS.map((tab, index) => {
             const offset = index - activeIndex;
             const absOffset = Math.abs(offset);
@@ -229,7 +229,7 @@ const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({ locale = 'ru' }) =>
                 className="absolute w-full max-w-4xl cursor-pointer"
                 initial={false}
                 animate={{
-                  x: offset * 120,
+                  x: offset * 70,
                   z: -absOffset * 150,
                   rotateY: offset * 8,
                   scale: isActive ? 1 : 0.85 - absOffset * 0.05,
