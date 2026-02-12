@@ -14,24 +14,24 @@ interface Testimonial {
 const getTestimonials = (locale: 'en' | 'ru' = 'ru'): Testimonial[] => [
   {
     id: 1,
-    name: "Рената",
-    role: "PoliMi Student",
+    name: locale === 'en' ? "Renata" : "Рената",
+    role: locale === 'en' ? "PoliMi Student" : "Студентка PoliMi",
     image: "/testimonials/renata.jpg",
     quote: locale === 'en' ? "The courses were organized with incredible quality and convenience — interactive platform, engaging lectures, and a large number of practical exercises. Beyond the vast amount of material, the courses also helped greatly with motivation. It's so much easier to prepare when you know you're not doing it alone." : "Сами курсы были организованы невероятно качественно и удобно, с интерактивной платформой, очень интересными лекциями и большим количеством практических заданий. Кроме огромного объема материалов, курсы сильно помогали и с мотивацией. Готовиться в разы легче, когда знаешь, что готовишься не один.",
     rating: 5
   },
   {
     id: 2,
-    name: "Дарья",
-    role: "PoliMi Graduate",
+    name: locale === 'en' ? "Daria" : "Дарья",
+    role: locale === 'en' ? "PoliMi Graduate" : "Выпускница PoliMi",
     image: "/testimonials/darya.jpg",
     quote: locale === 'en' ? "Girls, thank you so much! I had been preparing before the course, but it was very difficult because of the Italian. The webinars and notes are super structured — even I, with terrible history knowledge, was able to understand and learn a lot!!! Thank you so much for this course!!!!!" : "Девочки, спасибо большое! Я готовилась и до курса, но было очень тяжело из-за итальянского. Вебинары и конспекты супер структурированные и даже я, с ужасными знаниями по истории, смогла разобраться и многое выучить!!! Спасибо большое за этот курс!!!!!",
     rating: 5
   },
   {
     id: 3,
-    name: "Милана",
-    role: "PoliMi Student",
+    name: locale === 'en' ? "Milana" : "Милана",
+    role: locale === 'en' ? "PoliMi Student" : "Студентка PoliMi",
     image: "/testimonials/milana.jpg",
     quote: locale === 'en' ? "The most valuable thing is being immediately immersed in the vocabulary, the language, and the atmosphere — without any acclimatization time. But the most useful aspect is the consistent, repeated practice throughout the entire course, rather than cramming everything into one month." : "Самое полезное это сразу здесь и сейчас окунаться в ту лексику, в язык и атмосферу без такого времени на акклиматизацию. Но самое полезное, что это постоянные повторяющиеся действия по подготовке в течение всего курса, а не за 1 месяц весь объем.",
     rating: 5
@@ -39,15 +39,15 @@ const getTestimonials = (locale: 'en' | 'ru' = 'ru'): Testimonial[] => [
   {
     id: 4,
     name: "Rusty",
-    role: "PoliMi Student",
+    role: locale === 'en' ? "PoliMi Student" : "Студент PoliMi",
     image: "/testimonials/rusty.jpg",
     quote: "This course is an essential tool in any effort to prepare for the entry exam. It structured the process and syllabus in a way I couldn't, and gave me all the knowledge and confidence to pass the test. Shoutout to the caring and supportive teachers!",
     rating: 5
   },
   {
     id: 5,
-    name: "Марина",
-    role: "PoliMi Student",
+    name: locale === 'en' ? "Marina" : "Марина",
+    role: locale === 'en' ? "PoliMi Student" : "Студентка PoliMi",
     image: "/testimonials/marina.png",
     quote: locale === 'en' ? "As for the PoliMi preparation course, I can say that absolutely everything was useful. Every subject and topic gave me new knowledge and skills that I use in my studies and in life. I plan to continue with a Master's degree and then a PhD." : "Что касается курса подготовки в ПолиМи, могу сказать, что абсолютно все было полезно. Каждый предмет и каждая тема дали мне новые знания и навыки, которые я использую в учебе и в жизни. В планах — продолжить обучение на магистратуре и затем на PhD.",
     rating: 5
