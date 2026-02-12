@@ -6,3 +6,4 @@ export { default as NowNextFlexBoardView } from '@/components/admin/roadmap/view
 export { default as MinimalModulesView } from '@/components/admin/roadmap/views/MinimalModulesView';
 export { default as SimpleModulesView } from '@/components/admin/roadmap/views/SimpleModulesView';
 export { default as CommandCenterRoadmapView } from '@/components/admin/roadmap/views/CommandCenterRoadmapView';
+export { default as CleanSprintView } from '@/components/admin/roadmap/views/CleanSprintView';

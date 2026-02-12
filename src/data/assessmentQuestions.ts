@@ -6,12 +6,12 @@ import {
 } from '@/types';
 
 export const DOMAIN_LABELS: Record<AssessmentDomain, string> = {
-  reading_en: 'Английский / Чтение',
+  reading_en: 'Чтение',
   logic: 'Логика',
-  drawing_spatial: 'Черчение / Пространство',
+  drawing_spatial: 'Черчение',
   math: 'Математика',
   physics: 'Физика',
-  humanities: 'Гуманитарный блок',
+  humanities: 'История и культура',
 };
 
 export const SELF_ASSESSMENT_QUESTIONS: SelfAssessmentQuestion[] = [

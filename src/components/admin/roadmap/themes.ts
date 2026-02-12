@@ -47,6 +47,11 @@ export const ROADMAP_VIEW_OPTIONS: Array<{ mode: RoadmapViewMode; title: string;
     mode: 'command_center',
     title: 'Command Center',
     hint: 'Premium sprint navigator with high-signal execution board'
+  },
+  {
+    mode: 'clean_sprint',
+    title: 'Clean Sprint',
+    hint: 'Minimal sprint cards — just subjects and modules'
   }
 ];
 
@@ -117,6 +122,23 @@ export const ROADMAP_THEMES: Record<RoadmapViewMode, RoadmapThemeDefinition> = {
         'radial-gradient(900px 360px at -6% -16%, rgba(148,163,184,0.14), transparent 56%), radial-gradient(920px 320px at 105% -8%, rgba(186,230,253,0.16), transparent 60%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
       ['--roadmap-tone-strong' as string]: '#334155',
       ['--roadmap-tone-mid' as string]: '#64748b',
+      ['--roadmap-tone-soft' as string]: '#94a3b8'
+    }
+  },
+  clean_sprint: {
+    mode: 'clean_sprint',
+    title: 'Clean Sprint',
+    subtitle: 'Minimal sprint cards with only subjects and their modules.',
+    headingClass: manrope.className,
+    bodyClass: manrope.className,
+    wrapperClass:
+      'rounded-[30px] border border-slate-200 shadow-[0_12px_36px_-24px_rgba(15,23,42,0.15)] overflow-hidden',
+    cardClass: 'bg-white border border-slate-100',
+    chipClass: 'bg-slate-50 text-slate-800 border border-slate-200',
+    style: {
+      background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+      ['--roadmap-tone-strong' as string]: '#1e293b',
+      ['--roadmap-tone-mid' as string]: '#475569',
       ['--roadmap-tone-soft' as string]: '#94a3b8'
     }
   },

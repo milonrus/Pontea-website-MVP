@@ -4,7 +4,8 @@ export type RoadmapViewMode =
   | 'results_matrix'
   | 'rhythm_heatboard'
   | 'simple_modules'
-  | 'command_center';
+  | 'command_center'
+  | 'clean_sprint';
 
 export type VisualPhaseId = 'launch' | 'build' | 'focus' | 'final';
 

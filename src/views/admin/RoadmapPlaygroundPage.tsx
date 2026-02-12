@@ -5,6 +5,7 @@ import { buildVisualRoadmapModel, formatExamPartLabel } from '@/components/admin
 import { getRoadmapTheme, ROADMAP_VIEW_OPTIONS } from '@/components/admin/roadmap/themes';
 import { RoadmapViewMode } from '@/components/admin/roadmap/types';
 import {
+  CleanSprintView,
   CommandCenterRoadmapView,
   RhythmHeatboardView,
   SimpleModulesView
@@ -370,6 +371,7 @@ const RoadmapPlaygroundPage: React.FC = () => {
     if (mode === 'rhythm_heatboard') return <RhythmHeatboardView {...sharedProps} />;
     if (mode === 'simple_modules') return <SimpleModulesView {...sharedProps} />;
     if (mode === 'command_center') return <CommandCenterRoadmapView {...sharedProps} />;
+    if (mode === 'clean_sprint') return <CleanSprintView {...sharedProps} />;
     return <RoadmapMatrixView roadmap={roadmap} />;
   };
 

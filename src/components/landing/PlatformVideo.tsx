@@ -7,9 +7,10 @@ interface PlatformVideoProps {
   isActive: boolean;
   className?: string;
   resetKey?: number;
+  onEnded?: () => void;
 }
 
-const PlatformVideo: React.FC<PlatformVideoProps> = ({ src, isActive, className = '', resetKey }) => {
+const PlatformVideo: React.FC<PlatformVideoProps> = ({ src, isActive, className = '', resetKey, onEnded }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -63,11 +64,11 @@ const PlatformVideo: React.FC<PlatformVideoProps> = ({ src, isActive, className 
         ref={videoRef}
         autoPlay
         muted
-        loop
         playsInline
         preload={isActive ? 'auto' : 'none'}
         className="w-full h-full object-contain"
         src={`${src}.webm`}
+        onEnded={onEnded}
       />
     </div>
   );

@@ -40,20 +40,20 @@ const PLATFORM_TABS: PlatformTab[] = [
     icon: <CheckSquare className="w-5 h-5" />,
     videoSrc: '/platform/practice-exams'
   },
-  {
-    id: 'saturday-school',
-    title: 'Субботняя школа',
-    description: 'Онлайн занятия для обсуждения самых интересных тем и ответов на любые вопросы',
-    icon: <Users className="w-5 h-5" />,
-    videoSrc: '/platform/saturday-school'
-  },
-  {
-    id: 'mentorship',
-    title: 'Менторство',
-    description: 'Разрабатываем персональный план подготовки. Помогаем с мотивацией и следим за прогрессом!',
-    icon: <Heart className="w-5 h-5" />,
-    videoSrc: '/platform/mentorship'
-  }
+  // {
+  //   id: 'saturday-school',
+  //   title: 'Субботняя школа',
+  //   description: 'Онлайн занятия для обсуждения самых интересных тем и ответов на любые вопросы',
+  //   icon: <Users className="w-5 h-5" />,
+  //   videoSrc: '/platform/saturday-school'
+  // },
+  // {
+  //   id: 'mentorship',
+  //   title: 'Менторство',
+  //   description: 'Разрабатываем персональный план подготовки. Помогаем с мотивацией и следим за прогрессом!',
+  //   icon: <Heart className="w-5 h-5" />,
+  //   videoSrc: '/platform/mentorship'
+  // }
 ];
 
 // ============================================================================
@@ -117,15 +117,11 @@ const SelectorPills: React.FC<SelectorProps> = ({ activeIndex, onSelect, tabs })
 
 const PlatformShowcase: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isAutoRotating, setIsAutoRotating] = useState(false);
+  const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
   const [videoResetKey, setVideoResetKey] = useState(0);
-  const progressRef = useRef<number>(0);
-  const animFrameRef = useRef<number>(0);
-  const lastTickRef = useRef<number>(0);
   const sectionRef = useRef<HTMLElement>(null);
   const hasEnteredView = useRef(false);
-
-  const AUTO_ROTATE_MS = 4500;
+  const manualOverrideRef = useRef(false);
 
   // IntersectionObserver: start carousel only when section enters viewport (once)
   useEffect(() => {
@@ -138,7 +134,7 @@ const PlatformShowcase: React.FC = () => {
           hasEnteredView.current = true;
           setActiveIndex(0);
           setVideoResetKey((k) => k + 1);
-          setIsAutoRotating(true);
+          setIsAutoAdvancing(true);
           observer.disconnect();
         }
       },
@@ -149,37 +145,16 @@ const PlatformShowcase: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!isAutoRotating) {
-      progressRef.current = 0;
-      return;
-    }
-
-    lastTickRef.current = performance.now();
-    progressRef.current = 0;
-
-    const tick = (now: number) => {
-      const delta = now - lastTickRef.current;
-      progressRef.current += delta;
-      lastTickRef.current = now;
-
-      if (progressRef.current >= AUTO_ROTATE_MS) {
-        setActiveIndex((prev) => (prev + 1) % PLATFORM_TABS.length);
-        progressRef.current = 0;
-      }
-
-      animFrameRef.current = requestAnimationFrame(tick);
-    };
-
-    animFrameRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animFrameRef.current);
-  }, [isAutoRotating, activeIndex]);
+  const handleVideoEnded = () => {
+    if (manualOverrideRef.current) return;
+    setActiveIndex((prev) => (prev + 1) % PLATFORM_TABS.length);
+  };
 
   const handleCardClick = (index: number) => {
     setActiveIndex(index);
-    setIsAutoRotating(false);
-    progressRef.current = 0;
-    setTimeout(() => setIsAutoRotating(true), 10000);
+    manualOverrideRef.current = true;
+    // Re-enable auto-advance after this video finishes
+    setTimeout(() => { manualOverrideRef.current = false; }, 500);
   };
 
   return (
@@ -274,7 +249,7 @@ const PlatformShowcase: React.FC = () => {
 
                     {/* Platform Video */}
                     <div className="absolute inset-0 pt-12">
-                      <PlatformVideo src={tab.videoSrc} isActive={isActive} resetKey={isActive ? videoResetKey : undefined} />
+                      <PlatformVideo src={tab.videoSrc} isActive={isActive} resetKey={isActive ? videoResetKey : undefined} onEnded={isActive ? handleVideoEnded : undefined} />
                     </div>
                   </div>
 

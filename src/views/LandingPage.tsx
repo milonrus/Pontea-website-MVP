@@ -290,7 +290,7 @@ const MethodologyPreview = () => (
 const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
-      <Header showLanguageSwitcher={false} />
+      <Header />
       <Hero />
       <PlatformShowcase />
       <ExperienceBanner />
