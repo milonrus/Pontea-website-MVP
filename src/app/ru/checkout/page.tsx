@@ -1,8 +1,16 @@
-"use client";
+import type { Metadata } from 'next';
+import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/ru/checkout'
+  }
+};
 
 const CheckoutPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
+      <LocalizedPageTopBar />
       <div className="max-w-4xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-primary mb-8">
           Оформление заказа

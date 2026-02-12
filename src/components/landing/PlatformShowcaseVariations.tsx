@@ -11,49 +11,49 @@ interface PlatformTab {
   videoSrc: string;
 }
 
-const PLATFORM_TABS: PlatformTab[] = [
+const getPlatformTabs = (locale: 'en' | 'ru' = 'ru'): PlatformTab[] => [
   {
     id: 'video-lectures',
-    title: 'Видео-лекции',
-    description: '80 часов записанных лекций с самыми доступными объяснениями',
+    title: locale === 'en' ? 'Video Lectures' : 'Видео-лекции',
+    description: locale === 'en' ? '80 hours of recorded lectures with the clearest explanations' : '80 часов записанных лекций с самыми доступными объяснениями',
     icon: <Play className="w-5 h-5" />,
     videoSrc: '/platform/video-lectures'
   },
   {
     id: 'notes',
-    title: 'Конспекты',
-    description: '60 конспектов по каждой теме для повторения материала',
+    title: locale === 'en' ? 'Study Notes' : 'Конспекты',
+    description: locale === 'en' ? '60 notes per topic for reviewing the material' : '60 конспектов по каждой теме для повторения материала',
     icon: <FileText className="w-5 h-5" />,
     videoSrc: '/platform/notes'
   },
   {
     id: 'question-bank',
-    title: 'Банк заданий',
-    description: '1000 упражнений для закрепления тем',
+    title: locale === 'en' ? 'Question Bank' : 'Банк заданий',
+    description: locale === 'en' ? '1000 exercises to reinforce every topic' : '1000 упражнений для закрепления тем',
     icon: <BookOpen className="w-5 h-5" />,
     videoSrc: '/platform/question-bank'
   },
   {
     id: 'practice-exams',
-    title: 'Пробные экзамены',
-    description: '10 пробных тестов для отслеживания прогресса и симуляции экзамены',
+    title: locale === 'en' ? 'Practice Exams' : 'Пробные экзамены',
+    description: locale === 'en' ? '10 mock tests to track progress and simulate the real exam' : '10 пробных тестов для отслеживания прогресса и симуляции экзамены',
     icon: <CheckSquare className="w-5 h-5" />,
     videoSrc: '/platform/practice-exams'
   },
-  {
-    id: 'saturday-school',
-    title: 'Субботняя школа',
-    description: 'Онлайн занятия для обсуждения самых интересных тем и ответов на любые вопросы',
-    icon: <Users className="w-5 h-5" />,
-    videoSrc: '/platform/saturday-school'
-  },
-  {
-    id: 'mentorship',
-    title: 'Менторство',
-    description: 'Разрабатываем персональный план подготовки. Помогаем с мотивацией и следим за прогрессом!',
-    icon: <Heart className="w-5 h-5" />,
-    videoSrc: '/platform/mentorship'
-  }
+  // {
+  //   id: 'saturday-school',
+  //   title: 'Субботняя школа',
+  //   description: 'Онлайн занятия для обсуждения самых интересных тем и ответов на любые вопросы',
+  //   icon: <Users className="w-5 h-5" />,
+  //   videoSrc: '/platform/saturday-school'
+  // },
+  // {
+  //   id: 'mentorship',
+  //   title: 'Менторство',
+  //   description: 'Разрабатываем персональный план подготовки. Помогаем с мотивацией и следим за прогрессом!',
+  //   icon: <Heart className="w-5 h-5" />,
+  //   videoSrc: '/platform/mentorship'
+  // }
 ];
 
 // ============================================================================
@@ -115,17 +115,19 @@ const SelectorPills: React.FC<SelectorProps> = ({ activeIndex, onSelect, tabs })
 // Platform Showcase - Floating Cards with Pill Selector
 // ============================================================================
 
-const PlatformShowcase: React.FC = () => {
+interface PlatformShowcaseProps {
+  locale?: 'en' | 'ru';
+}
+
+const PlatformShowcase: React.FC<PlatformShowcaseProps> = ({ locale = 'ru' }) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isAutoRotating, setIsAutoRotating] = useState(false);
+  const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
   const [videoResetKey, setVideoResetKey] = useState(0);
-  const progressRef = useRef<number>(0);
-  const animFrameRef = useRef<number>(0);
-  const lastTickRef = useRef<number>(0);
   const sectionRef = useRef<HTMLElement>(null);
   const hasEnteredView = useRef(false);
+  const manualOverrideRef = useRef(false);
 
-  const AUTO_ROTATE_MS = 4500;
+  const PLATFORM_TABS = getPlatformTabs(locale);
 
   // IntersectionObserver: start carousel only when section enters viewport (once)
   useEffect(() => {
@@ -138,7 +140,7 @@ const PlatformShowcase: React.FC = () => {
           hasEnteredView.current = true;
           setActiveIndex(0);
           setVideoResetKey((k) => k + 1);
-          setIsAutoRotating(true);
+          setIsAutoAdvancing(true);
           observer.disconnect();
         }
       },
@@ -149,37 +151,16 @@ const PlatformShowcase: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!isAutoRotating) {
-      progressRef.current = 0;
-      return;
-    }
-
-    lastTickRef.current = performance.now();
-    progressRef.current = 0;
-
-    const tick = (now: number) => {
-      const delta = now - lastTickRef.current;
-      progressRef.current += delta;
-      lastTickRef.current = now;
-
-      if (progressRef.current >= AUTO_ROTATE_MS) {
-        setActiveIndex((prev) => (prev + 1) % PLATFORM_TABS.length);
-        progressRef.current = 0;
-      }
-
-      animFrameRef.current = requestAnimationFrame(tick);
-    };
-
-    animFrameRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animFrameRef.current);
-  }, [isAutoRotating, activeIndex]);
+  const handleVideoEnded = () => {
+    if (manualOverrideRef.current) return;
+    setActiveIndex((prev) => (prev + 1) % PLATFORM_TABS.length);
+  };
 
   const handleCardClick = (index: number) => {
     setActiveIndex(index);
-    setIsAutoRotating(false);
-    progressRef.current = 0;
-    setTimeout(() => setIsAutoRotating(true), 10000);
+    manualOverrideRef.current = true;
+    // Re-enable auto-advance after this video finishes
+    setTimeout(() => { manualOverrideRef.current = false; }, 500);
   };
 
   return (
@@ -216,10 +197,19 @@ const PlatformShowcase: React.FC = () => {
           className="text-center mb-8"
         >
           <h2 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold text-primary mb-0 leading-tight">
-            Все необходимое для поступления<br />
-            <span className="bg-gradient-to-r from-primary via-teal to-accent bg-clip-text text-transparent">
-              в одной платформе
-            </span>
+            {locale === 'en' ? 'Everything you need to get in, in one platform' : (
+              <>
+                Все необходимое для поступления<br />
+                <span className="bg-gradient-to-r from-primary via-teal to-accent bg-clip-text text-transparent">
+                  в одной платформе
+                </span>
+              </>
+            )}
+            {locale === 'en' && (
+              <span className="bg-gradient-to-r from-primary via-teal to-accent bg-clip-text text-transparent">
+                {' '}
+              </span>
+            )}
           </h2>
         </motion.div>
 
@@ -274,7 +264,7 @@ const PlatformShowcase: React.FC = () => {
 
                     {/* Platform Video */}
                     <div className="absolute inset-0 pt-12">
-                      <PlatformVideo src={tab.videoSrc} isActive={isActive} resetKey={isActive ? videoResetKey : undefined} />
+                      <PlatformVideo src={tab.videoSrc} isActive={isActive} resetKey={isActive ? videoResetKey : undefined} onEnded={isActive ? handleVideoEnded : undefined} />
                     </div>
                   </div>
 

@@ -1,42 +1,20 @@
 # Pontea
 
-> **Note**: This is the **main branch** containing the MVP landing page. For the full educational platform, see the [develop branch](https://github.com/milonrus/Pontea-website-MVP/tree/develop).
+Pontea is a Next.js-based educational platform for students and admins. Students can take practice sessions and timed tests, while admins manage question content and bulk imports. The app is built with React 19, TypeScript, Tailwind CSS, and Supabase for auth and data.
 
-Pontea MVP is a minimal landing page built with Next.js 15, React 19, TypeScript, and Tailwind CSS. This branch contains only the public-facing marketing pages without authentication or database dependencies.
-
-## Branch Strategy
-
-This repository uses a **branch-based deployment approach**:
-
-- **`main` branch** (you are here) → Production landing page at `pontea.com`
-  - Landing page with hero, features, pricing
-  - Methodology page explaining the exam prep approach
-  - Consultation booking page for lead capture
-  - No authentication, no database, minimal dependencies
-
-- **`develop` branch** → Full platform at `pontea-dev.vercel.app`
-  - Complete educational platform with auth, tests, admin dashboard
-  - Student practice sessions and timed tests
-  - Question management and bulk imports
-  - Supabase backend for data and authentication
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment instructions.
-
-## Features (Main Branch)
-
-- Responsive landing page with hero section
-- Pricing tiers with feature comparison
-- Team showcase
-- FAQ section
-- Methodology page explaining exam preparation approach
-- Consultation booking form
+## Features
+- Student practice sessions and timed, proctored-style tests
+- Server-synced timers with drift detection and section locking
+- Admin question management with CSV and image-based imports
+- Supabase-backed auth and role-based access (admin vs student)
+- App Router routes for auth, dashboard, tests, and admin tools
 
 ## Tech Stack
-
 - Next.js 15 (App Router) + React 19
 - TypeScript
-- Tailwind CSS (custom theme with Pontea branding)
-- No database or authentication on this branch
+- Tailwind CSS
+- Supabase (database, auth)
+- Playwright for end-to-end tests
 
 ## Getting Started
 
@@ -45,14 +23,33 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment instructions.
 npm install
 ```
 
-### 2) Run the dev server
+### 2) Configure environment
+Create a `.env.local` file in the repo root:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=... # optional, server-side admin tasks
+GEMINI_API_KEY=...            # optional, image parsing
+SEO_LOCK=true                 # default safety mode (noindex + robots disallow)
+```
+
+### 3) Run the dev server
 ```bash
 npm run dev
 ```
 
 App will be available at `http://localhost:3000`.
 
-**Note**: This branch does not require environment variables for local development.
+### SEO Lock Mode (Temporary)
+- Lock mode is **enabled by default** unless you explicitly set `SEO_LOCK=false`.
+- When lock mode is on:
+  - `X-Robots-Tag: noindex, nofollow, noarchive` is added on site responses.
+  - `robots.txt` disallows all crawlers.
+  - `sitemap.xml` is blocked.
+- When you're ready to launch SEO, set:
+```bash
+SEO_LOCK=false
+```
 
 ## Scripts
 ```bash

@@ -5,39 +5,76 @@ import Button from '@/components/shared/Button';
 import PaymentModal from '@/components/shared/PaymentModal';
 import { PlanTier } from '@/types';
 
-const TIERS: PlanTier[] = [
+interface PricingProps {
+  locale?: 'en' | 'ru';
+}
+
+const getTiers = (locale: 'en' | 'ru' = 'ru'): PlanTier[] => [
   {
-    name: 'База',
+    name: locale === 'en' ? 'Basic' : 'База',
     price: 690,
     priceRub: 75000,
-    features: ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены'],
-    missingFeatures: ['Видеолекции', 'Живые семинары', 'Отслеживание прогресса', 'Чат с поддержкой', 'Индивидуальные занятия 1-на-1'],
+    features: locale === 'en' ?
+      ['Theory notes (250+ pages)', '1000+ practice questions', 'Practice exams'] :
+      ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены'],
+    missingFeatures: locale === 'en' ?
+      ['Video lectures', 'Live seminars', 'Progress tracking', 'Support chat', '1-on-1 private sessions'] :
+      ['Видеолекции', 'Живые семинары', 'Отслеживание прогресса', 'Чат с поддержкой', 'Индивидуальные занятия 1-на-1'],
   },
   {
-    name: 'Полный курс',
+    name: locale === 'en' ? 'Full Course' : 'Полный курс',
     price: 1190,
     priceRub: 130000,
     recommended: true,
-    features: ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены', '40+ часов видеолекций', 'Еженедельные живые семинары', 'Мониторинг прогресса', 'Групповой чат поддержки'],
-    missingFeatures: ['Персональная программа подготовки', 'Индивидуальные занятия 1-на-1'],
+    features: locale === 'en' ?
+      ['Theory notes (250+ pages)', '1000+ practice questions', 'Practice exams', '40+ hours of video lectures', 'Weekly live seminars', 'Progress monitoring', 'Group support chat'] :
+      ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены', '40+ часов видеолекций', 'Еженедельные живые семинары', 'Мониторинг прогресса', 'Групповой чат поддержки'],
+    missingFeatures: locale === 'en' ?
+      ['Personalized preparation program', '1-on-1 private sessions'] :
+      ['Персональная программа подготовки', 'Индивидуальные занятия 1-на-1'],
   },
   {
     name: 'VIP',
     price: 2750,
     priceRub: 300000,
-    features: ['Все из тарифа «Полный курс»', 'Персональная программа подготовки', 'Индивидуальные занятия с преподавателями 1-на-1', '3 консультации с основателями', 'Приоритетная поддержка'],
+    features: locale === 'en' ?
+      ['Everything in Full Course', 'Personalized preparation program', '1-on-1 sessions with instructors', '3 consultations with founders', 'Priority support'] :
+      ['Все из тарифа «Полный курс»', 'Персональная программа подготовки', 'Индивидуальные занятия с преподавателями 1-на-1', '3 консультации с основателями', 'Приоритетная поддержка'],
     missingFeatures: [],
   }
 ];
 
-const Pricing: React.FC = () => {
+const translations = {
+  en: {
+    heading: 'Choose your preparation plan',
+    most_popular: 'Most popular',
+    buy: 'Buy',
+    per_month: '/mo',
+    installment: '≈ €{price}/mo · 6-month installment',
+    help_text: 'Need help choosing or with payment?',
+    cta: 'Book a free consultation',
+  },
+  ru: {
+    heading: 'Выбери свой способ подготовки',
+    most_popular: 'Самый популярный',
+    buy: 'Купить',
+    per_month: '/мес',
+    installment: '≈ {price}₽ · рассрочка на 6 мес',
+    help_text: 'Нужна помощь с выбором или оплатой?',
+    cta: 'Запишись на бесплатную консультацию',
+  },
+};
+
+const Pricing: React.FC<PricingProps> = ({ locale = 'ru' }) => {
   const [selectedTier, setSelectedTier] = useState<PlanTier | null>(null);
+  const t = translations[locale];
+  const TIERS = getTiers(locale);
 
   return (
     <section id="pricing" className="section-padding bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-primary">Выбери свой способ подготовки</h2>
+          <h2 className="text-3xl md:text-4xl font-display font-bold text-primary">{t.heading}</h2>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -51,7 +88,7 @@ const Pricing: React.FC = () => {
             >
               {tier.recommended && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent text-primary font-bold px-6 py-1.5 rounded-full text-sm whitespace-nowrap">
-                  Самый популярный
+                  {t.most_popular}
                 </div>
               )}
 
@@ -59,11 +96,11 @@ const Pricing: React.FC = () => {
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-bold text-primary">€{tier.price}</span>
-                  <span className="text-sm text-gray-400">или</span>
-                  <span className="text-lg font-bold text-green-600">€{Math.round(tier.price / 6)}/мес</span>
+                  <span className="text-sm text-gray-400">{locale === 'en' ? 'or' : 'или'}</span>
+                  <span className="text-lg font-bold text-green-600">€{Math.round(tier.price / 6)}{t.per_month}</span>
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
-                  ≈ {tier.priceRub.toLocaleString('ru-RU')}&nbsp;₽ · рассрочка на 6 мес
+                  {locale === 'en' ? `≈ €${Math.round(tier.price/6)}/mo · 6-month installment` : `≈ ${tier.priceRub.toLocaleString('ru-RU')}&nbsp;₽ · рассрочка на 6 мес`}
                 </div>
               </div>
 
@@ -73,7 +110,7 @@ const Pricing: React.FC = () => {
                 onClick={() => setSelectedTier(tier)}
                 className="mb-8"
               >
-                Купить
+                {t.buy}
               </Button>
 
               <div className="space-y-4">
@@ -107,8 +144,8 @@ const Pricing: React.FC = () => {
               <MessageCircle className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-primary">Нужна помощь с выбором или оплатой?</div>
-              <div className="text-xs text-gray-500">Запишись на бесплатную консультацию</div>
+              <div className="text-sm font-bold text-primary">{t.help_text}</div>
+              <div className="text-xs text-gray-500">{t.cta}</div>
             </div>
             <span className="text-primary text-lg flex-shrink-0">&rarr;</span>
           </Link>

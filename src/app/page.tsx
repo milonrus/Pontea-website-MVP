@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { headers } from 'next/headers';
+import RootLanguageProfileRedirect from '@/components/shared/RootLanguageProfileRedirect';
 import { Locale } from '@/lib/i18n/config';
 import { getSuggestedLocaleFromAcceptLanguage } from '@/lib/i18n/routes';
 
@@ -46,6 +47,7 @@ const LanguageGateway = async () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-secondary">
+      <RootLanguageProfileRedirect />
       <div className="max-w-2xl w-full mx-4">
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">

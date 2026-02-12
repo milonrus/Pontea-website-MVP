@@ -3,36 +3,45 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Button from '@/components/shared/Button';
 
-const WORRIES = [
+interface Worry {
+    id: number;
+    tag: string;
+    title: string;
+    description: string;
+    image: string;
+    color: 'blue' | 'orange' | 'yellow' | 'green';
+}
+
+const getWorries = (locale: 'en' | 'ru' = 'ru'): Worry[] => [
     {
         id: 1,
-        tag: "я вообще не в теме",
-        title: "Все уже готовятся, а я только узнал про экзамен",
-        description: "Разберёмся вместе. Шаг за шагом, и всё встанет на свои места.",
+        tag: locale === 'en' ? "I know nothing about this" : "я вообще не в теме",
+        title: locale === 'en' ? "Everyone is already preparing, and I just found out about the exam" : "Все уже готовятся, а я только узнал про экзамен",
+        description: locale === 'en' ? "We'll figure it out together. Step by step, everything will fall into place." : "Разберёмся вместе. Шаг за шагом, и всё встанет на свои места.",
         image: "/stress/unknown.png",
         color: 'blue',
     },
     {
         id: 2,
-        tag: "времени не хватит",
-        title: "Не знаю свой уровень и успею ли вообще",
-        description: "Выясним, где ты сейчас, и построим план, который реально успеть.",
+        tag: locale === 'en' ? "there's not enough time" : "времени не хватит",
+        title: locale === 'en' ? "I don't know my level or whether I'll make it in time" : "Не знаю свой уровень и успею ли вообще",
+        description: locale === 'en' ? "We'll figure out where you are right now and build a plan that's actually achievable." : "Выясним, где ты сейчас, и построим план, который реально успеть.",
         image: "/stress/time.png",
         color: 'orange',
     },
     {
         id: 3,
-        tag: "готовлюсь вслепую",
-        title: "Учусь, но не понимаю, туда ли иду",
-        description: "Ментор будет рядом: проверит, подскажет, поддержит.",
+        tag: locale === 'en' ? "I'm preparing blind" : "готовлюсь вслепую",
+        title: locale === 'en' ? "I'm studying, but I don't know if I'm heading in the right direction" : "Учусь, но не понимаю, туда ли иду",
+        description: locale === 'en' ? "A mentor will be there to check, guide, and support you." : "Ментор будет рядом: проверит, подскажет, поддержит.",
         image: "/stress/tired.png",
         color: 'yellow',
     },
     {
         id: 4,
-        tag: "а вдруг провалюсь",
-        title: "Боюсь, что на экзамене всё вылетит из головы",
-        description: "Прорешаешь десятки mock-тестов на время, и формат станет привычным.",
+        tag: locale === 'en' ? "what if I fail" : "а вдруг провалюсь",
+        title: locale === 'en' ? "I'm afraid I'll forget everything during the exam" : "Боюсь, что на экзамене всё вылетит из головы",
+        description: locale === 'en' ? "You'll solve dozens of timed mock tests, and the format will become second nature." : "Прорешаешь десятки mock-тестов на время, и формат станет привычным.",
         image: "/stress/failure.png",
         color: 'green',
     }
@@ -80,7 +89,32 @@ const WavyPath = () => {
     );
 };
 
-const StressManagementTimeline = () => {
+interface StressManagementTimelineProps {
+    locale?: 'en' | 'ru';
+}
+
+const translations = {
+    en: {
+        h2: 'Worried it won\'t work out?',
+        subtitle: 'We\'ve been through it — and we know how to help',
+        ctaHeading: 'Assess your level and start preparing — without the chaos',
+        ctaSubtitle: 'A short diagnostic will give you a personalized plan for the next 4 months',
+        ctaButton: 'Take the quiz',
+    },
+    ru: {
+        h2: 'Страшно, что не получится?',
+        subtitle: 'Мы через это прошли и знаем, как помочь',
+        ctaHeading: 'Оцени свой уровень и начни подготовку без хаоса',
+        ctaSubtitle: 'Короткая диагностика даст персональный план на ближайшие 4 месяца',
+        ctaButton: 'Пройти опрос',
+    },
+};
+
+const StressManagementTimeline: React.FC<StressManagementTimelineProps> = ({ locale = 'ru' }) => {
+    const t = translations[locale];
+    const localePrefix = locale === 'en' ? '/en' : '/ru';
+    const WORRIES = getWorries(locale);
+
     return (
         <section className="relative pt-16 lg:pt-20 pb-20 overflow-hidden bg-gradient-to-b from-white via-blue-50/20 to-white">
             {/* Animated background elements */}
@@ -114,7 +148,7 @@ const StressManagementTimeline = () => {
                         transition={{ delay: 0.1 }}
                         className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary mb-4"
                     >
-                        Страшно, что не получится?
+                        {t.h2}
                     </motion.h2>
 
                     <motion.p
@@ -124,14 +158,14 @@ const StressManagementTimeline = () => {
                         transition={{ delay: 0.2 }}
                         className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto"
                     >
-                        Мы через это прошли и знаем, как помочь
+                        {t.subtitle}
                     </motion.p>
                 </div>
 
                 {/* Timeline - Desktop */}
                 <div className="hidden lg:block">
                     <div className="grid grid-cols-2 xl:grid-cols-4 gap-6 xl:gap-8 items-start">
-                        {WORRIES.map((worry, index) => (
+                        {WORRIES.map((worry: Worry, index: number) => (
                             <div
                                 key={worry.id}
                                 className={index % 2 === 1 ? 'lg:mt-10 xl:mt-16' : ''}
@@ -144,7 +178,7 @@ const StressManagementTimeline = () => {
 
                 {/* Timeline - Mobile (vertical stack) */}
                 <div className="lg:hidden space-y-8">
-                    {WORRIES.map((worry, index) => (
+                    {WORRIES.map((worry: Worry, index: number) => (
                         <motion.div
                             key={worry.id}
                             initial={{ opacity: 0, y: 24 }}
@@ -173,22 +207,26 @@ const StressManagementTimeline = () => {
                             <div className="grid gap-7 lg:gap-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
                                 <div className="max-w-3xl text-center lg:text-left mx-auto lg:mx-0">
                                     <p className="text-2xl md:text-3xl lg:text-[2rem] font-display font-bold text-primary leading-tight">
-                                        Оцени свой уровень и начни подготовку{' '}
-                                        <span className="whitespace-nowrap">без хаоса</span>
+                                        {locale === 'en' ? t.ctaHeading : (
+                                            <>
+                                                Оцени свой уровень и начни подготовку{' '}
+                                                <span className="whitespace-nowrap">без хаоса</span>
+                                            </>
+                                        )}
                                     </p>
                                     <p className="text-sm md:text-base text-slate-600 mt-3">
-                                        Короткая диагностика даст персональный план на ближайшие 4 месяца
+                                        {t.ctaSubtitle}
                                     </p>
                                 </div>
 
                                 <div className="flex justify-center lg:justify-end">
-                                    <Link href="/ru/assessment" className="block w-full max-w-[320px] lg:w-auto">
+                                    <Link href={`${localePrefix}/assessment`} className="block w-full max-w-[320px] lg:w-auto">
                                         <Button
                                             size="lg"
                                             variant="primary"
                                             className="h-14 w-full lg:w-auto lg:min-w-[280px] px-8 md:px-10 !rounded-xl shadow-[0_14px_32px_-16px_rgba(255,200,87,0.8)]"
                                         >
-                                            Пройти опрос
+                                            {t.ctaButton}
                                         </Button>
                                     </Link>
                                 </div>
@@ -205,7 +243,7 @@ const WorryCardWrapper = ({
     worry,
     index
 }: {
-    worry: typeof WORRIES[0];
+    worry: Worry;
     index: number;
 }) => {
     return (
@@ -228,7 +266,7 @@ const WorryCard = ({
     worry,
     index
 }: {
-    worry: typeof WORRIES[0];
+    worry: Worry;
     index: number;
 }) => {
     // Цвет рамки для визуального разнообразия

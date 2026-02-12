@@ -1,7 +1,8 @@
 "use client";
 
+import { Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Locale, SUPPORTED_LOCALES } from '@/lib/i18n/config';
 import { getLocaleFromPathname, getSwitchLocalePath } from '@/lib/i18n/routes';
 
@@ -9,17 +10,21 @@ interface LanguageSwitcherProps {
   className?: string;
 }
 
-function buildLocaleHref(pathname: string, targetLocale: Locale): string {
-  return getSwitchLocalePath(pathname, targetLocale);
+function buildLocaleHref(pathname: string, search: string, targetLocale: Locale): string {
+  const nextPath = getSwitchLocalePath(pathname, targetLocale);
+  return search ? `${nextPath}?${search}` : nextPath;
 }
 
-const LanguageSwitcher = ({ className }: LanguageSwitcherProps) => {
+const LanguageSwitcherInner = ({ className }: LanguageSwitcherProps) => {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const currentLocale = getLocaleFromPathname(pathname);
 
   if (!currentLocale) {
     return null;
   }
+
+  const search = searchParams.toString();
 
   return (
     <nav
@@ -33,7 +38,7 @@ const LanguageSwitcher = ({ className }: LanguageSwitcherProps) => {
         return (
           <Link
             key={locale}
-            href={buildLocaleHref(pathname, locale)}
+            href={buildLocaleHref(pathname, search, locale)}
             aria-current={isActive ? 'page' : undefined}
             className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
               isActive
@@ -49,4 +54,13 @@ const LanguageSwitcher = ({ className }: LanguageSwitcherProps) => {
   );
 };
 
+const LanguageSwitcher = ({ className }: LanguageSwitcherProps) => {
+  return (
+    <Suspense fallback={<div className="h-8 w-20 animate-pulse rounded-full bg-gray-100" />}>
+      <LanguageSwitcherInner className={className} />
+    </Suspense>
+  );
+};
+
 export default LanguageSwitcher;
+

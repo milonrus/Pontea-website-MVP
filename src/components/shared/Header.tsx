@@ -1,15 +1,38 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Button from './Button';
+import { useAuth } from '@/contexts/AuthContext';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  locale?: 'en' | 'ru';
+}
+
+const translations = {
+  en: {
+    aboutCourse: 'About the Course',
+    pricing: 'Pricing',
+    personalPlan: 'Personal Plan',
+    needHelp: 'Need help choosing?',
+  },
+  ru: {
+    aboutCourse: 'О курсе',
+    pricing: 'Цены',
+    personalPlan: 'Персональный план',
+    needHelp: 'Нужна помощь с выбором?',
+  },
+};
+
+const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { currentUser, isAdmin } = useAuth();
+
+  const t = translations[locale];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,15 +42,12 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const localePrefix = locale === 'en' ? '/en' : '/ru';
+
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false);
-    if (pathname !== '/') {
-      window.location.hash = id;
-      // Let the hash change trigger the scroll after navigation
-      setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) element.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+    if (pathname !== '/' && pathname !== `${localePrefix}`) {
+      window.location.href = `${localePrefix}#${id}`;
       return;
     }
     const element = document.getElementById(id);
@@ -37,25 +57,36 @@ const Header: React.FC = () => {
   };
 
   const navLinks = [
-    { label: 'The Exam & Method', path: '/methodology', type: 'link' },
-    { label: 'Pricing', id: 'pricing', type: 'scroll' },
-    { label: 'FAQ', id: 'faq', type: 'scroll' },
+    { label: t.aboutCourse, path: `${localePrefix}/arched-prep-course`, type: 'link' as const },
+    { label: t.pricing, id: 'pricing', type: 'scroll' as const },
+    { label: t.personalPlan, path: `${localePrefix}/assessment`, type: 'link' as const },
   ];
 
   return (
-    <header 
+    <header
       className={`fixed top-0 w-full z-40 transition-all duration-300 ${
         isScrolled ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 z-50">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-accent font-display font-bold text-xl">P</span>
-          </div>
-          <span className={`font-display font-bold text-2xl tracking-tight ${isScrolled ? 'text-primary' : 'text-primary'}`}>
-            PONTEA
-          </span>
+        <Link href={localePrefix} className="z-50">
+          <div
+            className={`w-auto transition-all duration-300 ${isScrolled ? 'h-5' : 'h-7'}`}
+            style={{
+              aspectRatio: '1056 / 122',
+              backgroundColor: '#01278b',
+              WebkitMaskImage: 'url(/pontea-logo.webp)',
+              WebkitMaskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              maskImage: 'url(/pontea-logo.webp)',
+              maskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              maskPosition: 'center',
+            }}
+            role="img"
+            aria-label="Pontea"
+          />
         </Link>
 
         {/* Desktop Nav */}
@@ -64,13 +95,13 @@ const Header: React.FC = () => {
             link.type === 'link' ? (
               <Link
                 key={link.label}
-                href={link.path || '/'}
+                href={link.path!}
                 className="text-sm font-medium text-gray-600 hover:text-primary transition-colors"
               >
                 {link.label}
               </Link>
             ) : (
-              <button 
+              <button
                 key={link.label}
                 onClick={() => scrollToSection(link.id!)}
                 className="text-sm font-medium text-gray-600 hover:text-primary transition-colors"
@@ -80,13 +111,28 @@ const Header: React.FC = () => {
             )
           ))}
 
-          <Link href="/ru/assessment">
-            <Button size="sm" variant="primary">Free Assessment</Button>
+          {isAdmin && (
+            <Link href="/admin" className="text-sm font-bold text-primary hover:text-accent transition-colors">
+              Admin
+            </Link>
+          )}
+
+          {currentUser && (
+            <Link href="/dashboard">
+              <Button size="sm" variant="outline" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Dashboard
+              </Button>
+            </Link>
+          )}
+
+          <Link href="/consultation">
+            <Button size="sm" variant="primary">{t.needHelp}</Button>
           </Link>
         </nav>
 
         {/* Mobile Toggle */}
-        <button 
+        <button
           className="md:hidden z-50 p-2 text-primary"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
@@ -107,7 +153,7 @@ const Header: React.FC = () => {
                   {link.label}
                 </Link>
                ) : (
-                <button 
+                <button
                   key={link.label}
                   onClick={() => scrollToSection(link.id!)}
                   className="text-xl font-display font-bold text-primary"
@@ -117,8 +163,20 @@ const Header: React.FC = () => {
                )
             ))}
 
-            <Link href="/ru/assessment" onClick={() => setMobileMenuOpen(false)}>
-              <Button size="lg" variant="primary">Start Assessment</Button>
+            {isAdmin && (
+              <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-xl font-display font-bold text-accent">Admin</span>
+              </Link>
+            )}
+
+            {currentUser && (
+              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                <span className="text-xl font-display font-bold text-primary">Dashboard</span>
+              </Link>
+            )}
+
+            <Link href="/consultation" onClick={() => setMobileMenuOpen(false)}>
+              <Button size="lg" variant="primary">{t.needHelp}</Button>
             </Link>
           </div>
         )}

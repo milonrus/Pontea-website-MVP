@@ -1,0 +1,783 @@
+{
+  "course_modular_overview": {
+    "sections": [
+      {
+        "section_id": 3,
+        "title": "Text Comprehension",
+        "submodules": [
+          {
+            "name": "Method & guidance",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 2,
+              "questions_total": 0,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 0
+            }
+          },
+          {
+            "name": "Warm-up practice (Text comprehension 1-5)",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 25,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 0
+            }
+          },
+          {
+            "name": "Real exam texts",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 63,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 0
+            }
+          }
+        ],
+        "section_total": {
+          "lessons_video_time_hms": "00:00:00",
+          "timed_text_time_hms": "00:00:00",
+          "untimed_text_items": 2,
+          "questions_total": 88,
+          "lessons_video_minutes": 0,
+          "timed_text_minutes": 0,
+          "total_time_minutes": 0
+        }
+      },
+      {
+        "section_id": 4,
+        "title": "Logical reasoning",
+        "submodules": [
+          {
+            "name": "Verbal logic",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:11:51",
+              "untimed_text_items": 0,
+              "questions_total": 34,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 11.85,
+              "total_time_minutes": 11.85
+            }
+          },
+          {
+            "name": "Sequences (numbers & letters)",
+            "stats": {
+              "lessons_video_time_hms": "00:13:23",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 16,
+              "lessons_video_minutes": 13.38,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 13.38
+            }
+          },
+          {
+            "name": "Mathematical & geometrical reasoning",
+            "stats": {
+              "lessons_video_time_hms": "00:14:57",
+              "timed_text_time_hms": "00:10:20",
+              "untimed_text_items": 1,
+              "questions_total": 15,
+              "lessons_video_minutes": 14.95,
+              "timed_text_minutes": 10.33,
+              "total_time_minutes": 25.28
+            }
+          },
+          {
+            "name": "Practice & revision",
+            "stats": {
+              "lessons_video_time_hms": "00:27:54",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 17,
+              "lessons_video_minutes": 27.9,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 27.9
+            }
+          }
+        ],
+        "section_total": {
+          "lessons_video_time_hms": "00:56:14",
+          "timed_text_time_hms": "00:22:11",
+          "untimed_text_items": 2,
+          "questions_total": 82,
+          "lessons_video_minutes": 56.23,
+          "timed_text_minutes": 22.18,
+          "total_time_minutes": 78.42
+        }
+      },
+      {
+        "section_id": 5,
+        "title": "Drawing & Representation",
+        "submodules": [
+          {
+            "name": "Orthogonal projections",
+            "stats": {
+              "lessons_video_time_hms": "00:43:17",
+              "timed_text_time_hms": "00:04:10",
+              "untimed_text_items": 0,
+              "questions_total": 6,
+              "lessons_video_minutes": 43.28,
+              "timed_text_minutes": 4.17,
+              "total_time_minutes": 47.45
+            }
+          },
+          {
+            "name": "Perspective",
+            "stats": {
+              "lessons_video_time_hms": "00:57:13",
+              "timed_text_time_hms": "00:06:00",
+              "untimed_text_items": 0,
+              "questions_total": 14,
+              "lessons_video_minutes": 57.22,
+              "timed_text_minutes": 6,
+              "total_time_minutes": 63.22
+            }
+          },
+          {
+            "name": "Understanding drawings (architectural drawings)",
+            "stats": {
+              "lessons_video_time_hms": "00:51:11",
+              "timed_text_time_hms": "00:30:14",
+              "untimed_text_items": 0,
+              "questions_total": 35,
+              "lessons_video_minutes": 51.18,
+              "timed_text_minutes": 30.23,
+              "total_time_minutes": 81.42
+            }
+          },
+          {
+            "name": "3D figures / spatial thinking",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:02:17",
+              "untimed_text_items": 1,
+              "questions_total": 25,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 2.28,
+              "total_time_minutes": 2.28
+            }
+          },
+          {
+            "name": "Old exams (Drawing representation)",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 70,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 0
+            }
+          },
+          {
+            "name": "Practice tests",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 60,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 0
+            }
+          }
+        ],
+        "section_total": {
+          "lessons_video_time_hms": "02:31:41",
+          "timed_text_time_hms": "00:42:41",
+          "untimed_text_items": 1,
+          "questions_total": 210,
+          "lessons_video_minutes": 151.68,
+          "timed_text_minutes": 42.68,
+          "total_time_minutes": 194.37
+        }
+      },
+      {
+        "section_id": 6,
+        "title": "Math",
+        "submodules": [
+          {
+            "name": "Intro & math terminology",
+            "stats": {
+              "lessons_video_time_hms": "00:04:58",
+              "timed_text_time_hms": "00:03:49",
+              "untimed_text_items": 0,
+              "questions_total": 14,
+              "lessons_video_minutes": 4.97,
+              "timed_text_minutes": 3.82,
+              "total_time_minutes": 8.78
+            }
+          },
+          {
+            "name": "Numbers, powers, roots, inequalities (part 1)",
+            "stats": {
+              "lessons_video_time_hms": "00:23:10",
+              "timed_text_time_hms": "00:14:36",
+              "untimed_text_items": 0,
+              "questions_total": 13,
+              "lessons_video_minutes": 23.17,
+              "timed_text_minutes": 14.6,
+              "total_time_minutes": 37.77
+            }
+          },
+          {
+            "name": "Equations (quadratics)",
+            "stats": {
+              "lessons_video_time_hms": "00:04:56",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 16,
+              "lessons_video_minutes": 4.93,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 4.93
+            }
+          },
+          {
+            "name": "Functions",
+            "stats": {
+              "lessons_video_time_hms": "00:16:58",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 17,
+              "lessons_video_minutes": 16.97,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 16.97
+            }
+          },
+          {
+            "name": "Geometry basics (figures + triangle)",
+            "stats": {
+              "lessons_video_time_hms": "00:05:04",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 23,
+              "lessons_video_minutes": 5.07,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 5.07
+            }
+          },
+          {
+            "name": "Geometry: quadrilateral & circle",
+            "stats": {
+              "lessons_video_time_hms": "00:08:03",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 24,
+              "lessons_video_minutes": 8.05,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 8.05
+            }
+          },
+          {
+            "name": "3D figures",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 15,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 0
+            }
+          },
+          {
+            "name": "Mathematical & geometrical reasoning (logic)",
+            "stats": {
+              "lessons_video_time_hms": "00:14:57",
+              "timed_text_time_hms": "00:10:20",
+              "untimed_text_items": 0,
+              "questions_total": 0,
+              "lessons_video_minutes": 14.95,
+              "timed_text_minutes": 10.33,
+              "total_time_minutes": 25.28
+            }
+          },
+          {
+            "name": "Logarithms & inequalities (part 2)",
+            "stats": {
+              "lessons_video_time_hms": "00:08:24",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 26,
+              "lessons_video_minutes": 8.4,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 8.4
+            }
+          },
+          {
+            "name": "Systems of equations & inequalities",
+            "stats": {
+              "lessons_video_time_hms": "00:16:43",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 10,
+              "lessons_video_minutes": 16.72,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 16.72
+            }
+          },
+          {
+            "name": "Logarithms (final)",
+            "stats": {
+              "lessons_video_time_hms": "00:09:36",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 18,
+              "lessons_video_minutes": 9.6,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 9.6
+            }
+          }
+        ],
+        "section_total": {
+          "lessons_video_time_hms": "01:52:49",
+          "timed_text_time_hms": "00:28:45",
+          "untimed_text_items": 8,
+          "questions_total": 176,
+          "lessons_video_minutes": 112.82,
+          "timed_text_minutes": 28.75,
+          "total_time_minutes": 141.57
+        }
+      },
+      {
+        "section_id": 7,
+        "title": "Physics",
+        "submodules": [
+          {
+            "name": "Vectors",
+            "stats": {
+              "lessons_video_time_hms": "00:06:13",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 16,
+              "lessons_video_minutes": 6.22,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 6.22
+            }
+          },
+          {
+            "name": "Kinematics",
+            "stats": {
+              "lessons_video_time_hms": "00:15:16",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 19,
+              "lessons_video_minutes": 15.27,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 15.27
+            }
+          },
+          {
+            "name": "Statics I",
+            "stats": {
+              "lessons_video_time_hms": "00:10:59",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 20,
+              "lessons_video_minutes": 10.98,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 10.98
+            }
+          },
+          {
+            "name": "Statics II",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 10,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 0
+            }
+          },
+          {
+            "name": "Fluids & states of matter",
+            "stats": {
+              "lessons_video_time_hms": "00:09:55",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 17,
+              "lessons_video_minutes": 9.92,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 9.92
+            }
+          },
+          {
+            "name": "Dynamics",
+            "stats": {
+              "lessons_video_time_hms": "00:08:51",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 9,
+              "lessons_video_minutes": 8.85,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 8.85
+            }
+          },
+          {
+            "name": "Work & energy",
+            "stats": {
+              "lessons_video_time_hms": "00:17:35",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 34,
+              "lessons_video_minutes": 17.58,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 17.58
+            }
+          },
+          {
+            "name": "Thermodynamics",
+            "stats": {
+              "lessons_video_time_hms": "00:09:37",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 20,
+              "lessons_video_minutes": 9.62,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 9.62
+            }
+          },
+          {
+            "name": "Electrostatics & electrodynamics",
+            "stats": {
+              "lessons_video_time_hms": "00:21:12",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 2,
+              "questions_total": 25,
+              "lessons_video_minutes": 21.2,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 21.2
+            }
+          },
+          {
+            "name": "Magnetism & oscillations",
+            "stats": {
+              "lessons_video_time_hms": "00:10:36",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 26,
+              "lessons_video_minutes": 10.6,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 10.6
+            }
+          },
+          {
+            "name": "Optics",
+            "stats": {
+              "lessons_video_time_hms": "00:13:48",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 1,
+              "questions_total": 11,
+              "lessons_video_minutes": 13.8,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 13.8
+            }
+          }
+        ],
+        "section_total": {
+          "lessons_video_time_hms": "02:04:02",
+          "timed_text_time_hms": "00:00:00",
+          "untimed_text_items": 12,
+          "questions_total": 207,
+          "lessons_video_minutes": 124.03,
+          "timed_text_minutes": 0,
+          "total_time_minutes": 124.03
+        }
+      },
+      {
+        "section_id": 8,
+        "title": "General culture",
+        "submodules": [
+          {
+            "name": "Section overview",
+            "stats": {
+              "lessons_video_time_hms": "00:32:59",
+              "timed_text_time_hms": "00:13:18",
+              "untimed_text_items": 0,
+              "questions_total": 0,
+              "lessons_video_minutes": 32.98,
+              "timed_text_minutes": 13.3,
+              "total_time_minutes": 46.28
+            }
+          },
+          {
+            "name": "Terminology (economics & sociology)",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:21:28",
+              "untimed_text_items": 0,
+              "questions_total": 22,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 21.47,
+              "total_time_minutes": 21.47
+            }
+          },
+          {
+            "name": "Literature (general)",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:16:40",
+              "untimed_text_items": 0,
+              "questions_total": 10,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 16.67,
+              "total_time_minutes": 16.67
+            }
+          },
+          {
+            "name": "Italian presidents",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:09:09",
+              "untimed_text_items": 0,
+              "questions_total": 20,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 9.15,
+              "total_time_minutes": 9.15
+            }
+          },
+          {
+            "name": "Italian literature (practice)",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:20:13",
+              "untimed_text_items": 0,
+              "questions_total": 40,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 20.22,
+              "total_time_minutes": 20.22
+            }
+          }
+        ],
+        "section_total": {
+          "lessons_video_time_hms": "00:32:59",
+          "timed_text_time_hms": "01:20:48",
+          "untimed_text_items": 0,
+          "questions_total": 92,
+          "lessons_video_minutes": 32.98,
+          "timed_text_minutes": 80.8,
+          "total_time_minutes": 113.78
+        }
+      },
+      {
+        "section_id": 9,
+        "title": "History",
+        "submodules": [
+          {
+            "name": "Antiquity",
+            "stats": {
+              "lessons_video_time_hms": "02:06:06",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 32,
+              "lessons_video_minutes": 126.1,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 126.1
+            }
+          },
+          {
+            "name": "Middle Ages",
+            "stats": {
+              "lessons_video_time_hms": "02:16:42",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 60,
+              "lessons_video_minutes": 136.7,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 136.7
+            }
+          },
+          {
+            "name": "Early Modern + 17th century",
+            "stats": {
+              "lessons_video_time_hms": "02:18:26",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 45,
+              "lessons_video_minutes": 138.43,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 138.43
+            }
+          },
+          {
+            "name": "18th century",
+            "stats": {
+              "lessons_video_time_hms": "01:41:10",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 45,
+              "lessons_video_minutes": 101.17,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 101.17
+            }
+          },
+          {
+            "name": "19th century",
+            "stats": {
+              "lessons_video_time_hms": "02:28:32",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 60,
+              "lessons_video_minutes": 148.53,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 148.53
+            }
+          },
+          {
+            "name": "20th century",
+            "stats": {
+              "lessons_video_time_hms": "06:30:17",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 120,
+              "lessons_video_minutes": 390.28,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 390.28
+            }
+          },
+          {
+            "name": "Italy overview",
+            "stats": {
+              "lessons_video_time_hms": "01:08:57",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 15,
+              "lessons_video_minutes": 68.95,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 68.95
+            }
+          },
+          {
+            "name": "Misc / likely misplaced items",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:00:00",
+              "untimed_text_items": 0,
+              "questions_total": 6,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 0,
+              "total_time_minutes": 0
+            }
+          }
+        ],
+        "section_total": {
+          "lessons_video_time_hms": "18:30:10",
+          "timed_text_time_hms": "00:00:00",
+          "untimed_text_items": 0,
+          "questions_total": 383,
+          "lessons_video_minutes": 1110.17,
+          "timed_text_minutes": 0,
+          "total_time_minutes": 1110.17
+        }
+      },
+      {
+        "section_id": 10,
+        "title": "History of Art & Architecture",
+        "submodules": [
+          {
+            "name": "Ancient Greece & Rome",
+            "stats": {
+              "lessons_video_time_hms": "00:49:34",
+              "timed_text_time_hms": "00:14:56",
+              "untimed_text_items": 0,
+              "questions_total": 20,
+              "lessons_video_minutes": 49.57,
+              "timed_text_minutes": 14.93,
+              "total_time_minutes": 64.5
+            }
+          },
+          {
+            "name": "Medieval + Proto-Renaissance / Gothic",
+            "stats": {
+              "lessons_video_time_hms": "00:51:37",
+              "timed_text_time_hms": "00:17:19",
+              "untimed_text_items": 0,
+              "questions_total": 20,
+              "lessons_video_minutes": 51.62,
+              "timed_text_minutes": 17.32,
+              "total_time_minutes": 68.93
+            }
+          },
+          {
+            "name": "Renaissance",
+            "stats": {
+              "lessons_video_time_hms": "00:42:12",
+              "timed_text_time_hms": "00:16:10",
+              "untimed_text_items": 0,
+              "questions_total": 0,
+              "lessons_video_minutes": 42.2,
+              "timed_text_minutes": 16.17,
+              "total_time_minutes": 58.37
+            }
+          },
+          {
+            "name": "Baroque -> Realism",
+            "stats": {
+              "lessons_video_time_hms": "00:57:39",
+              "timed_text_time_hms": "00:17:54",
+              "untimed_text_items": 0,
+              "questions_total": 15,
+              "lessons_video_minutes": 57.65,
+              "timed_text_minutes": 17.9,
+              "total_time_minutes": 75.55
+            }
+          },
+          {
+            "name": "19-20th century",
+            "stats": {
+              "lessons_video_time_hms": "00:53:10",
+              "timed_text_time_hms": "00:42:00",
+              "untimed_text_items": 0,
+              "questions_total": 30,
+              "lessons_video_minutes": 53.17,
+              "timed_text_minutes": 42,
+              "total_time_minutes": 95.17
+            }
+          },
+          {
+            "name": "Spotlight + memory (Leonardo/Gaudi/cards)",
+            "stats": {
+              "lessons_video_time_hms": "00:00:00",
+              "timed_text_time_hms": "00:11:00",
+              "untimed_text_items": 0,
+              "questions_total": 30,
+              "lessons_video_minutes": 0,
+              "timed_text_minutes": 11,
+              "total_time_minutes": 11
+            }
+          }
+        ],
+        "section_total": {
+          "lessons_video_time_hms": "04:14:12",
+          "timed_text_time_hms": "01:59:19",
+          "untimed_text_items": 0,
+          "questions_total": 115,
+          "lessons_video_minutes": 254.2,
+          "timed_text_minutes": 119.32,
+          "total_time_minutes": 373.52
+        }
+      }
+    ],
+    "grand_total": {
+      "lessons_video_time_hms": "30:42:07",
+      "timed_text_time_hms": "04:53:44",
+      "untimed_text_items": 25,
+      "questions_total": 1353,
+      "lessons_video_minutes": 1842.12,
+      "timed_text_minutes": 293.73,
+      "total_time_minutes": 2135.85
+    }
+  }
+}

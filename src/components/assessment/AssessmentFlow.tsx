@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -8,6 +10,7 @@ import {
   SelfAssessmentQuestion,
   DomainResult,
 } from '@/types';
+import type { CanonicalRoadmapOutput } from '@/lib/roadmap-generator/types';
 import {
   ALL_ASSESSMENT_QUESTIONS,
   TOTAL_QUESTIONS,
@@ -17,19 +20,22 @@ import {
   computeDomainResults,
   getWeakestDomains,
   generateStudyPlan,
+  domainResultsToLevelsBySection,
 } from '@/lib/assessment/scoring';
-import IntroScreen from './IntroScreen';
+import { generateRoadmaps } from '@/lib/roadmap-generator/engine';
+import courseFixture from '@/data/roadmap-course-overview.json';
 import QuestionCard from './QuestionCard';
 import ProgressBar from './ProgressBar';
 import PostQuizEmailForm from './PostQuizEmailForm';
 
-type Step = 'intro' | 'quiz' | 'email' | 'submitting';
+type Step = 'quiz' | 'email' | 'submitting';
 
 interface ComputedResults {
   answers: AssessmentAnswer[];
   domainResults: DomainResult[];
   weakestDomains: DomainResult[];
   studyPlan: DomainResult[];
+  roadmapOutput?: CanonicalRoadmapOutput;
 }
 
 function getResolvedQuestion(
@@ -54,7 +60,7 @@ function getResolvedQuestion(
   const selfAnswer = answers.find(
     (a) => a.domain === q.domain && a.type === 'self_assessment'
   );
-  const selfScore = selfAnswer?.selfAssessmentScore ?? 0;
+  const selfScore = selfAnswer?.selfAssessmentScore ?? 3;
   const difficulty = getDifficultyForScore(selfScore);
   const variant = q.variants.find((v) => v.difficulty === difficulty) ?? q.variants[0];
 
@@ -69,7 +75,7 @@ function getResolvedQuestion(
 
 const AssessmentFlow: React.FC = () => {
   const router = useRouter();
-  const [step, setStep] = useState<Step>('intro');
+  const [step, setStep] = useState<Step>('quiz');
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
@@ -104,14 +110,14 @@ const AssessmentFlow: React.FC = () => {
       const option = (qDef as SelfAssessmentQuestion).options.find(
         (o) => o.id === selectedOptionId
       );
-      answer.selfAssessmentScore = option?.score ?? 0;
+      answer.selfAssessmentScore = option?.score ?? 3;
     } else {
       answer.microCheckCorrect = selectedOptionId === resolved.correctOptionId;
       const selfAnswer = answers.find(
         (a) => a.domain === qDef.domain && a.type === 'self_assessment'
       );
       answer.microCheckDifficulty = getDifficultyForScore(
-        selfAnswer?.selfAssessmentScore ?? 0
+        selfAnswer?.selfAssessmentScore ?? 3
       );
     }
 
@@ -133,11 +139,25 @@ const AssessmentFlow: React.FC = () => {
     const weakestDomains = getWeakestDomains(domainResults);
     const studyPlan = generateStudyPlan(domainResults);
 
+    let roadmapOutput: CanonicalRoadmapOutput | undefined;
+    try {
+      const levels_by_section = domainResultsToLevelsBySection(domainResults);
+      const result = generateRoadmaps({
+        weeks_to_exam: 20,
+        levels_by_section,
+        course_modular_overview: courseFixture.course_modular_overview,
+      });
+      roadmapOutput = result.roadmaps[0];
+    } catch (e) {
+      console.error('Failed to generate roadmap:', e);
+    }
+
     setComputedResults({
       answers: finalAnswers,
       domainResults,
       weakestDomains,
       studyPlan,
+      roadmapOutput,
     });
     setStep('email');
   };
@@ -158,6 +178,7 @@ const AssessmentFlow: React.FC = () => {
           domainResults: computedResults.domainResults,
           weakestDomains: computedResults.weakestDomains,
           studyPlan: computedResults.studyPlan,
+          roadmapOutput: computedResults.roadmapOutput,
         }),
       });
 
@@ -177,28 +198,18 @@ const AssessmentFlow: React.FC = () => {
   const saveFallback = (email: string) => {
     if (!computedResults) return;
     const result = {
-      version: 2,
+      version: 3,
       email,
       answers: computedResults.answers,
       domainResults: computedResults.domainResults,
       weakestDomains: computedResults.weakestDomains,
       studyPlan: computedResults.studyPlan,
+      roadmapOutput: computedResults.roadmapOutput,
       submittedAt: new Date().toISOString(),
     };
     localStorage.setItem('pontea_results_v2', JSON.stringify(result));
     router.push('/ru/results');
   };
-
-  if (step === 'intro') {
-    return (
-      <IntroScreen
-        onStart={() => {
-          setStep('quiz');
-          setQuestionStartTime(Date.now());
-        }}
-      />
-    );
-  }
 
   if (step === 'email' && computedResults) {
     return <PostQuizEmailForm onSubmit={handleEmailSubmit} isLoading={isSubmitting} />;

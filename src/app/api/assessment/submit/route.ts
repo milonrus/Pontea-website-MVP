@@ -5,7 +5,7 @@ import { createServerClient } from '@/lib/supabase/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, answers, domainResults, weakestDomains, studyPlan } = body;
+    const { email, answers, domainResults, weakestDomains, studyPlan, roadmapOutput } = body;
 
     if (!email || !answers || !domainResults || !weakestDomains || !studyPlan) {
       return NextResponse.json(
@@ -27,7 +27,8 @@ export async function POST(request: Request) {
         domain_results: domainResults,
         weakest_domains: weakestDomains,
         study_plan: studyPlan,
-        version: 2,
+        roadmap_output: roadmapOutput ?? null,
+        version: 3,
       });
 
     if (dbError) {
@@ -48,12 +49,13 @@ export async function POST(request: Request) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            version: 2,
+            version: 3,
             email,
             answers,
             domainResults,
             weakestDomains,
             studyPlan,
+            roadmapOutput,
             submittedAt: new Date().toISOString(),
           }),
           signal: AbortSignal.timeout(5000),

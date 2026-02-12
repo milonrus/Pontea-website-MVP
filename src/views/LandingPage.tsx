@@ -287,17 +287,26 @@ const MethodologyPreview = () => (
   </section>
 );
 
-const LandingPage: React.FC = () => {
+interface LandingPageProps {
+  locale?: 'en' | 'ru';
+}
+
+const LandingPage: React.FC<LandingPageProps> = ({ locale = 'ru' }) => {
+  const footerT = {
+    en: { tagline: 'Architecture Entrance Prep', methodology: 'Methodology', pricing: 'Pricing', contact: 'Contact' },
+    ru: { tagline: 'Подготовка к архитектурным экзаменам', methodology: 'Методология', pricing: 'Цены', contact: 'Контакты' }
+  }[locale];
+
   return (
     <div className="min-h-screen bg-white">
-      <Header />
-      <Hero />
-      <PlatformShowcase />
-      <ExperienceBanner />
-      <Testimonials />
-      <StressManagementTimeline />
-      <Pricing />
-      <FAQ />
+      <Header locale={locale} />
+      <Hero locale={locale} />
+      <PlatformShowcase locale={locale} />
+      <ExperienceBanner locale={locale} />
+      <Testimonials locale={locale} />
+      <StressManagementTimeline locale={locale} />
+      <Pricing locale={locale} />
+      <FAQ locale={locale} />
 
       {/* Footer */}
       <footer className="bg-primary text-white py-12">
@@ -305,12 +314,12 @@ const LandingPage: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
               <div className="text-2xl font-display font-bold mb-2">PONTEA</div>
-              <p className="text-blue-200 text-sm">Architecture Entrance Prep</p>
+              <p className="text-blue-200 text-sm">{footerT.tagline}</p>
             </div>
             <div className="flex gap-8 text-sm text-blue-200">
-              <Link href="/methodology" className="hover:text-white">Methodology</Link>
-              <a href="#pricing" className="hover:text-white">Pricing</a>
-              <a href="#" className="hover:text-white">Contact</a>
+              <Link href="/methodology" className="hover:text-white">{footerT.methodology}</Link>
+              <a href="#pricing" className="hover:text-white">{footerT.pricing}</a>
+              <a href="#" className="hover:text-white">{footerT.contact}</a>
             </div>
             <div className="flex flex-col items-center md:items-end gap-3">
               <LanguageSwitcher className="bg-white/95" />

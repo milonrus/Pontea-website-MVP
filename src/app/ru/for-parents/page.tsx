@@ -1,8 +1,16 @@
-"use client";
+import type { Metadata } from 'next';
+import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/ru/for-parents'
+  }
+};
 
 const ForParentsPage = () => {
   return (
     <div className="min-h-screen bg-white">
+      <LocalizedPageTopBar />
       <div className="max-w-7xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-primary mb-8">
           Для родителей
