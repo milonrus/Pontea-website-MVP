@@ -7,11 +7,32 @@ import { usePathname } from 'next/navigation';
 import Button from './Button';
 import { useAuth } from '@/contexts/AuthContext';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  locale?: 'en' | 'ru';
+}
+
+const translations = {
+  en: {
+    aboutCourse: 'About the Course',
+    pricing: 'Pricing',
+    personalPlan: 'Personal Plan',
+    needHelp: 'Need help choosing?',
+  },
+  ru: {
+    aboutCourse: 'О курсе',
+    pricing: 'Цены',
+    personalPlan: 'Персональный план',
+    needHelp: 'Нужна помощь с выбором?',
+  },
+};
+
+const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { currentUser, isAdmin } = useAuth();
+
+  const t = translations[locale];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,10 +42,12 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const localePrefix = locale === 'en' ? '/en' : '/ru';
+
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false);
-    if (pathname !== '/' && pathname !== '/ru') {
-      window.location.href = `/ru#${id}`;
+    if (pathname !== '/' && pathname !== `${localePrefix}`) {
+      window.location.href = `${localePrefix}#${id}`;
       return;
     }
     const element = document.getElementById(id);
@@ -34,9 +57,9 @@ const Header: React.FC = () => {
   };
 
   const navLinks = [
-    { label: 'О курсе', path: '/ru/arched-prep-course', type: 'link' as const },
-    { label: 'Цены', id: 'pricing', type: 'scroll' as const },
-    { label: 'Персональный план', path: '/ru/assessment', type: 'link' as const },
+    { label: t.aboutCourse, path: `${localePrefix}/arched-prep-course`, type: 'link' as const },
+    { label: t.pricing, id: 'pricing', type: 'scroll' as const },
+    { label: t.personalPlan, path: `${localePrefix}/assessment`, type: 'link' as const },
   ];
 
   return (
@@ -46,7 +69,7 @@ const Header: React.FC = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        <Link href="/ru" className="z-50">
+        <Link href={localePrefix} className="z-50">
           <div
             className={`w-auto transition-all duration-300 ${isScrolled ? 'h-5' : 'h-7'}`}
             style={{
@@ -104,7 +127,7 @@ const Header: React.FC = () => {
           )}
 
           <Link href="/consultation">
-            <Button size="sm" variant="primary">Нужна помощь с выбором?</Button>
+            <Button size="sm" variant="primary">{t.needHelp}</Button>
           </Link>
         </nav>
 
@@ -153,7 +176,7 @@ const Header: React.FC = () => {
             )}
 
             <Link href="/consultation" onClick={() => setMobileMenuOpen(false)}>
-              <Button size="lg" variant="primary">Нужна помощь с выбором?</Button>
+              <Button size="lg" variant="primary">{t.needHelp}</Button>
             </Link>
           </div>
         )}
