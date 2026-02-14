@@ -30,6 +30,11 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=... # optional, server-side admin tasks
 GEMINI_API_KEY=...            # optional, image parsing
+NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION=... # optional, RU payment link for Foundation
+NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED=...   # optional, RU payment link for Advanced
+NEXT_PUBLIC_SUPPORT_TELEGRAM_URL=...       # optional, support button URL
+PRICING_LEAD_WEBHOOK_URL=...               # optional, webhook for EUR/Mentorship leads
+PRICING_PAYMENT_INTENT_WEBHOOK_URL=...     # optional, webhook for RUB payment intents
 SEO_LOCK=true                 # default safety mode (noindex + robots disallow)
 ```
 

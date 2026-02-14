@@ -1,4 +1,8 @@
 export type RuPricingPlanId = 'foundation' | 'advanced' | 'mentorship';
+export type RuPricingCurrency = 'RUB' | 'EUR';
+export type PricingLeadType = 'rub_intent' | 'eur_application' | 'mentorship_application';
+export type PayerType = 'individual' | 'legal_entity';
+export type MessengerType = 'telegram' | 'whatsapp';
 
 export interface RuPricingGroup {
   title: string;

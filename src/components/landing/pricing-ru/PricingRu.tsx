@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { MessageCircle } from 'lucide-react';
-import PaymentModal from '@/components/shared/PaymentModal';
 import { RU_PRICING_PLANS } from './data';
 import { RuPricingPlan } from './types';
 import VariantConversionFocus from './VariantConversionFocus';
+import PricingLeadModal from './PricingLeadModal';
+
+const DEFAULT_SUPPORT_TELEGRAM_URL = 'https://t.me/pontea_support_bot';
+const SUPPORT_TELEGRAM_URL =
+  process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM_URL || DEFAULT_SUPPORT_TELEGRAM_URL;
 
 const PricingRu: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<RuPricingPlan | null>(null);
@@ -30,13 +33,15 @@ const PricingRu: React.FC = () => {
           </p>
         </div>
 
-        <div className="mt-8">
+        <div id="pricing-cards" className="mt-8 scroll-mt-12 md:scroll-mt-16">
           <VariantConversionFocus {...variantProps} />
         </div>
 
         <div className="mx-auto mt-12 max-w-xl">
-          <Link
-            href="/consultation"
+          <a
+            href={SUPPORT_TELEGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="group flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-sm transition-all duration-200 hover:border-primary/20 hover:shadow-md"
           >
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/15">
@@ -51,18 +56,15 @@ const PricingRu: React.FC = () => {
               </div>
             </div>
             <span className="flex-shrink-0 text-lg text-primary">&rarr;</span>
-          </Link>
+          </a>
         </div>
       </div>
 
-      {selectedPlan && (
-        <PaymentModal
-          isOpen={!!selectedPlan}
-          onClose={() => setSelectedPlan(null)}
-          tierName={`${selectedPlan.name} · Полная стоимость`}
-          price={selectedPlan.price}
-        />
-      )}
+      <PricingLeadModal
+        isOpen={!!selectedPlan}
+        onClose={() => setSelectedPlan(null)}
+        plan={selectedPlan}
+      />
     </section>
   );
 };

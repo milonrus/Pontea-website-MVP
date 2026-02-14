@@ -82,7 +82,7 @@ const Pricing: React.FC<PricingProps> = ({ locale = 'ru' }) => {
           <h2 className="text-3xl md:text-4xl font-display font-bold text-primary">{t.heading}</h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div id="pricing-cards" className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto scroll-mt-12 md:scroll-mt-16">
           {TIERS.map((tier) => (
             <div
               key={tier.name}

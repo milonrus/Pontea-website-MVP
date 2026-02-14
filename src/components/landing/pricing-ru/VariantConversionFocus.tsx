@@ -1,7 +1,11 @@
 import React from 'react';
 import { BadgeCheck } from 'lucide-react';
 import Button from '@/components/shared/Button';
-import { formatRub } from './data';
+import {
+  formatEurPerMonth,
+  formatFullPriceLine,
+  RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN,
+} from './data';
 import { RuPricingPlan, RuPricingVariantProps } from './types';
 
 const visualByPlan: Record<
@@ -23,12 +27,6 @@ const visualByPlan: Record<
     frame: 'border-red-200 bg-gradient-to-b from-red-50/70 to-white',
     valueText: 'Максимум персонального внимания и стратегической поддержки',
   },
-};
-
-const primaryCtaByPlan: Record<RuPricingPlan['id'], string> = {
-  foundation: 'Начать подготовку',
-  advanced: 'Выбрать Advanced',
-  mentorship: 'Оставить заявку',
 };
 
 const ctaHintByPlan: Record<RuPricingPlan['id'], string> = {
@@ -70,16 +68,12 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
             <p className="mt-2 text-sm font-medium text-gray-800">{visual.valueText}</p>
 
             <div className="mt-5 border-y border-gray-200 py-4">
-              <div className="text-5xl font-bold leading-none text-primary">€{plan.price}</div>
-              <div className="mt-2 flex min-h-7 items-center justify-between gap-3">
-                <div className="text-xs text-gray-500">{formatRub(plan.priceRub)}</div>
-                <div
-                  className={`inline-flex rounded-md bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700 ${
-                    plan.installmentAvailable ? '' : 'invisible'
-                  }`}
-                >
-                  Доступна рассрочка
-                </div>
+              <div className="flex items-end gap-1.5 text-primary">
+                <span className="text-5xl font-bold leading-none">€{formatEurPerMonth(plan.price)}</span>
+                <span className="pb-1 text-sm font-semibold">/мес</span>
+              </div>
+              <div className="mt-2 text-xs text-gray-500">
+                {formatFullPriceLine(plan.price, plan.priceRub)}
               </div>
             </div>
 
@@ -108,7 +102,7 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
                 fullWidth
                 onClick={() => onBuy(plan)}
               >
-                {primaryCtaByPlan[plan.id]}
+                {RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN[plan.id]}
               </Button>
               <p className="text-center text-xs text-gray-500">
                 {ctaHintByPlan[plan.id]}

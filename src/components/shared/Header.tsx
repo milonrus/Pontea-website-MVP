@@ -43,6 +43,9 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
   }, []);
 
   const localePrefix = locale === 'en' ? '/en' : '/ru';
+  const DEFAULT_SUPPORT_TELEGRAM_URL = 'https://t.me/pontea_support_bot';
+  const supportTelegramUrl =
+    process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM_URL || DEFAULT_SUPPORT_TELEGRAM_URL;
 
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false);
@@ -58,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
 
   const navLinks = [
     { label: t.aboutCourse, path: `${localePrefix}/arched-prep-course`, type: 'link' as const },
-    { label: t.pricing, id: 'pricing', type: 'scroll' as const },
+    { label: t.pricing, id: 'pricing-cards', type: 'scroll' as const },
     { label: t.personalPlan, path: `${localePrefix}/assessment`, type: 'link' as const },
   ];
 
@@ -126,9 +129,9 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
             </Link>
           )}
 
-          <Link href="/consultation">
+          <a href={supportTelegramUrl} target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="primary">{t.needHelp}</Button>
-          </Link>
+          </a>
         </nav>
 
         {/* Mobile Toggle */}
@@ -175,9 +178,14 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
               </Link>
             )}
 
-            <Link href="/consultation" onClick={() => setMobileMenuOpen(false)}>
+            <a
+              href={supportTelegramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               <Button size="lg" variant="primary">{t.needHelp}</Button>
-            </Link>
+            </a>
           </div>
         )}
       </div>

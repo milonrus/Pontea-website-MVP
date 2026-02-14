@@ -1,6 +1,7 @@
 import {
   RuPricingFeatureRow,
   RuPricingPlan,
+  RuPricingPlanId,
 } from './types';
 
 export const RU_PRICING_PLANS: RuPricingPlan[] = [
@@ -253,3 +254,22 @@ export const RU_PRICING_FEATURE_ROWS: RuPricingFeatureRow[] = [
 
 export const formatRub = (value: number) =>
   `≈ ${value.toLocaleString('ru-RU')} ₽`;
+
+export const COURSE_DURATION_MONTHS = 5;
+
+const eurPerMonthFormatter = new Intl.NumberFormat('ru-RU', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
+export const formatEurPerMonth = (totalEur: number) =>
+  eurPerMonthFormatter.format(totalEur / COURSE_DURATION_MONTHS);
+
+export const formatFullPriceLine = (priceEur: number, priceRub: number) =>
+  `Полная стоимость: €${priceEur} / ≈ ${priceRub.toLocaleString('ru-RU')} ₽ за ${COURSE_DURATION_MONTHS} месяцев`;
+
+export const RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN: Record<RuPricingPlanId, string> = {
+  foundation: 'Начать подготовку',
+  advanced: 'Выбрать Advanced',
+  mentorship: 'Оставить заявку',
+};

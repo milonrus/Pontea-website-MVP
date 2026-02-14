@@ -132,7 +132,7 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
               </div>
 
               <div className="w-full sm:w-auto sm:min-w-[220px]">
-                <Link href="#pricing" className="block">
+                <Link href="#pricing-cards" className="block">
                   <Button
                     size="lg"
                     variant="outline"
