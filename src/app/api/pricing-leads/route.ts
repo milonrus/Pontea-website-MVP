@@ -71,6 +71,7 @@ export async function POST(request: Request) {
       messenger_type: payload.messengerType,
       messenger_handle: payload.messengerHandle,
       comment: payload.comment,
+      consent_offer: payload.consentOffer,
       consent_personal_data: payload.consentPersonalData,
       consent_marketing: payload.consentMarketing,
       cta_label: payload.ctaLabel,

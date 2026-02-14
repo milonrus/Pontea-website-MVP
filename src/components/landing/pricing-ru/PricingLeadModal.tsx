@@ -2,19 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   CheckCircle2,
-  ChevronRight,
   CircleAlert,
-  CreditCard,
-  Euro,
-  MessageCircle,
-  ShieldCheck,
 } from 'lucide-react';
 import Button from '@/components/shared/Button';
 import Modal from '@/components/shared/Modal';
 import {
-  formatEurPerMonth,
   formatFullPriceLine,
   RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN,
 } from './data';
@@ -26,6 +19,7 @@ import {
 } from './types';
 
 type ModalStep = 'currency' | 'lead_form' | 'success';
+type PaymentOptionId = 'rub_full' | 'rub_installment' | 'eur';
 
 interface PricingLeadModalProps {
   isOpen: boolean;
@@ -42,6 +36,7 @@ interface LeadFormState {
   messengerType: MessengerType | '';
   messengerHandle: string;
   comment: string;
+  consentOffer: boolean;
   consentPersonalData: boolean;
   consentMarketing: boolean;
 }
@@ -55,6 +50,7 @@ const DEFAULT_LEAD_FORM: LeadFormState = {
   messengerType: '',
   messengerHandle: '',
   comment: '',
+  consentOffer: false,
   consentPersonalData: false,
   consentMarketing: false,
 };
@@ -62,19 +58,38 @@ const DEFAULT_LEAD_FORM: LeadFormState = {
 const E164_PHONE_REGEX = /^\+[1-9]\d{6,14}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const DEFAULT_SUPPORT_TELEGRAM_URL = 'https://t.me/pontea_support_bot';
-const SUPPORT_TELEGRAM_URL =
-  process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM_URL || DEFAULT_SUPPORT_TELEGRAM_URL;
 const DEFAULT_RUB_PAYMENT_URL_FOUNDATION = 'https://payform.ru/b8aFIn1/';
 const DEFAULT_RUB_PAYMENT_URL_ADVANCED = 'https://payform.ru/j2aFIb3/';
+const DEFAULT_SUPPORT_TELEGRAM_URL = 'https://t.me/pontea_support_bot';
 
 const RUB_PAYMENT_URL_BY_PLAN: Record<'foundation' | 'advanced', string | undefined> = {
   foundation: process.env.NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION || DEFAULT_RUB_PAYMENT_URL_FOUNDATION,
   advanced: process.env.NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED || DEFAULT_RUB_PAYMENT_URL_ADVANCED,
 };
+const SUPPORT_TELEGRAM_URL =
+  process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM_URL || DEFAULT_SUPPORT_TELEGRAM_URL;
+
+const RUB_INSTALLMENT_PAYMENT_URL_BY_PLAN: Record<'foundation' | 'advanced', string | undefined> = {
+  foundation: process.env.NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION_INSTALLMENT,
+  advanced: process.env.NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED_INSTALLMENT,
+};
+
+const RUB_FULL_PRICE_BY_PLAN: Record<'foundation' | 'advanced', number> = {
+  foundation: 82_000,
+  advanced: 137_000,
+};
+
+const RUB_INSTALLMENT_TOTAL_BY_PLAN: Record<'foundation' | 'advanced', number> = {
+  foundation: 89_000,
+  advanced: 149_000,
+};
+
+const INSTALLMENT_MONTHS = 4;
+
+const formatRubAmount = (value: number) => `${value.toLocaleString('ru-RU')} ₽`;
 
 const fieldClassName =
-  'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20';
+  'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20';
 
 const errorClassName = 'mt-1 text-xs font-medium text-red-600';
 
@@ -88,10 +103,10 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   const [leadForm, setLeadForm] = useState<LeadFormState>(DEFAULT_LEAD_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string | null>(null);
-  const [supportError, setSupportError] = useState<string | null>(null);
   const [retryLeadId, setRetryLeadId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOptionId>('rub_full');
 
   const isMentorship = plan?.id === 'mentorship';
 
@@ -113,10 +128,10 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     setLeadForm(DEFAULT_LEAD_FORM);
     setErrors({});
     setApiError(null);
-    setSupportError(null);
     setRetryLeadId(null);
     setIsSubmitting(false);
     setIsRetrying(false);
+    setSelectedPaymentOption('rub_full');
   }, [isOpen, plan?.id]);
 
   if (!plan) {
@@ -124,7 +139,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   }
 
   const modalTitleByStep: Record<ModalStep, string> = {
-    currency: 'Выберите валюту оплаты',
+    currency: 'Выберите способ оплаты',
     lead_form: isMentorship ? 'Заявка на Mentorship' : 'Оплата в евро',
     success: 'Заявка отправлена',
   };
@@ -158,40 +173,8 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   const closeWithReset = () => {
     setErrors({});
     setApiError(null);
-    setSupportError(null);
     setRetryLeadId(null);
     onClose();
-  };
-
-  const openSupport = () => {
-    setSupportError(null);
-
-    if (!SUPPORT_TELEGRAM_URL) {
-      setSupportError('Ссылка поддержки пока не настроена. Пожалуйста, попробуйте позже.');
-      return;
-    }
-
-    window.open(SUPPORT_TELEGRAM_URL, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleBack = () => {
-    setApiError(null);
-    setSupportError(null);
-    setErrors({});
-
-    if (step === 'lead_form') {
-      if (isMentorship) {
-        closeWithReset();
-        return;
-      }
-
-      setStep('currency');
-      return;
-    }
-
-    if (step === 'success') {
-      setStep('lead_form');
-    }
   };
 
   const validateLeadForm = (): Record<string, string> => {
@@ -229,8 +212,13 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   const submitLeadApplication = async (event: React.FormEvent) => {
     event.preventDefault();
     setApiError(null);
-    setSupportError(null);
     setRetryLeadId(null);
+
+    if (!isMentorship && !leadForm.consentOffer) {
+      setApiError('Подтвердите согласие с публичной офертой, чтобы продолжить.');
+      setStep('currency');
+      return;
+    }
 
     const validationErrors = validateLeadForm();
     setErrors(validationErrors);
@@ -264,6 +252,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
           messengerType: isMentorship ? undefined : leadForm.messengerType || undefined,
           messengerHandle: isMentorship ? undefined : leadForm.messengerHandle.trim() || undefined,
           comment: isMentorship ? undefined : leadForm.comment.trim() || undefined,
+          consentOffer: isMentorship ? false : leadForm.consentOffer,
           consentPersonalData: isMentorship ? true : leadForm.consentPersonalData,
           consentMarketing: isMentorship ? false : leadForm.consentMarketing,
           ctaLabel,
@@ -327,104 +316,252 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   };
 
   const renderPlanPriceSummary = () => (
-    <div className="rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 via-white to-accent/10 p-4">
+    <div className="rounded-xl border border-gray-200 bg-white p-3.5">
       <div className="text-sm font-semibold text-primary">{plan.name}</div>
-      <div className="mt-1 flex items-end gap-1.5 text-primary">
-        <div className="text-3xl font-bold leading-none">€{formatEurPerMonth(plan.price)}</div>
-        <div className="pb-0.5 text-sm font-semibold">/мес</div>
-      </div>
       <div className="mt-1 text-sm text-gray-600">{formatFullPriceLine(plan.price, plan.priceRub)}</div>
     </div>
   );
 
-  const renderCurrencyStep = () => (
-    <>
-      <div className="mb-5">{renderPlanPriceSummary()}</div>
+  const ensureOfferConsent = () => {
+    if (leadForm.consentOffer) {
+      setErrors((prev) => {
+        if (!prev.consentOffer) {
+          return prev;
+        }
 
+        const rest = { ...prev };
+        delete rest.consentOffer;
+        return rest;
+      });
+      return true;
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      consentOffer: 'Чтобы продолжить, примите условия публичной оферты.',
+    }));
+    return false;
+  };
+
+  const renderCurrencyStep = () => {
+    if (plan.id !== 'foundation' && plan.id !== 'advanced') {
+      return (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          Оплата в этом формате доступна только для тарифов Foundation и Advanced.
+        </div>
+      );
+    }
+
+    const rubFullPrice = RUB_FULL_PRICE_BY_PLAN[plan.id];
+    const rubInstallmentTotal = RUB_INSTALLMENT_TOTAL_BY_PLAN[plan.id];
+    const rubInstallmentMonthly = Math.round(
+      rubInstallmentTotal / INSTALLMENT_MONTHS
+    );
+
+    const handleConfirmPaymentMethod = () => {
+      setApiError(null);
+
+      if (!ensureOfferConsent()) {
+        return;
+      }
+
+      if (selectedPaymentOption === 'rub_full') {
+        const paymentUrl = RUB_PAYMENT_URL_BY_PLAN[plan.id];
+
+        if (!paymentUrl) {
+          setApiError('Ссылка на оплату временно недоступна. Попробуйте позже.');
+          return;
+        }
+
+        window.location.assign(paymentUrl);
+        return;
+      }
+
+      if (selectedPaymentOption === 'rub_installment') {
+        const paymentUrl = RUB_INSTALLMENT_PAYMENT_URL_BY_PLAN[plan.id];
+
+        if (!paymentUrl) {
+          setApiError('Ссылка на оплату в рассрочку временно недоступна. Попробуйте позже.');
+          return;
+        }
+
+        window.location.assign(paymentUrl);
+        return;
+      }
+
+      setSelectedCurrency('EUR');
+      setStep('lead_form');
+      setErrors({});
+    };
+
+    type PaymentOption = {
+      id: PaymentOptionId;
+      amount: string;
+      title: string;
+      subtitle?: string;
+      amountHint?: string;
+    };
+
+    const formatEurAmount = (value: number) =>
+      new Intl.NumberFormat('ru-RU', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(value);
+
+    const paymentOptions: PaymentOption[] = [
+      {
+        id: 'rub_full',
+        amount: formatRubAmount(rubFullPrice),
+        title: 'Оплата картой РФ',
+        subtitle: 'Один платеж в рублях',
+      },
+      {
+        id: 'rub_installment',
+        amount: formatRubAmount(rubInstallmentMonthly),
+        amountHint: `х ${INSTALLMENT_MONTHS} = ${formatRubAmount(rubInstallmentTotal)}`,
+        title: `Рассрочка на ${INSTALLMENT_MONTHS} месяца`,
+        subtitle: 'Ежемесячная оплата',
+      },
+      {
+        id: 'eur',
+        amount: `€${formatEurAmount(plan.price)}`,
+        title: 'Банковский перевод (EUR)',
+        subtitle: 'Перевод по реквизитам в евро',
+      },
+    ];
+
+    const accessNote = `Доступ на 6 месяцев. Тариф ${plan.name}.`;
+
+    const getActionLabel = () => {
+      return 'Перейти к оплате';
+    };
+
+    return (
       <div className="space-y-3">
-        <button
-          type="button"
-          onClick={() => {
-            setApiError(null);
-            setErrors({});
+        <p className="text-base font-semibold leading-snug text-primary sm:text-lg">
+          {accessNote}
+        </p>
 
-            if (plan.id !== 'foundation' && plan.id !== 'advanced') {
-              setApiError('Оплата в рублях доступна только для Foundation и Advanced.');
-              return;
-            }
+        <div className="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white">
+          {paymentOptions.map((option) => {
+            const isSelected = selectedPaymentOption === option.id;
 
-            const paymentUrl = RUB_PAYMENT_URL_BY_PLAN[plan.id];
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  setSelectedPaymentOption(option.id);
+                  setApiError(null);
+                }}
+                className={`w-full px-3.5 py-3 text-left transition-colors sm:px-4 sm:py-3.5 ${
+                  isSelected ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/70'
+                }`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <div
+                    className={`mt-1 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                      isSelected ? 'border-gray-900' : 'border-gray-300'
+                    }`}
+                  >
+                    {isSelected ? (
+                      <span className="h-2.5 w-2.5 rounded-full bg-gray-900" />
+                    ) : null}
+                  </div>
 
-            if (!paymentUrl) {
-              setApiError('Ссылка на оплату временно недоступна. Напишите в поддержку.');
-              return;
-            }
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="text-base font-medium text-gray-900 sm:text-lg">{option.title}</div>
+                        {option.subtitle ? (
+                          <p className="mt-1 text-sm text-gray-500">{option.subtitle}</p>
+                        ) : null}
+                      </div>
 
-            window.location.assign(paymentUrl);
-          }}
-          className="group w-full rounded-2xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-primary/30 hover:shadow-sm"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-xl bg-primary/10 p-2 text-primary">
-                <CreditCard className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="font-semibold text-primary">Рубли (российской картой)</div>
-                <div className="mt-1 text-sm text-gray-600">
-                  Оплата по ссылке на платёжной платформе.
+                      <div className="text-left sm:self-center sm:text-right">
+                        <div className="text-2xl font-medium leading-none text-gray-900 tabular-nums">
+                          {option.amount}
+                        </div>
+                        {option.amountHint ? (
+                          <div className="mt-1 text-xs text-gray-500">
+                            {option.amountHint}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-0.5" />
-          </div>
-        </button>
+              </button>
+            );
+          })}
+        </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedCurrency('EUR');
-            setStep('lead_form');
-            setApiError(null);
-            setErrors({});
-          }}
-          className="group w-full rounded-2xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-primary/30 hover:shadow-sm"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-xl bg-accent/20 p-2 text-primary">
-                <Euro className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="font-semibold text-primary">Евро (иностранной картой)</div>
-                <div className="mt-1 text-sm text-gray-600">
-                  Сначала оформим заявку, затем отправим договор и инвойс.
-                </div>
-              </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-0.5" />
-          </div>
-        </button>
-      </div>
-    </>
-  );
+        <div className="px-0.5">
+          <label className="flex cursor-pointer items-start gap-2.5 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={leadForm.consentOffer}
+              onChange={(event) => {
+                const isChecked = event.target.checked;
+                setLeadForm((prev) => ({ ...prev, consentOffer: isChecked }));
+                if (isChecked) {
+                  setErrors((prev) => {
+                    if (!prev.consentOffer) {
+                      return prev;
+                    }
 
-  const renderLeadStep = () => (
-    <form onSubmit={submitLeadApplication} className="space-y-4">
-      {renderPlanPriceSummary()}
+                    const rest = { ...prev };
+                    delete rest.consentOffer;
+                    return rest;
+                  });
+                  setApiError(null);
+                }
+              }}
+              className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <span>
+              Принимаю условия{' '}
+              <a
+                href="/ru/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary underline underline-offset-2"
+              >
+                публичной оферты
+              </a>
+            </span>
+          </label>
+          {errors.consentOffer && <p className={errorClassName}>{errors.consentOffer}</p>}
+        </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-        <div className="text-sm font-semibold text-primary">{plan.name}</div>
-        <div className="mt-1 text-sm text-gray-600">
-          {isMentorship
-            ? 'Индивидуально согласуем формат и оплату.'
-            : 'Оплата не списывается сейчас. После проверки данных отправим дальнейшие шаги.'}
+        <div className="flex justify-end">
+          <Button onClick={handleConfirmPaymentMethod} size="sm">
+            {getActionLabel()}
+          </Button>
         </div>
       </div>
+    );
+  };
+
+  const renderLeadStep = () => (
+    <form onSubmit={submitLeadApplication} className="space-y-3">
+      {!isMentorship ? (
+        <>
+          {renderPlanPriceSummary()}
+
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+            <div className="text-sm font-semibold text-primary">{plan.name}</div>
+            <div className="mt-1 text-sm text-gray-600">
+              Оплата не списывается сейчас. После проверки данных отправим дальнейшие шаги.
+            </div>
+          </div>
+        </>
+      ) : null}
 
       {isMentorship ? (
         <>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Имя
@@ -454,13 +591,13 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             </div>
           </div>
 
-          <Button type="submit" fullWidth isLoading={isSubmitting}>
+          <Button type="submit" fullWidth size="sm" isLoading={isSubmitting}>
             Оставить заявку
           </Button>
         </>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Имя
@@ -490,7 +627,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Email
@@ -520,7 +657,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Тип плательщика
@@ -562,7 +699,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Мессенджер (опционально)
@@ -612,15 +749,15 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             />
           </div>
 
-          <div className="space-y-3 rounded-xl border border-gray-200 p-3.5">
-            <label className="flex cursor-pointer items-start gap-3 text-sm text-gray-700">
+          <div className="space-y-2.5 rounded-lg border border-gray-200 p-3">
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-gray-700">
               <input
                 type="checkbox"
                 checked={leadForm.consentPersonalData}
                 onChange={(event) =>
                   setLeadForm((prev) => ({ ...prev, consentPersonalData: event.target.checked }))
                 }
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
               />
               <span>Согласен(а) на обработку персональных данных.</span>
             </label>
@@ -628,20 +765,20 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
               <p className={errorClassName}>{errors.consentPersonalData}</p>
             )}
 
-            <label className="flex cursor-pointer items-start gap-3 text-sm text-gray-700">
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-gray-700">
               <input
                 type="checkbox"
                 checked={leadForm.consentMarketing}
                 onChange={(event) =>
                   setLeadForm((prev) => ({ ...prev, consentMarketing: event.target.checked }))
                 }
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
               />
               <span>Согласен(а) на получение рекламных материалов (опционально).</span>
             </label>
           </div>
 
-          <Button type="submit" fullWidth isLoading={isSubmitting}>
+          <Button type="submit" fullWidth size="sm" isLoading={isSubmitting}>
             Отправить заявку
           </Button>
         </>
@@ -650,67 +787,47 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   );
 
   const renderSuccessStep = () => (
-    <div className="py-6 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-        <CheckCircle2 className="h-8 w-8" />
+    <div className="py-4 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600">
+        <CheckCircle2 className="h-7 w-7" />
       </div>
-      <h4 className="mt-5 text-2xl font-bold text-primary">Спасибо, заявка получена</h4>
+      <h4 className="mt-4 text-xl font-bold text-primary">Спасибо, заявка получена</h4>
       <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-gray-600">
         Свяжемся с вами в течение рабочего дня, чтобы согласовать следующие шаги.
       </p>
 
-      <div className="mt-6">
-        <Button onClick={closeWithReset} fullWidth>
+      <div className="mt-5">
+        <Button onClick={closeWithReset} fullWidth size="sm">
           Закрыть
         </Button>
       </div>
     </div>
   );
 
-  const showBackButton = step !== 'currency';
-
   return (
     <Modal
       isOpen={isOpen}
       onClose={closeWithReset}
       title={modalTitleByStep[step]}
-      maxWidth="max-w-2xl"
-    >
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            {showBackButton ? (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/5"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Назад
-              </button>
-            ) : null}
-          </div>
-
-          <button
-            type="button"
-            onClick={openSupport}
-            className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:border-primary/30 hover:bg-primary/5"
+      maxWidth="max-w-xl"
+      headerActions={
+        step === 'currency' ? (
+          <a
+            href={SUPPORT_TELEGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:border-primary/30 hover:bg-primary/5"
           >
-            <MessageCircle className="h-4 w-4" />
             Написать в поддержку
-          </button>
-        </div>
-
-        {supportError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {supportError}
-          </div>
-        )}
-
+          </a>
+        ) : null
+      }
+    >
+      <div className="space-y-3 text-sm">
         {apiError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
             <div className="flex items-start gap-2 text-sm text-red-700">
-              <CircleAlert className="mt-0.5 h-4 w-4 flex-none" />
+              <CircleAlert className="mt-0.5 h-3.5 w-3.5 flex-none" />
               <span>{apiError}</span>
             </div>
             {retryLeadId && (
@@ -732,15 +849,6 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
         {step === 'currency' && renderCurrencyStep()}
         {step === 'lead_form' && renderLeadStep()}
         {step === 'success' && renderSuccessStep()}
-
-        <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 text-xs text-blue-800">
-          <div className="flex items-start gap-2">
-            <ShieldCheck className="mt-0.5 h-4 w-4 flex-none" />
-            <span>
-              Мы используем данные только для связи по вашей заявке и организации обучения.
-            </span>
-          </div>
-        </div>
       </div>
     </Modal>
   );

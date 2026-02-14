@@ -24,6 +24,7 @@ export interface NormalizedPricingLeadPayload {
   messengerType: MessengerType | null;
   messengerHandle: string | null;
   comment: string | null;
+  consentOffer: boolean;
   consentPersonalData: boolean;
   consentMarketing: boolean;
   ctaLabel: string;
@@ -119,6 +120,7 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
   }
 
   const consentMarketing = source.consentMarketing === true;
+  const consentOffer = source.consentOffer === true;
 
   const lastName = normalizeText(source.lastName);
   const email = normalizeText(source.email);
@@ -187,6 +189,10 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
     if (!payerType) {
       return { payload: null, error: 'payerType is required' };
     }
+
+    if (!consentOffer) {
+      return { payload: null, error: 'consentOffer must be true for eur_application' };
+    }
   }
 
   if (source.leadType === 'mentorship_application') {
@@ -212,6 +218,7 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
       messengerType,
       messengerHandle,
       comment,
+      consentOffer,
       consentPersonalData,
       consentMarketing,
       ctaLabel,
@@ -248,6 +255,7 @@ export function buildWebhookPayload(lead: Record<string, any>) {
     messengerType: lead.messenger_type,
     messengerHandle: lead.messenger_handle,
     comment: lead.comment,
+    consentOffer: lead.consent_offer,
     consentPersonalData: lead.consent_personal_data,
     consentMarketing: lead.consent_marketing,
     ctaLabel: lead.cta_label,

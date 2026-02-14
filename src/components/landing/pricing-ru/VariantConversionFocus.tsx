@@ -29,12 +29,6 @@ const visualByPlan: Record<
   },
 };
 
-const ctaHintByPlan: Record<RuPricingPlan['id'], string> = {
-  foundation: 'Доступ открывается сразу',
-  advanced: 'Доступ сразу, расписание в личном кабинете',
-  mentorship: 'Свяжемся и подтвердим формат',
-};
-
 const includeLabelByPlan: Record<RuPricingPlan['id'], string> = {
   foundation: 'Что включено',
   advanced: 'Всё из Foundation, а также',
@@ -96,7 +90,7 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
               ))}
             </ul>
 
-            <div className="mt-5 space-y-2">
+            <div className="mt-5 space-y-1.5">
               <Button
                 variant={isRecommended ? 'primary' : 'outline'}
                 fullWidth
@@ -104,8 +98,8 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
               >
                 {RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN[plan.id]}
               </Button>
-              <p className="text-center text-xs text-gray-500">
-                {ctaHintByPlan[plan.id]}
+              <p className="text-center text-xs font-medium text-gray-500">
+                Доступна рассрочка
               </p>
             </div>
           </article>
