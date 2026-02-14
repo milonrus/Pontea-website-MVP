@@ -8,6 +8,7 @@ interface ModalProps {
   children: React.ReactNode;
   title?: string;
   maxWidth?: string;
+  headerActions?: React.ReactNode;
 }
 
 const Modal: React.FC<ModalProps> = ({ 
@@ -15,7 +16,8 @@ const Modal: React.FC<ModalProps> = ({
   onClose, 
   children, 
   title, 
-  maxWidth = 'max-w-lg' 
+  maxWidth = 'max-w-lg',
+  headerActions,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -45,14 +47,17 @@ const Modal: React.FC<ModalProps> = ({
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
             className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl overflow-hidden`}
           >
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h3 className="text-xl font-display font-bold text-primary">{title}</h3>
-              <button 
-                onClick={onClose}
-                className="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div className="flex items-center justify-between gap-3 border-b border-gray-100 p-6">
+              <h3 className="min-w-0 flex-1 text-xl font-display font-bold text-primary">{title}</h3>
+              <div className="flex items-center gap-2">
+                {headerActions}
+                <button 
+                  onClick={onClose}
+                  className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="p-6 overflow-y-auto max-h-[85vh]">
               {children}
