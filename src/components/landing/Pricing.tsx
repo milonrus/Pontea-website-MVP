@@ -3,6 +3,7 @@ import { Check, X, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import Button from '@/components/shared/Button';
 import PaymentModal from '@/components/shared/PaymentModal';
+import PricingRu from '@/components/landing/pricing-ru/PricingRu';
 import { PlanTier } from '@/types';
 
 interface PricingProps {
@@ -11,35 +12,35 @@ interface PricingProps {
 
 const getTiers = (locale: 'en' | 'ru' = 'ru'): PlanTier[] => [
   {
-    name: locale === 'en' ? 'Basic' : 'База',
+    name: locale === 'en' ? 'Start' : 'Старт',
     price: 690,
     priceRub: 75000,
     features: locale === 'en' ?
-      ['Theory notes (250+ pages)', '1000+ practice questions', 'Practice exams'] :
-      ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены'],
+      ['Access to the platform with video lessons, practice tasks, and theory'] :
+      ['Доступ к платформе с видео, задачками и теорией'],
     missingFeatures: locale === 'en' ?
-      ['Video lectures', 'Live seminars', 'Progress tracking', 'Support chat', '1-on-1 private sessions'] :
-      ['Видеолекции', 'Живые семинары', 'Отслеживание прогресса', 'Чат с поддержкой', 'Индивидуальные занятия 1-на-1'],
+      ['Mentor with bi-weekly check-ins', 'Saturday school: group classes with instructors', 'Instructor answers and assignment discussions in the forum', '20 personal sessions with instructors', 'Personal mentor calls, chat, and anytime support', 'Strategic sessions with the school founders'] :
+      ['Ментор с check-in каждые 2 недели', 'Субботняя школа: занятия с преподавателями в группе', 'Ответы от преподавателей и обсуждение заданий в форуме', '20 персональных занятий с преподавателями', 'Персональные созвоны с ментором, чат и поддержка в любое время', 'Стратегические сессии с основательницами школы'],
   },
   {
-    name: locale === 'en' ? 'Full Course' : 'Полный курс',
+    name: locale === 'en' ? 'Full' : 'Полный',
     price: 1190,
     priceRub: 130000,
     recommended: true,
     features: locale === 'en' ?
-      ['Theory notes (250+ pages)', '1000+ practice questions', 'Practice exams', '40+ hours of video lectures', 'Weekly live seminars', 'Progress monitoring', 'Group support chat'] :
-      ['Конспекты теории (250+ страниц)', '1000+ тренировочных вопросов', 'Пробные экзамены', '40+ часов видеолекций', 'Еженедельные живые семинары', 'Мониторинг прогресса', 'Групповой чат поддержки'],
+      ['Platform access', 'A mentor tracks progress: bi-weekly check-ins to review and adjust your roadmap', 'Saturday school: group classes with instructors', 'Instructor answers and assignment discussions in the forum'] :
+      ['Доступ к платформе', 'Ментор, который следит за прогрессом: check-in каждые две недели для проверки выполнения роадмапа и его доработки', 'Субботняя школа: занятия с преподавателями в группе', 'Ответы от преподавателей, обсуждение заданий в форуме'],
     missingFeatures: locale === 'en' ?
-      ['Personalized preparation program', '1-on-1 private sessions'] :
-      ['Персональная программа подготовки', 'Индивидуальные занятия 1-на-1'],
+      ['20 personal sessions with instructors (5 months x 4 sessions)', 'Personal mentor calls, chat, and anytime support', 'Strategic sessions with the school founders'] :
+      ['20 персональных занятий с преподавателями (5 мес х 4 занятия)', 'Персональные созвоны с ментором, чат и поддержка в любое время', 'Стратегические сессии с основательницами школы'],
   },
   {
-    name: 'VIP',
+    name: 'Мастер',
     price: 2750,
     priceRub: 300000,
     features: locale === 'en' ?
-      ['Everything in Full Course', 'Personalized preparation program', '1-on-1 sessions with instructors', '3 consultations with founders', 'Priority support'] :
-      ['Все из тарифа «Полный курс»', 'Персональная программа подготовки', 'Индивидуальные занятия с преподавателями 1-на-1', '3 консультации с основателями', 'Приоритетная поддержка'],
+      ['Everything in the Full plan', '20 personal sessions with instructors (5 months x 4 sessions)', 'Personal mentor calls, chat, and anytime support', 'Strategic sessions with the school founders'] :
+      ['Все, что в тарифе «Полный»', '20 персональных занятий с преподавателями (5 мес х 4 занятия)', 'Персональные созвоны с ментором, чат и поддержка в любое время', 'Стратегические сессии с основательницами школы'],
     missingFeatures: [],
   }
 ];
@@ -66,6 +67,10 @@ const translations = {
 };
 
 const Pricing: React.FC<PricingProps> = ({ locale = 'ru' }) => {
+  if (locale === 'ru') {
+    return <PricingRu />;
+  }
+
   const [selectedTier, setSelectedTier] = useState<PlanTier | null>(null);
   const t = translations[locale];
   const TIERS = getTiers(locale);
