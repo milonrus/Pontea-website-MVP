@@ -4,7 +4,21 @@ const CURRENCIES = ['RUB', 'EUR'] as const;
 const PAYER_TYPES = ['individual', 'legal_entity'] as const;
 const MESSENGER_TYPES = ['telegram', 'whatsapp'] as const;
 
+const EUR_PRICE_BY_PLAN: Record<PlanId, number> = {
+  foundation: 890,
+  advanced: 1490,
+  mentorship: 3490,
+};
+
+const RUB_PRICE_BY_PLAN: Record<PlanId, number> = {
+  foundation: 82000,
+  advanced: 137000,
+  mentorship: 321000,
+};
+
 export const MAX_WEBHOOK_ATTEMPTS = 3;
+const DEFAULT_PRICING_LEAD_WEBHOOK_URL =
+  'https://shumiha.app.n8n.cloud/webhook/71f89af7-71f5-42b4-9c86-4602218cbf7f';
 
 export type LeadType = (typeof LEAD_TYPES)[number];
 export type PlanId = (typeof PLAN_IDS)[number];
@@ -24,6 +38,10 @@ export interface NormalizedPricingLeadPayload {
   messengerType: MessengerType | null;
   messengerHandle: string | null;
   comment: string | null;
+  contractCountry: string | null;
+  contractCity: string | null;
+  contractPostalCode: string | null;
+  contractAddress: string | null;
   consentOffer: boolean;
   consentPersonalData: boolean;
   consentMarketing: boolean;
@@ -45,6 +63,7 @@ export interface WebhookDeliveryResult {
 
 const E164_PHONE_REGEX = /^\+[1-9]\d{6,14}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const POSTAL_CODE_REGEX = /^[A-Za-z0-9][A-Za-z0-9\s-]{0,15}$/;
 
 const hasValue = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
@@ -151,6 +170,10 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
   }
 
   const comment = normalizeText(source.comment);
+  const contractCountry = normalizeText(source.contractCountry);
+  const contractCity = normalizeText(source.contractCity);
+  const contractPostalCode = normalizeText(source.contractPostalCode);
+  const contractAddress = normalizeText(source.contractAddress);
   const referrer = normalizeText(source.referrer);
   const utmSource = normalizeText(source.utmSource);
   const utmMedium = normalizeText(source.utmMedium);
@@ -190,6 +213,26 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
       return { payload: null, error: 'payerType is required' };
     }
 
+    if (!contractCountry) {
+      return { payload: null, error: 'contractCountry is required' };
+    }
+
+    if (!contractCity) {
+      return { payload: null, error: 'contractCity is required' };
+    }
+
+    if (!contractAddress) {
+      return { payload: null, error: 'contractAddress is required' };
+    }
+
+    if (!contractPostalCode) {
+      return { payload: null, error: 'contractPostalCode is required' };
+    }
+
+    if (!POSTAL_CODE_REGEX.test(contractPostalCode)) {
+      return { payload: null, error: 'contractPostalCode format is invalid' };
+    }
+
     if (!consentOffer) {
       return { payload: null, error: 'consentOffer must be true for eur_application' };
     }
@@ -218,6 +261,10 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
       messengerType,
       messengerHandle,
       comment,
+      contractCountry,
+      contractCity,
+      contractPostalCode,
+      contractAddress,
       consentOffer,
       consentPersonalData,
       consentMarketing,
@@ -239,10 +286,23 @@ export function buildWebhookPayload(lead: Record<string, any>) {
     lead.lead_type === 'rub_intent'
       ? 'pricing_payment_intent'
       : 'pricing_lead_submitted';
+  const planId = isPlanId(lead.plan_id) ? lead.plan_id : null;
+  const price =
+    planId && lead.currency === 'RUB'
+      ? RUB_PRICE_BY_PLAN[planId]
+      : planId
+        ? EUR_PRICE_BY_PLAN[planId]
+        : null;
+  const orderNumber =
+    lead.lead_type === 'eur_application' && typeof lead.invoice_order_number === 'number'
+      ? lead.invoice_order_number
+      : null;
 
   return {
     event,
     leadId: lead.id,
+    orderNumber,
+    price,
     leadType: lead.lead_type,
     status: lead.status,
     planId: lead.plan_id,
@@ -255,6 +315,10 @@ export function buildWebhookPayload(lead: Record<string, any>) {
     messengerType: lead.messenger_type,
     messengerHandle: lead.messenger_handle,
     comment: lead.comment,
+    contractCountry: lead.contract_country,
+    contractCity: lead.contract_city,
+    contractPostalCode: lead.contract_postal_code,
+    contractAddress: lead.contract_address,
     consentOffer: lead.consent_offer,
     consentPersonalData: lead.consent_personal_data,
     consentMarketing: lead.consent_marketing,
@@ -278,7 +342,10 @@ export async function deliverWebhookWithRetries(
   webhookUrlOverride?: string,
   webhookEnvName: string = 'PRICING_LEAD_WEBHOOK_URL'
 ): Promise<WebhookDeliveryResult> {
-  const webhookUrl = webhookUrlOverride || process.env.PRICING_LEAD_WEBHOOK_URL;
+  const webhookUrl =
+    webhookUrlOverride ||
+    process.env.PRICING_LEAD_WEBHOOK_URL ||
+    DEFAULT_PRICING_LEAD_WEBHOOK_URL;
 
   if (!webhookUrl) {
     return {

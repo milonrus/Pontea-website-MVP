@@ -318,7 +318,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ locale = 'ru' }) => {
             </div>
             <div className="flex gap-8 text-sm text-blue-200">
               <Link href="/methodology" className="hover:text-white py-2">{footerT.methodology}</Link>
-              <a href="#pricing" className="hover:text-white py-2">{footerT.pricing}</a>
+              <a href="#pricing-cards" className="hover:text-white py-2">{footerT.pricing}</a>
               <a href="#" className="hover:text-white py-2">{footerT.contact}</a>
             </div>
             <div className="flex flex-col items-center md:items-end gap-3">

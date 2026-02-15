@@ -30,10 +30,10 @@ const translations = {
     badge: 'Набор на цикл 2026/2027 открыт',
     h1Line1: 'Онлайн-школа',
     h1Line2: 'подготовки к ARCHED и TIL-A',
-    subtitle: 'Подгтовим с любого уровня на высокий балл!',
+    subtitle: 'Подготовим с любого уровня на высокий балл!',
     cta1: 'Получить план подготовки',
-    subLabel: 'Ответь на 5 вопросов',
-    cta2: 'Купить курс',
+    subLabel: 'Опрос займет 5 минут. Бесплатно.',
+    cta2: 'Выбрать курс',
     statLabel: 'Поступают в целевые вузы',
     footnote: '*среди тех, кто прошел курс до конца',
     hours: 'часов видеоуроков',
@@ -132,7 +132,7 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
               </div>
 
               <div className="w-full sm:w-auto sm:min-w-[220px]">
-                <Link href="#pricing" className="block">
+                <Link href="#pricing-cards" className="block">
                   <Button
                     size="lg"
                     variant="outline"

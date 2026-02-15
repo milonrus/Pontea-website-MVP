@@ -26,9 +26,12 @@ import { generateRoadmaps } from '@/lib/roadmap-generator/engine';
 import courseFixture from '@/data/roadmap-course-overview.json';
 import QuestionCard from './QuestionCard';
 import ProgressBar from './ProgressBar';
-import PostQuizEmailForm from './PostQuizEmailForm';
+import PostQuizEmailForm, {
+  AssessmentContactSubmission,
+} from './PostQuizEmailForm';
 
-type Step = 'quiz' | 'email' | 'submitting';
+type Step = 'quiz' | 'contact' | 'submitting';
+const RESULTS_STORAGE_KEY = 'pontea_results_v2';
 
 interface ComputedResults {
   answers: AssessmentAnswer[];
@@ -159,10 +162,10 @@ const AssessmentFlow: React.FC = () => {
       studyPlan,
       roadmapOutput,
     });
-    setStep('email');
+    setStep('contact');
   };
 
-  const handleEmailSubmit = async (email: string) => {
+  const handleContactSubmit = async (contact: AssessmentContactSubmission) => {
     if (!computedResults) return;
 
     setIsSubmitting(true);
@@ -173,7 +176,11 @@ const AssessmentFlow: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email,
+          name: contact.name,
+          email: contact.email,
+          phone: contact.phone,
+          consentPersonalData: contact.consentPersonalData,
+          consentAt: contact.consentAt,
           answers: computedResults.answers,
           domainResults: computedResults.domainResults,
           weakestDomains: computedResults.weakestDomains,
@@ -187,19 +194,23 @@ const AssessmentFlow: React.FC = () => {
         router.push(`/ru/results/${token}`);
       } else {
         // Fallback: save to localStorage and redirect to old route
-        saveFallback(email);
+        saveFallback(contact);
       }
     } catch {
       // Fallback: save to localStorage and redirect to old route
-      saveFallback(email);
+      saveFallback(contact);
     }
   };
 
-  const saveFallback = (email: string) => {
+  const saveFallback = (contact: AssessmentContactSubmission) => {
     if (!computedResults) return;
     const result = {
       version: 3,
-      email,
+      name: contact.name,
+      email: contact.email,
+      phone: contact.phone,
+      consentPersonalData: contact.consentPersonalData,
+      consentAt: contact.consentAt,
       answers: computedResults.answers,
       domainResults: computedResults.domainResults,
       weakestDomains: computedResults.weakestDomains,
@@ -207,12 +218,12 @@ const AssessmentFlow: React.FC = () => {
       roadmapOutput: computedResults.roadmapOutput,
       submittedAt: new Date().toISOString(),
     };
-    localStorage.setItem('pontea_results_v2', JSON.stringify(result));
+    localStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(result));
     router.push('/ru/results');
   };
 
-  if (step === 'email' && computedResults) {
-    return <PostQuizEmailForm onSubmit={handleEmailSubmit} isLoading={isSubmitting} />;
+  if (step === 'contact' && computedResults) {
+    return <PostQuizEmailForm onSubmit={handleContactSubmit} isLoading={isSubmitting} />;
   }
 
   if (step === 'submitting') {

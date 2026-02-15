@@ -2,8 +2,8 @@ import React from 'react';
 import { BadgeCheck } from 'lucide-react';
 import Button from '@/components/shared/Button';
 import {
+  COURSE_DURATION_MONTHS,
   formatEurPerMonth,
-  formatFullPriceLine,
   RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN,
 } from './data';
 import { RuPricingPlan, RuPricingVariantProps } from './types';
@@ -31,8 +31,8 @@ const visualByPlan: Record<
 
 const includeLabelByPlan: Record<RuPricingPlan['id'], string> = {
   foundation: 'Что включено',
-  advanced: 'Всё из Foundation, а также',
-  mentorship: 'Всё из Advanced, а также',
+  advanced: 'Всё из Стартового, а также',
+  mentorship: 'Всё из Основного, а также',
 };
 
 const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
@@ -62,12 +62,14 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
             <p className="mt-2 text-sm font-medium text-gray-800">{visual.valueText}</p>
 
             <div className="mt-5 border-y border-gray-200 py-4">
-              <div className="flex items-end gap-1.5 text-primary">
-                <span className="text-5xl font-bold leading-none">€{formatEurPerMonth(plan.price)}</span>
-                <span className="pb-1 text-sm font-semibold">/мес</span>
+              <div className="flex items-end gap-2 text-primary">
+                <span className="text-3xl font-bold leading-none md:text-4xl">€{plan.price}</span>
+                <span className="pb-1 text-sm font-semibold text-primary/80">
+                  = €{formatEurPerMonth(plan.price)}/мес
+                </span>
               </div>
               <div className="mt-2 text-xs text-gray-500">
-                {formatFullPriceLine(plan.price, plan.priceRub)}
+                {plan.priceRub.toLocaleString('ru-RU')} ₽ за {COURSE_DURATION_MONTHS} месяцев
               </div>
             </div>
 

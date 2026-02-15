@@ -25,7 +25,7 @@ const getWorries = (locale: 'en' | 'ru' = 'ru'): Worry[] => [
         id: 2,
         tag: locale === 'en' ? "there's not enough time" : "времени не хватит",
         title: locale === 'en' ? "I don't know my level or whether I'll make it in time" : "Не знаю свой уровень и успею ли вообще",
-        description: locale === 'en' ? "We'll figure out where you are right now and build a plan that's actually achievable." : "Выясним, где ты сейчас, и построим план, который реально успеть.",
+        description: locale === 'en' ? "translate" : "Определим твою точку А и составим реалистичный план до точки Б, с котором ты всё успеешь.",
         image: "/stress/time.png",
         color: 'orange',
     },
@@ -104,8 +104,8 @@ const translations = {
     ru: {
         h2: 'Страшно, что не получится?',
         subtitle: 'Мы через это прошли и знаем, как помочь',
-        ctaHeading: 'Оцени свой уровень и начни подготовку без хаоса',
-        ctaSubtitle: 'Короткая диагностика даст персональный план на ближайшие 4 месяца',
+        ctaHeading: 'Оцени свой уровень и начни подготовку без хаоса. Бесплатно.',
+        ctaSubtitle: 'Короткая диагностика даст персональный план на ближайшие 5 месяцев',
         ctaButton: 'Пройти опрос',
     },
 };
@@ -210,7 +210,8 @@ const StressManagementTimeline: React.FC<StressManagementTimelineProps> = ({ loc
                                         {locale === 'en' ? t.ctaHeading : (
                                             <>
                                                 Оцени свой уровень и начни подготовку{' '}
-                                                <span className="whitespace-nowrap">без хаоса</span>
+                                                <span className="whitespace-nowrap">без хаоса.</span>{' '}
+                                                <span className="whitespace-nowrap">Бесплатно.</span>
                                             </>
                                         )}
                                     </p>

@@ -7,7 +7,7 @@ import {
 export const RU_PRICING_PLANS: RuPricingPlan[] = [
   {
     id: 'foundation',
-    name: 'Foundation',
+    name: 'Стартовый',
     subtitle: 'Идеальный старт для тех, кто готовится самостоятельно',
     price: 890,
     priceRub: 82000,
@@ -41,13 +41,13 @@ export const RU_PRICING_PLANS: RuPricingPlan[] = [
   },
   {
     id: 'advanced',
-    name: 'Advanced',
+    name: 'Основной',
     subtitle: 'Оптимальный баланс практики, сопровождения и обратной связи',
     price: 1490,
     priceRub: 137000,
     badge: 'Выбор 80% учеников',
     installmentAvailable: true,
-    includesFrom: 'Включает всё из Foundation, а также:',
+    includesFrom: 'Включает всё из Стартового, а также:',
     summary: [
       '1300+ заданий, 10 пробных тестов и 3 экзаменационные симуляции',
       'Групповые онлайн-уроки по каждому предмету с разбором сложных тем',
@@ -88,13 +88,13 @@ export const RU_PRICING_PLANS: RuPricingPlan[] = [
   },
   {
     id: 'mentorship',
-    name: 'Mentorship',
+    name: 'Индивидуальный',
     subtitle: 'Максимум персонального внимания и стратегической поддержки',
     price: 3490,
     priceRub: 321000,
     badge: 'Количество мест ограничено',
     installmentAvailable: true,
-    includesFrom: 'Включает всё из Advanced, а также:',
+    includesFrom: 'Включает всё из Основного, а также:',
     summary: [
       '20 персональных занятий с топ-преподавателями',
       'Персональный ментор и приоритетная поддержка в рабочие часы',
@@ -269,6 +269,6 @@ export const formatFullPriceLine = (priceEur: number, priceRub: number) =>
 
 export const RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN: Record<RuPricingPlanId, string> = {
   foundation: 'Начать подготовку',
-  advanced: 'Выбрать Advanced',
+  advanced: 'Выбрать Основной',
   mentorship: 'Оставить заявку',
 };

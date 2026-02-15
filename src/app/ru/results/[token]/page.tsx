@@ -40,7 +40,14 @@ export default async function TokenResultsPage({
 
   const results: AssessmentResult = {
     version: data.version,
+    name: data.name ?? undefined,
     email: data.email,
+    phone: data.phone ?? undefined,
+    consentPersonalData:
+      typeof data.consent_personal_data === 'boolean'
+        ? data.consent_personal_data
+        : undefined,
+    consentAt: data.consent_at ?? undefined,
     answers: data.answers,
     domainResults: data.domain_results as DomainResult[],
     weakestDomains: data.weakest_domains as DomainResult[],

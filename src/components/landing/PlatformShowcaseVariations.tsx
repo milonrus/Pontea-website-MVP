@@ -15,28 +15,28 @@ const getPlatformTabs = (locale: 'en' | 'ru' = 'ru'): PlatformTab[] => [
   {
     id: 'video-lectures',
     title: locale === 'en' ? 'Video Lectures' : 'Видео-лекции',
-    description: locale === 'en' ? '80 hours of recorded lectures with the clearest explanations' : '80 часов записанных лекций с самыми доступными объяснениями',
+    description: locale === 'en' ? 'translate' : '30+ часов записанных лекций с самыми доступными объяснениями',
     icon: <Play className="w-5 h-5" />,
     videoSrc: '/platform/video-lectures'
   },
   {
     id: 'notes',
     title: locale === 'en' ? 'Study Notes' : 'Конспекты',
-    description: locale === 'en' ? '60 notes per topic for reviewing the material' : '60 конспектов по каждой теме для повторения материала',
+    description: locale === 'en' ? 'translate' : '60 конспектов по всем темам для повторения материала',
     icon: <FileText className="w-5 h-5" />,
     videoSrc: '/platform/notes'
   },
   {
     id: 'question-bank',
     title: locale === 'en' ? 'Question Bank' : 'Банк заданий',
-    description: locale === 'en' ? '1000 exercises to reinforce every topic' : '1000 упражнений для закрепления тем',
+    description: locale === 'en' ? 'translate' : '1000+ упражнений для закрепления тем',
     icon: <BookOpen className="w-5 h-5" />,
     videoSrc: '/platform/question-bank'
   },
   {
     id: 'practice-exams',
     title: locale === 'en' ? 'Practice Exams' : 'Пробные экзамены',
-    description: locale === 'en' ? '10 mock tests to track progress and simulate the real exam' : '10 пробных тестов для отслеживания прогресса и симуляции экзамены',
+    description: locale === 'en' ? 'transltate' : '10 полноценных пробных экзаменов с полным погружением в реальные условия тестирования',
     icon: <CheckSquare className="w-5 h-5" />,
     videoSrc: '/platform/practice-exams'
   },
@@ -70,9 +70,7 @@ const SelectorPills: React.FC<SelectorProps> = ({ activeIndex, onSelect, tabs })
   return (
     <div className="relative mb-4">
       <div className="flex justify-center">
-        <div className="inline-flex items-center gap-1 overflow-x-auto snap-x scrollbar-hide p-1.5 max-w-full md:flex-wrap md:justify-center rounded-full bg-gray-100/80 backdrop-blur-sm border border-gray-200/60"
-          style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-        >
+        <div className="flex flex-wrap items-center justify-center gap-1 p-1.5 rounded-full bg-gray-100/80 backdrop-blur-sm border border-gray-200/60 max-w-full">
           {tabs.map((tab, index) => {
             const isActive = index === activeIndex;
             return (
@@ -80,7 +78,7 @@ const SelectorPills: React.FC<SelectorProps> = ({ activeIndex, onSelect, tabs })
                 key={tab.id}
                 onClick={() => onSelect(index)}
                 className={`
-                  relative flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap snap-center
+                  relative flex items-center justify-center gap-2 px-3 sm:px-4 md:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap
                   flex-shrink-0 transition-all duration-200
                   ${isActive
                     ? 'text-white'
@@ -104,9 +102,6 @@ const SelectorPills: React.FC<SelectorProps> = ({ activeIndex, onSelect, tabs })
           })}
         </div>
       </div>
-      {/* Gradient fade masks for mobile scroll */}
-      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#f8faff] to-transparent pointer-events-none md:hidden" />
-      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f8faff] to-transparent pointer-events-none md:hidden" />
     </div>
   );
 };

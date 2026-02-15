@@ -2,21 +2,17 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ChevronLeft,
   CheckCircle2,
   CircleAlert,
+  ArrowRight,
+  User,
+  Phone,
 } from 'lucide-react';
 import Button from '@/components/shared/Button';
 import Modal from '@/components/shared/Modal';
-import {
-  formatFullPriceLine,
-  RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN,
-} from './data';
-import {
-  MessengerType,
-  PayerType,
-  RuPricingCurrency,
-  RuPricingPlan,
-} from './types';
+import { RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN } from './data';
+import { RuPricingPlan } from './types';
 
 type ModalStep = 'currency' | 'lead_form' | 'success';
 type PaymentOptionId = 'rub_full' | 'rub_installment' | 'eur';
@@ -29,34 +25,55 @@ interface PricingLeadModalProps {
 
 interface LeadFormState {
   firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   phone: string;
-  payerType: PayerType;
-  messengerType: MessengerType | '';
-  messengerHandle: string;
-  comment: string;
+  contractCountry: string;
+  contractCity: string;
+  contractPostalCode: string;
+  contractAddress: string;
   consentOffer: boolean;
   consentPersonalData: boolean;
-  consentMarketing: boolean;
 }
+
+interface LeadFormValidationResult {
+  errors: Record<string, string>;
+  normalizedPhone: string | null;
+  parsedFullName: {
+    firstName: string;
+    lastName: string;
+  } | null;
+}
+
+type LeadTextField =
+  | 'firstName'
+  | 'fullName'
+  | 'email'
+  | 'phone'
+  | 'contractCountry'
+  | 'contractCity'
+  | 'contractPostalCode'
+  | 'contractAddress';
 
 const DEFAULT_LEAD_FORM: LeadFormState = {
   firstName: '',
-  lastName: '',
+  fullName: '',
   email: '',
-  phone: '+7',
-  payerType: 'individual',
-  messengerType: '',
-  messengerHandle: '',
-  comment: '',
+  phone: '',
+  contractCountry: '',
+  contractCity: '',
+  contractPostalCode: '',
+  contractAddress: '',
   consentOffer: false,
   consentPersonalData: false,
-  consentMarketing: false,
 };
 
 const E164_PHONE_REGEX = /^\+[1-9]\d{6,14}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const LATIN_TEXT_TOKEN_REGEX = /^[A-Za-z][A-Za-z'.-]*$/;
+const LATIN_ADDRESS_REGEX = /^[A-Za-z0-9\s,.'#/-]+$/;
+const POSTAL_CODE_REGEX = /^[A-Za-z0-9][A-Za-z0-9\s-]{0,15}$/;
+const HAS_LATIN_LETTER_REGEX = /[A-Za-z]/;
 
 const DEFAULT_RUB_PAYMENT_URL_FOUNDATION = 'https://payform.ru/b8aFIn1/';
 const DEFAULT_RUB_PAYMENT_URL_ADVANCED = 'https://payform.ru/j2aFIb3/';
@@ -88,10 +105,155 @@ const INSTALLMENT_MONTHS = 4;
 
 const formatRubAmount = (value: number) => `${value.toLocaleString('ru-RU')} ₽`;
 
-const fieldClassName =
-  'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20';
+const eurFieldClassName =
+  'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-[15px] leading-5 text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20';
+
+const eurLabelClassName = 'block text-xs font-semibold uppercase tracking-wide text-slate-500';
 
 const errorClassName = 'mt-1 text-xs font-medium text-red-600';
+const mentorshipLabelClassName = 'text-[11px] font-semibold text-gray-500 uppercase tracking-wide';
+const mentorshipFieldClassName =
+  'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20';
+const mentorshipErrorClassName = 'mt-1 text-xs text-red-500';
+
+const MENTORSHIP_CONSULTATION_POINTS = [
+  'Определим цели поступления',
+  'Обсудим план обучения',
+  'Покажем, как устроена школа',
+  'Ответим на все вопросы',
+];
+
+const normalizeWhitespace = (value: string) => value.trim().replace(/\s+/g, ' ');
+const parseOrderNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null;
+
+const isLatinTextValue = (value: string): boolean => {
+  const normalized = normalizeWhitespace(value);
+  if (!normalized) {
+    return false;
+  }
+
+  return normalized.split(' ').every((token) => LATIN_TEXT_TOKEN_REGEX.test(token));
+};
+
+const parseFullName = (value: string): { firstName: string; lastName: string } | null => {
+  const normalized = normalizeWhitespace(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  const parts = normalized.split(' ');
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(' '),
+  };
+};
+
+const normalizePhoneToE164 = (rawPhone: string): string | null => {
+  const trimmed = rawPhone.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const compact = trimmed.replace(/[\s().-]/g, '');
+
+  if (!compact) {
+    return null;
+  }
+
+  let candidate = compact;
+
+  if (candidate.startsWith('00')) {
+    candidate = `+${candidate.slice(2)}`;
+  }
+
+  if (candidate.startsWith('+')) {
+    const digits = candidate.slice(1).replace(/\D/g, '');
+
+    if (!digits) {
+      return null;
+    }
+
+    const internationalNumber = `+${digits}`;
+    return E164_PHONE_REGEX.test(internationalNumber) ? internationalNumber : null;
+  }
+
+  const digits = candidate.replace(/\D/g, '');
+  let normalized: string | null = null;
+
+  if (digits.length === 11 && digits.startsWith('8')) {
+    normalized = `+7${digits.slice(1)}`;
+  } else if (digits.length === 11 && digits.startsWith('7')) {
+    normalized = `+${digits}`;
+  } else if (digits.length === 10) {
+    normalized = `+7${digits}`;
+  }
+
+  if (!normalized) {
+    return null;
+  }
+
+  return E164_PHONE_REGEX.test(normalized) ? normalized : null;
+};
+
+const getTextFieldFormatError = (field: LeadTextField, rawValue: string): string => {
+  const normalized = normalizeWhitespace(rawValue);
+  if (!normalized) {
+    return '';
+  }
+
+  if (field === 'firstName') {
+    if (normalized.length < 2) {
+      return 'Введите имя (минимум 2 символа).';
+    }
+    return '';
+  }
+
+  if (field === 'fullName') {
+    if (!parseFullName(normalized)) {
+      return 'Введите имя и фамилию (минимум два слова).';
+    }
+    return isLatinTextValue(normalized) ? '' : 'Имя и фамилия должны быть латиницей.';
+  }
+
+  if (field === 'email') {
+    return EMAIL_REGEX.test(normalized) ? '' : 'Введите корректный email.';
+  }
+
+  if (field === 'phone') {
+    return normalizePhoneToE164(rawValue) ? '' : 'Введите номер телефона в международном формате.';
+  }
+
+  if (field === 'contractCountry') {
+    return isLatinTextValue(normalized) ? '' : 'Укажите страну латиницей.';
+  }
+
+  if (field === 'contractCity') {
+    return isLatinTextValue(normalized) ? '' : 'Укажите город латиницей.';
+  }
+
+  if (field === 'contractPostalCode') {
+    return POSTAL_CODE_REGEX.test(normalized)
+      ? ''
+      : 'Укажите индекс латиницей и цифрами (например, 20121 или SW1A 1AA).';
+  }
+
+  if (
+    !LATIN_ADDRESS_REGEX.test(normalized) ||
+    !HAS_LATIN_LETTER_REGEX.test(normalized)
+  ) {
+    return 'Укажите адрес латиницей.';
+  }
+
+  return '';
+};
 
 const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   isOpen,
@@ -99,14 +261,14 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   plan,
 }) => {
   const [step, setStep] = useState<ModalStep>('currency');
-  const [selectedCurrency, setSelectedCurrency] = useState<RuPricingCurrency | null>(null);
   const [leadForm, setLeadForm] = useState<LeadFormState>(DEFAULT_LEAD_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [retryLeadId, setRetryLeadId] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOptionId>('rub_full');
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOptionId | null>(null);
 
   const isMentorship = plan?.id === 'mentorship';
 
@@ -124,14 +286,14 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     }
 
     setStep(plan.id === 'mentorship' ? 'lead_form' : 'currency');
-    setSelectedCurrency(null);
     setLeadForm(DEFAULT_LEAD_FORM);
     setErrors({});
     setApiError(null);
     setRetryLeadId(null);
+    setOrderNumber(null);
     setIsSubmitting(false);
     setIsRetrying(false);
-    setSelectedPaymentOption('rub_full');
+    setSelectedPaymentOption(null);
   }, [isOpen, plan?.id]);
 
   if (!plan) {
@@ -140,7 +302,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
   const modalTitleByStep: Record<ModalStep, string> = {
     currency: 'Выберите способ оплаты',
-    lead_form: isMentorship ? 'Заявка на Mentorship' : 'Оплата в евро',
+    lead_form: isMentorship ? 'Заявка на тариф «Индивидуальный»' : 'Оплата в евро',
     success: 'Заявка отправлена',
   };
 
@@ -174,56 +336,142 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     setErrors({});
     setApiError(null);
     setRetryLeadId(null);
+    setOrderNumber(null);
     onClose();
   };
 
-  const validateLeadForm = (): Record<string, string> => {
+  const setConsentValidationState = (
+    field: 'consentPersonalData' | 'consentOffer',
+    isChecked: boolean
+  ) => {
+    const messageByField: Record<'consentPersonalData' | 'consentOffer', string> = {
+      consentPersonalData: 'Нужно согласие на обработку персональных данных.',
+      consentOffer: 'Чтобы продолжить, примите условия публичной оферты.',
+    };
+
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (isChecked) {
+        delete next[field];
+      } else {
+        next[field] = messageByField[field];
+      }
+      return next;
+    });
+  };
+
+  const handleTextFieldBlur = (field: LeadTextField, value: string) => {
+    const formatError = getTextFieldFormatError(field, value);
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (formatError) {
+        next[field] = formatError;
+      } else {
+        delete next[field];
+      }
+      return next;
+    });
+  };
+
+  const validateLeadForm = (): LeadFormValidationResult => {
     const nextErrors: Record<string, string> = {};
+    const normalizedPhone = normalizePhoneToE164(leadForm.phone);
+    const normalizedFirstName = normalizeWhitespace(leadForm.firstName);
+    const normalizedFullName = normalizeWhitespace(leadForm.fullName);
+    const normalizedCountry = normalizeWhitespace(leadForm.contractCountry);
+    const normalizedCity = normalizeWhitespace(leadForm.contractCity);
+    const normalizedPostalCode = normalizeWhitespace(leadForm.contractPostalCode);
+    const normalizedAddress = normalizeWhitespace(leadForm.contractAddress);
 
-    if (!leadForm.firstName.trim() || leadForm.firstName.trim().length < 2) {
-      nextErrors.firstName = 'Введите имя (минимум 2 символа).';
-    }
-
-    if (!E164_PHONE_REGEX.test(leadForm.phone.trim())) {
-      nextErrors.phone = 'Введите номер в международном формате, например +79991234567.';
-    }
-
-    if (!isMentorship) {
-      if (!leadForm.lastName.trim() || leadForm.lastName.trim().length < 2) {
-        nextErrors.lastName = 'Введите фамилию (минимум 2 символа).';
+    if (isMentorship) {
+      if (!normalizedFirstName || normalizedFirstName.length < 2) {
+        nextErrors.firstName = 'Введите имя (минимум 2 символа).';
       }
 
-      if (!EMAIL_REGEX.test(leadForm.email.trim())) {
-        nextErrors.email = 'Введите корректный email.';
+      if (!normalizedPhone) {
+        nextErrors.phone = 'Введите номер телефона в международном формате.';
       }
 
       if (!leadForm.consentPersonalData) {
         nextErrors.consentPersonalData = 'Нужно согласие на обработку персональных данных.';
       }
 
-      if (leadForm.messengerHandle.trim() && !leadForm.messengerType) {
-        nextErrors.messengerType = 'Выберите тип мессенджера или очистите поле handle.';
-      }
+      return {
+        errors: nextErrors,
+        normalizedPhone,
+        parsedFullName: null,
+      };
     }
 
-    return nextErrors;
+    const parsedFullName = parseFullName(normalizedFullName);
+
+    if (!parsedFullName) {
+      nextErrors.fullName = 'Введите имя и фамилию (минимум два слова).';
+    } else if (!isLatinTextValue(normalizedFullName)) {
+      nextErrors.fullName = 'Имя и фамилия должны быть латиницей.';
+    }
+
+    if (!EMAIL_REGEX.test(leadForm.email.trim())) {
+      nextErrors.email = 'Введите корректный email.';
+    }
+
+    if (!normalizedPhone) {
+      nextErrors.phone = 'Введите номер телефона в международном формате.';
+    }
+
+    if (!normalizedCountry) {
+      nextErrors.contractCountry = 'Укажите страну.';
+    } else if (!isLatinTextValue(normalizedCountry)) {
+      nextErrors.contractCountry = 'Укажите страну латиницей.';
+    }
+
+    if (!normalizedCity) {
+      nextErrors.contractCity = 'Укажите город.';
+    } else if (!isLatinTextValue(normalizedCity)) {
+      nextErrors.contractCity = 'Укажите город латиницей.';
+    }
+
+    if (!normalizedPostalCode) {
+      nextErrors.contractPostalCode = 'Укажите почтовый индекс.';
+    } else if (!POSTAL_CODE_REGEX.test(normalizedPostalCode)) {
+      nextErrors.contractPostalCode =
+        'Укажите индекс латиницей и цифрами (например, 20121 или SW1A 1AA).';
+    }
+
+    if (!normalizedAddress) {
+      nextErrors.contractAddress = 'Укажите адрес.';
+    } else if (
+      !LATIN_ADDRESS_REGEX.test(normalizedAddress) ||
+      !HAS_LATIN_LETTER_REGEX.test(normalizedAddress)
+    ) {
+      nextErrors.contractAddress = 'Укажите адрес латиницей.';
+    }
+
+    if (!leadForm.consentPersonalData) {
+      nextErrors.consentPersonalData = 'Нужно согласие на обработку персональных данных.';
+    }
+
+    if (!leadForm.consentOffer) {
+      nextErrors.consentOffer = 'Чтобы продолжить, примите условия публичной оферты.';
+    }
+
+    return {
+      errors: nextErrors,
+      normalizedPhone,
+      parsedFullName,
+    };
   };
 
   const submitLeadApplication = async (event: React.FormEvent) => {
     event.preventDefault();
     setApiError(null);
     setRetryLeadId(null);
+    setOrderNumber(null);
 
-    if (!isMentorship && !leadForm.consentOffer) {
-      setApiError('Подтвердите согласие с публичной офертой, чтобы продолжить.');
-      setStep('currency');
-      return;
-    }
+    const validation = validateLeadForm();
+    setErrors(validation.errors);
 
-    const validationErrors = validateLeadForm();
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length > 0) {
+    if (Object.keys(validation.errors).length > 0 || !validation.normalizedPhone) {
       return;
     }
 
@@ -231,6 +479,12 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
     const leadType = isMentorship ? 'mentorship_application' : 'eur_application';
     const currency = isMentorship ? null : 'EUR';
+    const firstName = isMentorship
+      ? leadForm.firstName.trim()
+      : validation.parsedFullName?.firstName || '';
+    const lastName = isMentorship
+      ? undefined
+      : validation.parsedFullName?.lastName || '';
 
     setIsSubmitting(true);
 
@@ -244,23 +498,31 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
           leadType,
           planId: plan.id,
           currency,
-          firstName: leadForm.firstName.trim(),
-          lastName: isMentorship ? undefined : leadForm.lastName.trim(),
+          firstName,
+          lastName,
           email: isMentorship ? undefined : leadForm.email.trim(),
-          phone: leadForm.phone.trim(),
-          payerType: isMentorship ? undefined : leadForm.payerType,
-          messengerType: isMentorship ? undefined : leadForm.messengerType || undefined,
-          messengerHandle: isMentorship ? undefined : leadForm.messengerHandle.trim() || undefined,
-          comment: isMentorship ? undefined : leadForm.comment.trim() || undefined,
+          phone: validation.normalizedPhone,
+          payerType: isMentorship ? undefined : 'individual',
+          messengerType: undefined,
+          messengerHandle: undefined,
+          comment: undefined,
+          contractCountry: isMentorship ? undefined : leadForm.contractCountry.trim(),
+          contractCity: isMentorship ? undefined : leadForm.contractCity.trim(),
+          contractPostalCode: isMentorship ? undefined : leadForm.contractPostalCode.trim(),
+          contractAddress: isMentorship ? undefined : leadForm.contractAddress.trim(),
           consentOffer: isMentorship ? false : leadForm.consentOffer,
-          consentPersonalData: isMentorship ? true : leadForm.consentPersonalData,
-          consentMarketing: isMentorship ? false : leadForm.consentMarketing,
+          consentPersonalData: leadForm.consentPersonalData,
+          consentMarketing: false,
           ctaLabel,
           ...tracking,
         }),
       });
 
       const data = await response.json().catch(() => null);
+      const nextOrderNumber = parseOrderNumber(data?.orderNumber);
+      if (nextOrderNumber !== null) {
+        setOrderNumber(nextOrderNumber);
+      }
 
       if (!response.ok) {
         setApiError(data?.error || 'Не удалось отправить заявку. Попробуйте ещё раз.');
@@ -299,6 +561,10 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       });
 
       const data = await response.json().catch(() => null);
+      const nextOrderNumber = parseOrderNumber(data?.orderNumber);
+      if (nextOrderNumber !== null) {
+        setOrderNumber(nextOrderNumber);
+      }
 
       if (!response.ok) {
         setApiError(data?.error || 'Не удалось повторно отправить заявку. Попробуйте ещё раз.');
@@ -314,13 +580,6 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       setIsRetrying(false);
     }
   };
-
-  const renderPlanPriceSummary = () => (
-    <div className="rounded-xl border border-gray-200 bg-white p-3.5">
-      <div className="text-sm font-semibold text-primary">{plan.name}</div>
-      <div className="mt-1 text-sm text-gray-600">{formatFullPriceLine(plan.price, plan.priceRub)}</div>
-    </div>
-  );
 
   const ensureOfferConsent = () => {
     if (leadForm.consentOffer) {
@@ -347,7 +606,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     if (plan.id !== 'foundation' && plan.id !== 'advanced') {
       return (
         <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Оплата в этом формате доступна только для тарифов Foundation и Advanced.
+          Оплата в этом формате доступна только для тарифов Стартовый и Основной.
         </div>
       );
     }
@@ -358,10 +617,32 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       rubInstallmentTotal / INSTALLMENT_MONTHS
     );
 
+    const hasSelectedPaymentOption = selectedPaymentOption !== null;
+    const shouldShowOfferConsent =
+      hasSelectedPaymentOption && selectedPaymentOption !== 'eur';
+    const actionButtonLabel =
+      selectedPaymentOption === 'eur' ? 'Перейти к оформлению' : 'Перейти к оплате';
+
+    const clearOfferConsentError = () => {
+      setErrors((prev) => {
+        if (!prev.consentOffer) {
+          return prev;
+        }
+
+        const rest = { ...prev };
+        delete rest.consentOffer;
+        return rest;
+      });
+    };
+
     const handleConfirmPaymentMethod = () => {
       setApiError(null);
 
-      if (!ensureOfferConsent()) {
+      if (!selectedPaymentOption) {
+        return;
+      }
+
+      if (selectedPaymentOption !== 'eur' && !ensureOfferConsent()) {
         return;
       }
 
@@ -389,7 +670,6 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
         return;
       }
 
-      setSelectedCurrency('EUR');
       setStep('lead_form');
       setErrors({});
     };
@@ -425,19 +705,20 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       {
         id: 'eur',
         amount: `€${formatEurAmount(plan.price)}`,
-        title: 'Банковский перевод (EUR)',
+        title: 'Карты зарубежного банка (EUR)',
         subtitle: 'Перевод по реквизитам в евро',
       },
     ];
 
     const accessNote = `Доступ на 6 месяцев. Тариф ${plan.name}.`;
 
-    const getActionLabel = () => {
-      return 'Перейти к оплате';
+    const submitCurrencyStep = (event: React.FormEvent) => {
+      event.preventDefault();
+      handleConfirmPaymentMethod();
     };
 
     return (
-      <div className="space-y-3">
+      <form onSubmit={submitCurrencyStep} className="space-y-3">
         <p className="text-base font-semibold leading-snug text-primary sm:text-lg">
           {accessNote}
         </p>
@@ -453,6 +734,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                 onClick={() => {
                   setSelectedPaymentOption(option.id);
                   setApiError(null);
+                  clearOfferConsentError();
                 }}
                 className={`w-full px-3.5 py-3 text-left transition-colors sm:px-4 sm:py-3.5 ${
                   isSelected ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/70'
@@ -498,23 +780,24 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
         </div>
 
         <div className="px-0.5">
-          <label className="flex cursor-pointer items-start gap-2.5 text-sm text-gray-700">
+          <label
+            aria-hidden={!shouldShowOfferConsent}
+            className={`flex items-start gap-2.5 text-sm text-gray-700 transition-opacity ${
+              shouldShowOfferConsent
+                ? 'cursor-pointer opacity-100'
+                : 'pointer-events-none opacity-0'
+            }`}
+          >
             <input
               type="checkbox"
               checked={leadForm.consentOffer}
+              disabled={!shouldShowOfferConsent}
               onChange={(event) => {
                 const isChecked = event.target.checked;
                 setLeadForm((prev) => ({ ...prev, consentOffer: isChecked }));
+                setConsentValidationState('consentOffer', isChecked);
                 if (isChecked) {
-                  setErrors((prev) => {
-                    if (!prev.consentOffer) {
-                      return prev;
-                    }
-
-                    const rest = { ...prev };
-                    delete rest.consentOffer;
-                    return rest;
-                  });
+                  clearOfferConsentError();
                   setApiError(null);
                 }
               }}
@@ -523,7 +806,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             <span>
               Принимаю условия{' '}
               <a
-                href="/ru/terms"
+                href="/ru/legal/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-primary underline underline-offset-2"
@@ -532,255 +815,389 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
               </a>
             </span>
           </label>
-          {errors.consentOffer && <p className={errorClassName}>{errors.consentOffer}</p>}
+          {shouldShowOfferConsent && errors.consentOffer ? (
+            <p className={errorClassName}>{errors.consentOffer}</p>
+          ) : null}
         </div>
 
         <div className="flex justify-end">
-          <Button onClick={handleConfirmPaymentMethod} size="sm">
-            {getActionLabel()}
+          <Button
+            type="submit"
+            size="md"
+            disabled={!hasSelectedPaymentOption}
+            className={
+              !hasSelectedPaymentOption
+                ? '!bg-gray-300 !text-gray-500 hover:!bg-gray-300 focus:!ring-gray-300'
+                : ''
+            }
+          >
+            {actionButtonLabel}
           </Button>
         </div>
-      </div>
+      </form>
     );
   };
 
   const renderLeadStep = () => (
-    <form onSubmit={submitLeadApplication} className="space-y-3">
-      {!isMentorship ? (
-        <>
-          {renderPlanPriceSummary()}
-
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-            <div className="text-sm font-semibold text-primary">{plan.name}</div>
-            <div className="mt-1 text-sm text-gray-600">
-              Оплата не списывается сейчас. После проверки данных отправим дальнейшие шаги.
-            </div>
-          </div>
-        </>
-      ) : null}
-
+    <form onSubmit={submitLeadApplication} className="space-y-4">
       {isMentorship ? (
-        <>
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Имя
-              </label>
-              <input
-                type="text"
-                value={leadForm.firstName}
-                onChange={(event) => setLeadForm((prev) => ({ ...prev, firstName: event.target.value }))}
-                className={fieldClassName}
-                placeholder="Иван"
-              />
-              {errors.firstName && <p className={errorClassName}>{errors.firstName}</p>}
+        <div className="overflow-hidden rounded-2xl bg-white md:-m-5 md:grid md:grid-cols-[1.03fr_0.97fr]">
+          <section className="bg-gray-50 px-4 py-5 sm:px-6 sm:py-6 md:px-7 md:py-7">
+            <h4 className="max-w-[16ch] text-4xl font-display font-bold leading-[0.95] text-primary sm:text-5xl">
+              Персональный формат подготовки
+            </h4>
+
+            <ul className="mt-8 border-y border-gray-200">
+              {MENTORSHIP_CONSULTATION_POINTS.map((point) => (
+                <li
+                  key={point}
+                  className="flex items-start gap-3 border-b border-gray-200 py-3 text-lg leading-snug text-gray-700 last:border-b-0"
+                >
+                  <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-primary" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="border-t border-gray-100 bg-brand-purple/25 px-4 py-5 sm:px-6 sm:py-6 md:border-l md:border-t-0 md:px-7 md:py-7">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/70">
+              Заполните данные
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <div className="space-y-1">
+                <label htmlFor="lead-first-name" className={mentorshipLabelClassName}>
+                  Имя
+                </label>
+                <div className="relative">
+                  <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="lead-first-name"
+                    name="firstName"
+                    type="text"
+                    autoComplete="given-name"
+                    value={leadForm.firstName}
+                    onChange={(event) => setLeadForm((prev) => ({ ...prev, firstName: event.target.value }))}
+                    onBlur={() => handleTextFieldBlur('firstName', leadForm.firstName)}
+                    className={`${mentorshipFieldClassName} pl-10`}
+                    placeholder="Ваше имя"
+                  />
+                </div>
+                {errors.firstName && <p className={mentorshipErrorClassName}>{errors.firstName}</p>}
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="lead-phone-mentorship" className={mentorshipLabelClassName}>
+                  Телефон
+                </label>
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="lead-phone-mentorship"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={leadForm.phone}
+                    onChange={(event) => setLeadForm((prev) => ({ ...prev, phone: event.target.value }))}
+                    onBlur={() => handleTextFieldBlur('phone', leadForm.phone)}
+                    className={`${mentorshipFieldClassName} pl-10`}
+                    placeholder="+7 999 123 45 67"
+                  />
+                </div>
+                {errors.phone && <p className={mentorshipErrorClassName}>{errors.phone}</p>}
+              </div>
             </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Номер телефона
+            <div className="mt-5 space-y-1">
+              <label className="flex cursor-pointer items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={leadForm.consentPersonalData}
+                  onChange={(event) => {
+                    const isChecked = event.target.checked;
+                    setLeadForm((prev) => ({ ...prev, consentPersonalData: isChecked }));
+                    setConsentValidationState('consentPersonalData', isChecked);
+                  }}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30"
+                />
+                <span className="text-xs leading-snug text-slate-600">
+                  Даю согласие на обработку{' '}
+                  <a
+                    href="/ru/legal/consent"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline decoration-slate-400 underline-offset-2 text-slate-600"
+                  >
+                    персональных данных
+                  </a>
+                </span>
               </label>
-              <input
-                type="tel"
-                value={leadForm.phone}
-                onChange={(event) => setLeadForm((prev) => ({ ...prev, phone: event.target.value }))}
-                className={fieldClassName}
-                placeholder="+79991234567"
-              />
-              {errors.phone && <p className={errorClassName}>{errors.phone}</p>}
+              {errors.consentPersonalData && (
+                <p className={mentorshipErrorClassName}>{errors.consentPersonalData}</p>
+              )}
             </div>
-          </div>
 
-          <Button type="submit" fullWidth size="sm" isLoading={isSubmitting}>
-            Оставить заявку
-          </Button>
-        </>
+            <div className="mt-5 space-y-2">
+              <Button
+                type="submit"
+                size="lg"
+                fullWidth
+                disabled={isSubmitting}
+                className="group !py-3"
+              >
+                {isSubmitting ? 'Сохраняем...' : 'Записаться на консультацию'}
+                {!isSubmitting && (
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                )}
+              </Button>
+              <p className="px-1 text-center text-[10px] leading-snug text-slate-500">
+                Нажимая «Записаться на консультацию», вы подтверждаете ознакомление с{' '}
+                <a
+                  href="/ru/legal/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-slate-300 underline-offset-2 text-slate-500"
+                >
+                  Политикой обработки персональных данных
+                </a>
+                .
+              </p>
+            </div>
+
+            <div className="mt-6 border-t border-gray-200 pt-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-slate-700 sm:text-base">
+                  Или свяжитесь с нами в Telegram
+                </p>
+                <a
+                  href={SUPPORT_TELEGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-lg border-2 border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+                >
+                  Написать
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Имя
-              </label>
-              <input
-                type="text"
-                value={leadForm.firstName}
-                onChange={(event) => setLeadForm((prev) => ({ ...prev, firstName: event.target.value }))}
-                className={fieldClassName}
-                placeholder="Иван"
-              />
-              {errors.firstName && <p className={errorClassName}>{errors.firstName}</p>}
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Фамилия
-              </label>
-              <input
-                type="text"
-                value={leadForm.lastName}
-                onChange={(event) => setLeadForm((prev) => ({ ...prev, lastName: event.target.value }))}
-                className={fieldClassName}
-                placeholder="Иванов"
-              />
-              {errors.lastName && <p className={errorClassName}>{errors.lastName}</p>}
-            </div>
+          <div className="space-y-1">
+            <p className="text-lg font-display font-bold text-primary">Тариф {plan.name}. €{plan.price}</p>
+            <p className="text-sm leading-snug text-slate-600">
+              Мы отправим договор и инвойс с реквизитами для банковского перевода на счет нашей компании.
+            </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Email
-              </label>
-              <input
-                type="email"
-                value={leadForm.email}
-                onChange={(event) => setLeadForm((prev) => ({ ...prev, email: event.target.value }))}
-                className={fieldClassName}
-                placeholder="name@example.com"
-              />
-              {errors.email && <p className={errorClassName}>{errors.email}</p>}
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Телефон
-              </label>
-              <input
-                type="tel"
-                value={leadForm.phone}
-                onChange={(event) => setLeadForm((prev) => ({ ...prev, phone: event.target.value }))}
-                className={fieldClassName}
-                placeholder="+79991234567"
-              />
-              {errors.phone && <p className={errorClassName}>{errors.phone}</p>}
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Тип плательщика
-              </label>
-              <select
-                value={leadForm.payerType}
-                onChange={(event) =>
-                  setLeadForm((prev) => ({ ...prev, payerType: event.target.value as PayerType }))
-                }
-                className={fieldClassName}
-              >
-                <option value="individual">Физлицо</option>
-                <option value="legal_entity">Юрлицо</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Тариф
-              </label>
-              <input
-                type="text"
-                value={plan.name}
-                readOnly
-                className={`${fieldClassName} cursor-not-allowed bg-gray-100 text-gray-500`}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-              Валюта
+          <div className="space-y-1">
+            <label htmlFor="lead-full-name" className={eurLabelClassName}>
+              Имя и фамилия
             </label>
             <input
+              id="lead-full-name"
+              name="fullName"
               type="text"
-              value={selectedCurrency || 'EUR'}
-              readOnly
-              className={`${fieldClassName} cursor-not-allowed bg-gray-100 text-gray-500`}
+              autoComplete="name"
+              value={leadForm.fullName}
+              onChange={(event) => setLeadForm((prev) => ({ ...prev, fullName: event.target.value }))}
+              onBlur={() => handleTextFieldBlur('fullName', leadForm.fullName)}
+              className={eurFieldClassName}
+              placeholder="Ivan Ivanov"
             />
+            {errors.fullName && <p className={errorClassName}>{errors.fullName}</p>}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Мессенджер (опционально)
-              </label>
-              <select
-                value={leadForm.messengerType}
-                onChange={(event) =>
-                  setLeadForm((prev) => ({
-                    ...prev,
-                    messengerType: event.target.value as MessengerType | '',
-                  }))
-                }
-                className={fieldClassName}
-              >
-                <option value="">Не выбрано</option>
-                <option value="telegram">Telegram</option>
-                <option value="whatsapp">WhatsApp</option>
-              </select>
-              {errors.messengerType && <p className={errorClassName}>{errors.messengerType}</p>}
-            </div>
+          <div className="space-y-1">
+            <label htmlFor="lead-phone-eur" className={eurLabelClassName}>
+              Телефон
+            </label>
+            <input
+              id="lead-phone-eur"
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              value={leadForm.phone}
+              onChange={(event) => setLeadForm((prev) => ({ ...prev, phone: event.target.value }))}
+              onBlur={() => handleTextFieldBlur('phone', leadForm.phone)}
+              className={eurFieldClassName}
+              placeholder="+7 999 123 45 67"
+            />
+            {errors.phone && <p className={errorClassName}>{errors.phone}</p>}
+          </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                Handle / номер (опционально)
+          <div className="space-y-1">
+            <label htmlFor="lead-email" className={eurLabelClassName}>
+              Email
+            </label>
+            <input
+              id="lead-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              value={leadForm.email}
+              onChange={(event) => setLeadForm((prev) => ({ ...prev, email: event.target.value }))}
+              onBlur={() => handleTextFieldBlur('email', leadForm.email)}
+              className={eurFieldClassName}
+              placeholder="name@example.com"
+            />
+            {errors.email && <p className={errorClassName}>{errors.email}</p>}
+          </div>
+
+          <h4 className="pt-1 text-lg font-display font-bold text-primary">Для оформления договора</h4>
+
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            <div className="space-y-1">
+              <label htmlFor="lead-contract-country" className={eurLabelClassName}>
+                Страна
               </label>
               <input
+                id="lead-contract-country"
+                name="contractCountry"
                 type="text"
-                value={leadForm.messengerHandle}
+                autoComplete="country-name"
+                value={leadForm.contractCountry}
                 onChange={(event) =>
-                  setLeadForm((prev) => ({ ...prev, messengerHandle: event.target.value }))
+                  setLeadForm((prev) => ({ ...prev, contractCountry: event.target.value }))
                 }
-                className={fieldClassName}
-                placeholder="@username или +123..."
+                onBlur={() => handleTextFieldBlur('contractCountry', leadForm.contractCountry)}
+                className={eurFieldClassName}
+                placeholder="Italy"
               />
+              {errors.contractCountry && <p className={errorClassName}>{errors.contractCountry}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="lead-contract-city" className={eurLabelClassName}>
+                Город
+              </label>
+              <input
+                id="lead-contract-city"
+                name="contractCity"
+                type="text"
+                autoComplete="address-level2"
+                value={leadForm.contractCity}
+                onChange={(event) => setLeadForm((prev) => ({ ...prev, contractCity: event.target.value }))}
+                onBlur={() => handleTextFieldBlur('contractCity', leadForm.contractCity)}
+                className={eurFieldClassName}
+                placeholder="Milan"
+              />
+              {errors.contractCity && <p className={errorClassName}>{errors.contractCity}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="lead-contract-postal-code" className={eurLabelClassName}>
+                Индекс
+              </label>
+              <input
+                id="lead-contract-postal-code"
+                name="contractPostalCode"
+                type="text"
+                autoComplete="postal-code"
+                value={leadForm.contractPostalCode}
+                onChange={(event) =>
+                  setLeadForm((prev) => ({ ...prev, contractPostalCode: event.target.value }))
+                }
+                onBlur={() => handleTextFieldBlur('contractPostalCode', leadForm.contractPostalCode)}
+                className={eurFieldClassName}
+                placeholder="20121"
+              />
+              {errors.contractPostalCode && <p className={errorClassName}>{errors.contractPostalCode}</p>}
             </div>
           </div>
 
-          <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-              Комментарий (опционально)
+          <div className="space-y-1">
+            <label htmlFor="lead-contract-address" className={eurLabelClassName}>
+              Адрес
             </label>
-            <textarea
-              value={leadForm.comment}
-              onChange={(event) => setLeadForm((prev) => ({ ...prev, comment: event.target.value }))}
-              className={`${fieldClassName} min-h-24 resize-y`}
-              placeholder="Добавьте детали, если нужно."
+            <input
+              id="lead-contract-address"
+              name="contractAddress"
+              type="text"
+              autoComplete="street-address"
+              value={leadForm.contractAddress}
+              onChange={(event) => setLeadForm((prev) => ({ ...prev, contractAddress: event.target.value }))}
+              onBlur={() => handleTextFieldBlur('contractAddress', leadForm.contractAddress)}
+              className={eurFieldClassName}
+              placeholder="Via Luigi Calamatta 22A"
             />
+            {errors.contractAddress && <p className={errorClassName}>{errors.contractAddress}</p>}
           </div>
 
-          <div className="space-y-2.5 rounded-lg border border-gray-200 p-3">
-            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-gray-700">
+          <div className="space-y-2">
+            <label className="flex cursor-pointer items-start gap-2.5">
               <input
                 type="checkbox"
                 checked={leadForm.consentPersonalData}
-                onChange={(event) =>
-                  setLeadForm((prev) => ({ ...prev, consentPersonalData: event.target.checked }))
-                }
-                className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                onChange={(event) => {
+                  const isChecked = event.target.checked;
+                  setLeadForm((prev) => ({ ...prev, consentPersonalData: isChecked }));
+                  setConsentValidationState('consentPersonalData', isChecked);
+                }}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30"
               />
-              <span>Согласен(а) на обработку персональных данных.</span>
+              <span className="text-[11px] leading-snug text-slate-600">
+                Согласен на обработку{' '}
+                <a
+                  href="/ru/legal/consent"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-slate-400 underline-offset-2 text-slate-600"
+                >
+                  персональных данных
+                </a>
+              </span>
             </label>
             {errors.consentPersonalData && (
               <p className={errorClassName}>{errors.consentPersonalData}</p>
             )}
 
-            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-gray-700">
+            <label className="flex cursor-pointer items-start gap-2.5">
               <input
                 type="checkbox"
-                checked={leadForm.consentMarketing}
-                onChange={(event) =>
-                  setLeadForm((prev) => ({ ...prev, consentMarketing: event.target.checked }))
-                }
-                className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                checked={leadForm.consentOffer}
+                onChange={(event) => {
+                  const isChecked = event.target.checked;
+                  setLeadForm((prev) => ({ ...prev, consentOffer: isChecked }));
+                  setConsentValidationState('consentOffer', isChecked);
+                }}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30"
               />
-              <span>Согласен(а) на получение рекламных материалов (опционально).</span>
+              <span className="text-[11px] leading-snug text-slate-600">
+                Принимаю условия{' '}
+                <a
+                  href="/ru/legal/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-slate-400 underline-offset-2 transition-colors hover:text-primary"
+                >
+                  публичной оферты
+                </a>
+              </span>
             </label>
+            {errors.consentOffer && (
+              <p className={errorClassName}>{errors.consentOffer}</p>
+            )}
           </div>
 
-          <Button type="submit" fullWidth size="sm" isLoading={isSubmitting}>
-            Отправить заявку
-          </Button>
+          <div className="space-y-1 pt-0.5">
+            <Button type="submit" size="md" fullWidth isLoading={isSubmitting} className="!py-2.5">
+              Отправить заявку
+            </Button>
+            <p className="px-1 text-center text-[9px] leading-snug text-slate-500">
+              Нажимая «Отправить заявку», вы подтверждаете ознакомление с{' '}
+              <a
+                href="/ru/legal/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-slate-300 underline-offset-2 text-slate-500"
+              >
+                Политикой обработки персональных данных
+              </a>
+              .
+            </p>
+          </div>
         </>
       )}
     </form>
@@ -795,6 +1212,11 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-gray-600">
         Свяжемся с вами в течение рабочего дня, чтобы согласовать следующие шаги.
       </p>
+      {orderNumber !== null ? (
+        <div className="mx-auto mt-4 max-w-md rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <span className="font-semibold">Номер заказа:</span> {orderNumber}
+        </div>
+      ) : null}
 
       <div className="mt-5">
         <Button onClick={closeWithReset} fullWidth size="sm">
@@ -804,14 +1226,38 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     </div>
   );
 
+  const showSupportAction = step === 'currency' || (step === 'lead_form' && !isMentorship);
+  const showBackAction = step === 'lead_form' && !isMentorship;
+  const isMentorshipLeadStep = isMentorship && step === 'lead_form';
+
+  const handleBackToCurrency = () => {
+    setStep('currency');
+    setApiError(null);
+    setErrors({});
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={closeWithReset}
       title={modalTitleByStep[step]}
-      maxWidth="max-w-xl"
+      maxWidth={isMentorshipLeadStep ? 'max-w-6xl' : 'max-w-xl'}
+      viewportPaddingClassName="p-4 sm:p-5"
+      panelMaxHeightClassName="max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-2.5rem)]"
+      headerLeading={
+        showBackAction ? (
+          <button
+            type="button"
+            onClick={handleBackToCurrency}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Назад</span>
+          </button>
+        ) : null
+      }
       headerActions={
-        step === 'currency' ? (
+        showSupportAction ? (
           <a
             href={SUPPORT_TELEGRAM_URL}
             target="_blank"
@@ -830,6 +1276,11 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
               <CircleAlert className="mt-0.5 h-3.5 w-3.5 flex-none" />
               <span>{apiError}</span>
             </div>
+            {orderNumber !== null ? (
+              <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-900">
+                <span className="font-semibold">Номер заказа:</span> {orderNumber}
+              </div>
+            ) : null}
             {retryLeadId && (
               <div className="mt-2">
                 <Button
