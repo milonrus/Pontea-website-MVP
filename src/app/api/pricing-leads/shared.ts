@@ -18,7 +18,7 @@ const RUB_PRICE_BY_PLAN: Record<PlanId, number> = {
 
 export const MAX_WEBHOOK_ATTEMPTS = 3;
 const DEFAULT_PRICING_LEAD_WEBHOOK_URL =
-  'https://shumiha.app.n8n.cloud/webhook/ab0e94db-b8ed-40f7-aa3f-2d0b55200c38';
+  'https://shumiha.app.n8n.cloud/webhook/71f89af7-71f5-42b4-9c86-4602218cbf7f';
 
 export type LeadType = (typeof LEAD_TYPES)[number];
 export type PlanId = (typeof PLAN_IDS)[number];
@@ -288,10 +288,10 @@ export function buildWebhookPayload(lead: Record<string, any>) {
       : 'pricing_lead_submitted';
   const planId = isPlanId(lead.plan_id) ? lead.plan_id : null;
   const price =
-    planId && lead.currency === 'EUR'
-      ? EUR_PRICE_BY_PLAN[planId]
-      : planId && lead.currency === 'RUB'
-        ? RUB_PRICE_BY_PLAN[planId]
+    planId && lead.currency === 'RUB'
+      ? RUB_PRICE_BY_PLAN[planId]
+      : planId
+        ? EUR_PRICE_BY_PLAN[planId]
         : null;
   const orderNumber =
     lead.lead_type === 'eur_application' && typeof lead.invoice_order_number === 'number'

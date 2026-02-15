@@ -5,6 +5,9 @@ import {
   ChevronLeft,
   CheckCircle2,
   CircleAlert,
+  ArrowRight,
+  User,
+  Phone,
 } from 'lucide-react';
 import Button from '@/components/shared/Button';
 import Modal from '@/components/shared/Modal';
@@ -102,15 +105,23 @@ const INSTALLMENT_MONTHS = 4;
 
 const formatRubAmount = (value: number) => `${value.toLocaleString('ru-RU')} ₽`;
 
-const fieldClassName =
-  'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20';
-
 const eurFieldClassName =
   'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-[15px] leading-5 text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20';
 
 const eurLabelClassName = 'block text-xs font-semibold uppercase tracking-wide text-slate-500';
 
 const errorClassName = 'mt-1 text-xs font-medium text-red-600';
+const mentorshipLabelClassName = 'text-[11px] font-semibold text-gray-500 uppercase tracking-wide';
+const mentorshipFieldClassName =
+  'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20';
+const mentorshipErrorClassName = 'mt-1 text-xs text-red-500';
+
+const MENTORSHIP_CONSULTATION_POINTS = [
+  'Определим цели поступления',
+  'Обсудим план обучения',
+  'Покажем, как устроена школа',
+  'Ответим на все вопросы',
+];
 
 const normalizeWhitespace = (value: string) => value.trim().replace(/\s+/g, ' ');
 const parseOrderNumber = (value: unknown): number | null =>
@@ -291,7 +302,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
   const modalTitleByStep: Record<ModalStep, string> = {
     currency: 'Выберите способ оплаты',
-    lead_form: isMentorship ? 'Заявка на Индивидуальный' : 'Оплата в евро',
+    lead_form: isMentorship ? 'Заявка на тариф «Индивидуальный»' : 'Оплата в евро',
     success: 'Заявка отправлена',
   };
 
@@ -379,6 +390,10 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
       if (!normalizedPhone) {
         nextErrors.phone = 'Введите номер телефона в международном формате.';
+      }
+
+      if (!leadForm.consentPersonalData) {
+        nextErrors.consentPersonalData = 'Нужно согласие на обработку персональных данных.';
       }
 
       return {
@@ -496,7 +511,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
           contractPostalCode: isMentorship ? undefined : leadForm.contractPostalCode.trim(),
           contractAddress: isMentorship ? undefined : leadForm.contractAddress.trim(),
           consentOffer: isMentorship ? false : leadForm.consentOffer,
-          consentPersonalData: isMentorship ? true : leadForm.consentPersonalData,
+          consentPersonalData: leadForm.consentPersonalData,
           consentMarketing: false,
           ctaLabel,
           ...tracking,
@@ -826,55 +841,147 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   const renderLeadStep = () => (
     <form onSubmit={submitLeadApplication} className="space-y-4">
       {isMentorship ? (
-        <>
-          <div className="space-y-3">
-            <div>
-              <label
-                htmlFor="lead-first-name"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600"
-              >
-                Имя
-              </label>
-              <input
-                id="lead-first-name"
-                name="firstName"
-                type="text"
-                autoComplete="given-name"
-                value={leadForm.firstName}
-                onChange={(event) => setLeadForm((prev) => ({ ...prev, firstName: event.target.value }))}
-                onBlur={() => handleTextFieldBlur('firstName', leadForm.firstName)}
-                className={fieldClassName}
-                placeholder="Ivan"
-              />
-              {errors.firstName && <p className={errorClassName}>{errors.firstName}</p>}
+        <div className="overflow-hidden rounded-2xl bg-white md:-m-5 md:grid md:grid-cols-[1.03fr_0.97fr]">
+          <section className="bg-gray-50 px-4 py-5 sm:px-6 sm:py-6 md:px-7 md:py-7">
+            <h4 className="max-w-[16ch] text-4xl font-display font-bold leading-[0.95] text-primary sm:text-5xl">
+              Персональный формат подготовки
+            </h4>
+
+            <ul className="mt-8 border-y border-gray-200">
+              {MENTORSHIP_CONSULTATION_POINTS.map((point) => (
+                <li
+                  key={point}
+                  className="flex items-start gap-3 border-b border-gray-200 py-3 text-lg leading-snug text-gray-700 last:border-b-0"
+                >
+                  <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-primary" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="border-t border-gray-100 bg-brand-purple/25 px-4 py-5 sm:px-6 sm:py-6 md:border-l md:border-t-0 md:px-7 md:py-7">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/70">
+              Заполните данные
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <div className="space-y-1">
+                <label htmlFor="lead-first-name" className={mentorshipLabelClassName}>
+                  Имя
+                </label>
+                <div className="relative">
+                  <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="lead-first-name"
+                    name="firstName"
+                    type="text"
+                    autoComplete="given-name"
+                    value={leadForm.firstName}
+                    onChange={(event) => setLeadForm((prev) => ({ ...prev, firstName: event.target.value }))}
+                    onBlur={() => handleTextFieldBlur('firstName', leadForm.firstName)}
+                    className={`${mentorshipFieldClassName} pl-10`}
+                    placeholder="Ваше имя"
+                  />
+                </div>
+                {errors.firstName && <p className={mentorshipErrorClassName}>{errors.firstName}</p>}
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="lead-phone-mentorship" className={mentorshipLabelClassName}>
+                  Телефон
+                </label>
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="lead-phone-mentorship"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={leadForm.phone}
+                    onChange={(event) => setLeadForm((prev) => ({ ...prev, phone: event.target.value }))}
+                    onBlur={() => handleTextFieldBlur('phone', leadForm.phone)}
+                    className={`${mentorshipFieldClassName} pl-10`}
+                    placeholder="+7 999 123 45 67"
+                  />
+                </div>
+                {errors.phone && <p className={mentorshipErrorClassName}>{errors.phone}</p>}
+              </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="lead-phone-mentorship"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600"
-              >
-                Номер телефона
+            <div className="mt-5 space-y-1">
+              <label className="flex cursor-pointer items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={leadForm.consentPersonalData}
+                  onChange={(event) => {
+                    const isChecked = event.target.checked;
+                    setLeadForm((prev) => ({ ...prev, consentPersonalData: isChecked }));
+                    setConsentValidationState('consentPersonalData', isChecked);
+                  }}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30"
+                />
+                <span className="text-xs leading-snug text-slate-600">
+                  Даю согласие на обработку{' '}
+                  <a
+                    href="/ru/legal/consent"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline decoration-slate-400 underline-offset-2 text-slate-600"
+                  >
+                    персональных данных
+                  </a>
+                </span>
               </label>
-              <input
-                id="lead-phone-mentorship"
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                value={leadForm.phone}
-                onChange={(event) => setLeadForm((prev) => ({ ...prev, phone: event.target.value }))}
-                onBlur={() => handleTextFieldBlur('phone', leadForm.phone)}
-                className={fieldClassName}
-                placeholder="+79991234567"
-              />
-              {errors.phone && <p className={errorClassName}>{errors.phone}</p>}
+              {errors.consentPersonalData && (
+                <p className={mentorshipErrorClassName}>{errors.consentPersonalData}</p>
+              )}
             </div>
-          </div>
 
-          <Button type="submit" fullWidth size="sm" isLoading={isSubmitting}>
-            Оставить заявку
-          </Button>
-        </>
+            <div className="mt-5 space-y-2">
+              <Button
+                type="submit"
+                size="lg"
+                fullWidth
+                disabled={isSubmitting}
+                className="group !py-3"
+              >
+                {isSubmitting ? 'Сохраняем...' : 'Записаться на консультацию'}
+                {!isSubmitting && (
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                )}
+              </Button>
+              <p className="px-1 text-center text-[10px] leading-snug text-slate-500">
+                Нажимая «Записаться на консультацию», вы подтверждаете ознакомление с{' '}
+                <a
+                  href="/ru/legal/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-slate-300 underline-offset-2 text-slate-500"
+                >
+                  Политикой обработки персональных данных
+                </a>
+                .
+              </p>
+            </div>
+
+            <div className="mt-6 border-t border-gray-200 pt-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-slate-700 sm:text-base">
+                  Или свяжитесь с нами в Telegram
+                </p>
+                <a
+                  href={SUPPORT_TELEGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-lg border-2 border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+                >
+                  Написать
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
       ) : (
         <>
           <div className="space-y-1">
@@ -1121,6 +1228,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
   const showSupportAction = step === 'currency' || (step === 'lead_form' && !isMentorship);
   const showBackAction = step === 'lead_form' && !isMentorship;
+  const isMentorshipLeadStep = isMentorship && step === 'lead_form';
 
   const handleBackToCurrency = () => {
     setStep('currency');
@@ -1133,7 +1241,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       isOpen={isOpen}
       onClose={closeWithReset}
       title={modalTitleByStep[step]}
-      maxWidth="max-w-xl"
+      maxWidth={isMentorshipLeadStep ? 'max-w-6xl' : 'max-w-xl'}
       viewportPaddingClassName="p-4 sm:p-5"
       panelMaxHeightClassName="max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-2.5rem)]"
       headerLeading={
