@@ -8,8 +8,11 @@ const PUBLIC_SITEMAP_PATHS = [
   '/ru/assessment',
   '/ru/for-parents',
   '/ru/refund',
-  '/ru/privacy',
-  '/ru/terms'
+  '/ru/legal',
+  '/ru/legal/privacy',
+  '/ru/legal/consent',
+  '/ru/legal/terms',
+  '/ru/legal/cookies'
 ];
 
 function isSeoLockEnabled() {

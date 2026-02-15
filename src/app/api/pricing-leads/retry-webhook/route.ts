@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { deliverWebhookWithRetries } from '../shared';
 
+const extractOrderNumber = (lead: Record<string, any>): number | null =>
+  typeof lead.invoice_order_number === 'number' ? lead.invoice_order_number : null;
+
 export async function POST(request: Request) {
   try {
     let body: unknown;
@@ -39,9 +42,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const orderNumber = extractOrderNumber(lead);
+
     if (lead.lead_type === 'rub_intent') {
       return NextResponse.json(
-        { error: 'Webhook retry is not supported for rub_intent' },
+        { error: 'Webhook retry is not supported for rub_intent', orderNumber },
         { status: 400 }
       );
     }
@@ -50,6 +55,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         leadId: lead.id,
+        orderNumber,
         alreadyDelivered: true,
       });
     }
@@ -78,6 +84,7 @@ export async function POST(request: Request) {
         {
           error: 'Не удалось отправить webhook после повторной попытки.',
           leadId: lead.id,
+          orderNumber,
         },
         { status: 502 }
       );
@@ -101,6 +108,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       leadId: lead.id,
+      orderNumber,
     });
   } catch (error) {
     console.error('Retry webhook error:', error);

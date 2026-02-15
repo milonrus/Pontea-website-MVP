@@ -403,7 +403,11 @@ export interface DomainResult {
 export interface AssessmentResult {
   version: number;
   userInfo?: UserInfo;
+  name?: string;
   email?: string;
+  phone?: string;
+  consentPersonalData?: boolean;
+  consentAt?: string;
   answers: AssessmentAnswer[];
   domainResults: DomainResult[];
   weakestDomains: DomainResult[];

@@ -20,6 +20,39 @@ interface FormErrors {
   consentPersonalData?: string;
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const getNameFormatError = (value: string): string => {
+  const normalized = value.trim();
+  if (!normalized) {
+    return '';
+  }
+  return normalized.length < 2 ? 'Имя должно содержать не менее 2 символов' : '';
+};
+
+const getEmailFormatError = (value: string): string => {
+  const normalized = value.trim();
+  if (!normalized) {
+    return '';
+  }
+  return EMAIL_REGEX.test(normalized) ? '' : 'Введите корректный email';
+};
+
+const getPhoneDigits = (value: string) => value.replace(/\D/g, '');
+
+const isPhoneEffectivelyEmpty = (value: string): boolean => getPhoneDigits(value).length <= 1;
+
+const getPhoneFormatError = (value: string): string => {
+  if (isPhoneEffectivelyEmpty(value)) {
+    return '';
+  }
+
+  const phoneDigits = getPhoneDigits(value);
+  return value.startsWith('+7') && phoneDigits.length >= 11
+    ? ''
+    : 'Номер должен начинаться с +7 и содержать 11 цифр';
+};
+
 const ConsultationForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -34,29 +67,32 @@ const ConsultationForm: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+  const setFieldError = (field: keyof FormErrors, message: string) => {
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (message) {
+        next[field] = message;
+      } else {
+        delete next[field];
+      }
+      return next;
+    });
+  };
 
-    if (!formData.name || formData.name.trim().length < 2) {
-      newErrors.name = 'Имя должно содержать не менее 2 символов';
+  const handleFieldBlur = (field: 'name' | 'email' | 'phone') => {
+    setFocusedField(null);
+
+    if (field === 'name') {
+      setFieldError('name', getNameFormatError(formData.name));
+      return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email || !emailRegex.test(formData.email)) {
-      newErrors.email = 'Введите корректный email';
+    if (field === 'email') {
+      setFieldError('email', getEmailFormatError(formData.email));
+      return;
     }
 
-    const phoneDigits = formData.phone.replace(/\D/g, '');
-    if (!formData.phone.startsWith('+7') || phoneDigits.length < 11) {
-      newErrors.phone = 'Номер должен начинаться с +7 и содержать 11 цифр';
-    }
-
-    if (!formData.consentPersonalData) {
-      newErrors.consentPersonalData = 'Необходимо согласие на обработку данных';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setFieldError('phone', getPhoneFormatError(formData.phone));
   };
 
   const handlePhoneChange = (value: string) => {
@@ -66,14 +102,47 @@ const ConsultationForm: React.FC = () => {
 
     const digits = value.replace(/\D/g, '');
     if (digits.length <= 11) {
-      setFormData({ ...formData, phone: '+7' + digits.slice(1) });
+      setFormData((prev) => ({ ...prev, phone: '+7' + digits.slice(1) }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const newErrors: FormErrors = {};
 
-    if (!validateForm()) {
+    if (!formData.name.trim()) {
+      newErrors.name = 'Введите имя';
+    } else {
+      const nameFormatError = getNameFormatError(formData.name);
+      if (nameFormatError) {
+        newErrors.name = nameFormatError;
+      }
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Введите корректный email';
+    } else {
+      const emailFormatError = getEmailFormatError(formData.email);
+      if (emailFormatError) {
+        newErrors.email = emailFormatError;
+      }
+    }
+
+    if (isPhoneEffectivelyEmpty(formData.phone)) {
+      newErrors.phone = 'Введите номер телефона';
+    } else {
+      const phoneFormatError = getPhoneFormatError(formData.phone);
+      if (phoneFormatError) {
+        newErrors.phone = phoneFormatError;
+      }
+    }
+
+    if (!formData.consentPersonalData) {
+      newErrors.consentPersonalData = 'Необходимо согласие на обработку данных';
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
 
@@ -152,7 +221,7 @@ const ConsultationForm: React.FC = () => {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             onFocus={() => setFocusedField('name')}
-            onBlur={() => setFocusedField(null)}
+            onBlur={() => handleFieldBlur('name')}
           />
           {focusedField === 'name' && (
             <motion.div
@@ -195,7 +264,7 @@ const ConsultationForm: React.FC = () => {
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             onFocus={() => setFocusedField('email')}
-            onBlur={() => setFocusedField(null)}
+            onBlur={() => handleFieldBlur('email')}
           />
           {focusedField === 'email' && (
             <motion.div
@@ -238,7 +307,7 @@ const ConsultationForm: React.FC = () => {
             value={formData.phone}
             onChange={(e) => handlePhoneChange(e.target.value)}
             onFocus={() => setFocusedField('phone')}
-            onBlur={() => setFocusedField(null)}
+            onBlur={() => handleFieldBlur('phone')}
           />
           {focusedField === 'phone' && (
             <motion.div
@@ -270,9 +339,14 @@ const ConsultationForm: React.FC = () => {
               type="checkbox"
               className="sr-only peer"
               checked={formData.consentPersonalData}
-              onChange={(e) =>
-                setFormData({ ...formData, consentPersonalData: e.target.checked })
-              }
+              onChange={(e) => {
+                const isChecked = e.target.checked;
+                setFormData((prev) => ({ ...prev, consentPersonalData: isChecked }));
+                setFieldError(
+                  'consentPersonalData',
+                  isChecked ? '' : 'Необходимо согласие на обработку данных'
+                );
+              }}
             />
             <div className="w-6 h-6 border-2 border-primary bg-white peer-checked:bg-primary transition-all group-hover:scale-110 flex items-center justify-center">
               {formData.consentPersonalData && (

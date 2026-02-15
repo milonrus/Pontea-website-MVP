@@ -8,7 +8,10 @@ interface ModalProps {
   children: React.ReactNode;
   title?: string;
   maxWidth?: string;
+  headerLeading?: React.ReactNode;
   headerActions?: React.ReactNode;
+  viewportPaddingClassName?: string;
+  panelMaxHeightClassName?: string;
 }
 
 const Modal: React.FC<ModalProps> = ({ 
@@ -17,7 +20,10 @@ const Modal: React.FC<ModalProps> = ({
   children, 
   title, 
   maxWidth = 'max-w-lg',
+  headerLeading,
   headerActions,
+  viewportPaddingClassName = 'p-4 sm:p-6',
+  panelMaxHeightClassName = 'max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)]',
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -33,7 +39,7 @@ const Modal: React.FC<ModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center ${viewportPaddingClassName}`}>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -45,10 +51,13 @@ const Modal: React.FC<ModalProps> = ({
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl overflow-hidden`}
+            className={`relative flex w-full flex-col ${maxWidth} ${panelMaxHeightClassName} overflow-hidden rounded-2xl bg-white shadow-xl`}
           >
-            <div className="flex items-center justify-between gap-3 border-b border-gray-100 p-6">
-              <h3 className="min-w-0 flex-1 text-xl font-display font-bold text-primary">{title}</h3>
+            <div className="flex items-center justify-between gap-3 border-b border-gray-100 p-4 sm:p-5">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                {headerLeading}
+                <h3 className="min-w-0 flex-1 text-xl font-display font-bold text-primary">{title}</h3>
+              </div>
               <div className="flex items-center gap-2">
                 {headerActions}
                 <button 
@@ -59,7 +68,7 @@ const Modal: React.FC<ModalProps> = ({
                 </button>
               </div>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[85vh]">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
               {children}
             </div>
           </motion.div>

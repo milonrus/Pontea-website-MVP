@@ -2,12 +2,54 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServerClient } from '@/lib/supabase/server';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PREFIX_REGEX = /^\+.+$/;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, answers, domainResults, weakestDomains, studyPlan, roadmapOutput } = body;
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
 
-    if (!email || !answers || !domainResults || !weakestDomains || !studyPlan) {
+    const {
+      name,
+      email,
+      phone,
+      consentPersonalData,
+      consentAt,
+      answers,
+      domainResults,
+      weakestDomains,
+      studyPlan,
+      roadmapOutput,
+    } = body;
+
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
+    const normalizedEmail = typeof email === 'string' ? email.trim() : '';
+    const normalizedPhone = typeof phone === 'string' ? phone.trim() : '';
+
+    const parsedConsentAt = typeof consentAt === 'string' ? new Date(consentAt) : null;
+    const normalizedConsentAt =
+      parsedConsentAt && !Number.isNaN(parsedConsentAt.getTime())
+        ? parsedConsentAt.toISOString()
+        : '';
+
+    const isPayloadValid =
+      normalizedName.length > 0 &&
+      EMAIL_REGEX.test(normalizedEmail) &&
+      PHONE_PREFIX_REGEX.test(normalizedPhone) &&
+      consentPersonalData === true &&
+      normalizedConsentAt.length > 0 &&
+      Array.isArray(answers) &&
+      Array.isArray(domainResults) &&
+      Array.isArray(weakestDomains) &&
+      Array.isArray(studyPlan);
+
+    if (!isPayloadValid) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -22,7 +64,11 @@ export async function POST(request: Request) {
       .from('assessment_results')
       .insert({
         share_token: shareToken,
-        email,
+        name: normalizedName,
+        email: normalizedEmail,
+        phone: normalizedPhone,
+        consent_personal_data: true,
+        consent_at: normalizedConsentAt,
         answers,
         domain_results: domainResults,
         weakest_domains: weakestDomains,
@@ -39,6 +85,15 @@ export async function POST(request: Request) {
       );
     }
 
+    const resultsUrl = `https://pontea.school/ru/results/${shareToken}`;
+    const compactDomainResults = Array.isArray(domainResults)
+      ? domainResults.map((result: any) => ({
+          domainLabel: result?.domainLabel,
+          score: result?.score,
+          selfAssessmentScore: result?.selfAssessmentScore,
+        }))
+      : [];
+
     const response = NextResponse.json({ token: shareToken });
 
     // Fire webhook to N8N after response is ready (fire-and-forget)
@@ -50,12 +105,14 @@ export async function POST(request: Request) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             version: 3,
-            email,
-            answers,
-            domainResults,
-            weakestDomains,
-            studyPlan,
-            roadmapOutput,
+            name: normalizedName,
+            phone: normalizedPhone,
+            email: normalizedEmail,
+            consentPersonalData: true,
+            consentAt: normalizedConsentAt,
+            domainResults: compactDomainResults,
+            url: resultsUrl,
+            resultsUrl,
             submittedAt: new Date().toISOString(),
           }),
           signal: AbortSignal.timeout(5000),

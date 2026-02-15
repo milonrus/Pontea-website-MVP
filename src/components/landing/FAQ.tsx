@@ -155,16 +155,6 @@ const getFaqs = (locale: 'en' | 'ru' = 'ru'): FAQItem[] => [
   {
     question:
       locale === 'en'
-        ? "Can I get a refund for the course?"
-        : "Можно ли вернуть деньги за курс?",
-    answer:
-      locale === 'en'
-        ? "Yes. We offer a full refund within 7 days if the course isn't right for you."
-        : "Да. Мы делаем полный возврат в течение 7 дней, если курс вам не подойдет."
-  },
-  {
-    question:
-      locale === 'en'
         ? "Is this course suitable for Politecnico di Milano Architecture admission (ARCHED)?"
         : "Подходит ли курс для поступления на архитектуру в Politecnico di Milano (ARCHED)?",
     answer:

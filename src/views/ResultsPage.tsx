@@ -4,41 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Check, X, MessageCircle } from 'lucide-react';
-import Button from '@/components/shared/Button';
 import Header from '@/components/shared/Header';
-import PaymentModal from '@/components/shared/PaymentModal';
 import ResultsSprintCarousel from '@/components/results/ResultsSprintCarousel';
 import LevelResultsShowcase from '@/components/results/LevelResultsShowcase';
-import { AssessmentResult, PlanTier } from '@/types';
+import PricingRu from '@/components/landing/pricing-ru/PricingRu';
+import { AssessmentResult } from '@/types';
 import type { CanonicalRoadmapOutput, ExamPart } from '@/lib/roadmap-generator/types';
-
-/* ── pricing data (reused from Pricing.tsx) ──────────────────── */
-
-const TIERS: PlanTier[] = [
-  {
-    name: 'Старт',
-    price: 690,
-    priceRub: 75000,
-    features: ['Доступ к платформе с видео, задачками и теорией'],
-    missingFeatures: ['Ментор с check-in каждые 2 недели', 'Субботняя школа: занятия с преподавателями в группе', 'Ответы от преподавателей и обсуждение заданий в форуме', '20 персональных занятий с преподавателями', 'Персональные созвоны с ментором, чат и поддержка в любое время', 'Стратегические сессии с основательницами школы'],
-  },
-  {
-    name: 'Полный',
-    price: 1190,
-    priceRub: 130000,
-    recommended: true,
-    features: ['Доступ к платформе', 'Ментор, который следит за прогрессом: check-in каждые две недели для проверки выполнения роадмапа и его доработки', 'Субботняя школа: занятия с преподавателями в группе', 'Ответы от преподавателей, обсуждение заданий в форуме'],
-    missingFeatures: ['20 персональных занятий с преподавателями (5 мес х 4 занятия)', 'Персональные созвоны с ментором, чат и поддержка в любое время', 'Стратегические сессии с основательницами школы'],
-  },
-  {
-    name: 'Мастер',
-    price: 2750,
-    priceRub: 300000,
-    features: ['Все, что в тарифе «Полный»', '20 персональных занятий с преподавателями (5 мес х 4 занятия)', 'Персональные созвоны с ментором, чат и поддержка в любое время', 'Стратегические сессии с основательницами школы'],
-    missingFeatures: [],
-  }
-];
 
 /* ── countdown helper ────────────────────────────────────────── */
 
@@ -89,7 +60,6 @@ interface ResultsPageProps {
 const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
   const router = useRouter();
   const [results, setResults] = useState<AssessmentResult | null>(initialResults ?? null);
-  const [selectedTier, setSelectedTier] = useState<PlanTier | null>(null);
   const weeksLeft = getWeeksUntilExam();
 
   useEffect(() => {
@@ -153,89 +123,12 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
 
         {/* Section 3: Pricing */}
         <motion.div
-          id="pricing"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="mb-12"
         >
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-primary text-center mb-10">
-            Получи доступ к платформе и начинай готовиться уже сейчас!
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {TIERS.map((tier) => (
-              <div
-                key={tier.name}
-                className={`
-                  relative bg-white rounded-2xl p-8 transition-all duration-300
-                  ${tier.recommended ? 'border-2 border-accent shadow-xl scale-105 z-10' : 'border border-gray-200 shadow-sm hover:shadow-lg'}
-                `}
-              >
-                {tier.recommended && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent text-primary font-bold px-6 py-1.5 rounded-full text-sm whitespace-nowrap">
-                    Самый популярный
-                  </div>
-                )}
-
-                <h3 className="text-2xl font-display font-bold text-primary mb-2">{tier.name}</h3>
-                <div className="mb-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-primary">€{tier.price}</span>
-                    <span className="text-sm text-gray-400">или</span>
-                    <span className="text-lg font-bold text-green-600">€{Math.round(tier.price / 6)}/мес</span>
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    ≈ {tier.priceRub.toLocaleString('ru-RU')}&nbsp;₽ · рассрочка на 6 мес
-                  </div>
-                </div>
-
-                <Button
-                  variant={tier.recommended ? 'primary' : 'outline'}
-                  fullWidth
-                  onClick={() => setSelectedTier(tier)}
-                  className="mb-8"
-                >
-                  {tier.recommended ? 'Начать подготовку' : 'Выбрать'}
-                </Button>
-
-                <div className="space-y-4">
-                  {tier.features.map((feature, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-green-600" />
-                      </div>
-                      <span className="text-gray-700 text-sm">{feature}</span>
-                    </div>
-                  ))}
-                  {tier.missingFeatures.map((feature, i) => (
-                    <div key={i} className="flex items-start gap-3 opacity-50">
-                      <div className="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                        <X className="w-3 h-3 text-gray-400" />
-                      </div>
-                      <span className="text-gray-500 text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="max-w-xl mx-auto mt-12">
-            <Link
-              href="/consultation"
-              className="flex items-center gap-4 bg-white rounded-2xl px-6 py-4 border border-gray-200 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 group"
-            >
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
-                <MessageCircle className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-primary">Нужна помощь с выбором или оплатой?</div>
-                <div className="text-xs text-gray-500">Запишись на бесплатную консультацию</div>
-              </div>
-              <span className="text-primary text-lg flex-shrink-0">&rarr;</span>
-            </Link>
-          </div>
+          <PricingRu />
         </motion.div>
       </main>
 
@@ -258,16 +151,6 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
           </div>
         </div>
       </footer>
-
-      {/* Payment Modal */}
-      {selectedTier && (
-        <PaymentModal
-          isOpen={!!selectedTier}
-          onClose={() => setSelectedTier(null)}
-          tierName={selectedTier.name}
-          price={selectedTier.price}
-        />
-      )}
     </div>
   );
 };

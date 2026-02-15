@@ -24,13 +24,10 @@ const PricingRu: React.FC = () => {
   return (
     <section id="pricing" className="section-padding bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-display font-bold text-primary md:text-5xl">
-            Тарифы подготовки к ARCHED
+        <div className="mx-auto text-center">
+          <h2 className="text-3xl font-display font-bold text-primary md:text-5xl md:whitespace-nowrap">
+            Выберите свой формат подготовки
           </h2>
-          <p className="mt-3 text-sm text-gray-600 md:text-base">
-            Сравните форматы по глубине сопровождения и выберите подходящий путь к поступлению.
-          </p>
         </div>
 
         <div id="pricing-cards" className="mt-8 scroll-mt-12 md:scroll-mt-16">
