@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE, Locale, getLocaleHome } from './config';
+import { isRuOnlyMode } from './mode';
 
 const LOCALE_PREFIX_PATTERN = /^\/(en|ru)(\/|$)/;
 
@@ -46,6 +47,10 @@ function getPairedRouteKey(pathname: string): keyof typeof PAIRED_ROUTE_MAP | nu
 }
 
 export function getSwitchLocalePath(pathname: string, targetLocale: Locale): string {
+  if (isRuOnlyMode()) {
+    return '/ru';
+  }
+
   const normalized = normalizePath(pathname);
   const routeKey = getPairedRouteKey(normalized);
 
@@ -57,6 +62,10 @@ export function getSwitchLocalePath(pathname: string, targetLocale: Locale): str
 }
 
 export function getSuggestedLocaleFromAcceptLanguage(acceptLanguageHeader: string | null): Locale {
+  if (isRuOnlyMode()) {
+    return 'ru';
+  }
+
   if (!acceptLanguageHeader) {
     return DEFAULT_LOCALE;
   }
@@ -76,4 +85,3 @@ export function getSuggestedLocaleFromAcceptLanguage(acceptLanguageHeader: strin
 
   return DEFAULT_LOCALE;
 }
-

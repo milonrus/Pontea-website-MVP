@@ -141,7 +141,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
               <p className="text-blue-200 text-sm">Architecture Entrance Prep</p>
             </div>
             <div className="flex gap-8 text-sm text-blue-200">
-              <Link href="/methodology" className="hover:text-white transition-colors">Methodology</Link>
+              <Link href="/ru" className="hover:text-white transition-colors">Methodology</Link>
               <Link href="/ru" className="hover:text-white transition-colors">Home</Link>
               <Link href="/ru/assessment" className="hover:text-white transition-colors">Assessment</Link>
             </div>

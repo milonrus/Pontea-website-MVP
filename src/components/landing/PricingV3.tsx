@@ -218,7 +218,7 @@ const PricingV3: React.FC = () => {
           className="text-center mt-14"
         >
           <Link
-            href="/consultation"
+            href="/ru"
             className="inline-flex items-center gap-2 text-primary hover:text-highlight font-medium transition-colors text-base border-b-2 border-dashed border-primary/30 hover:border-highlight/50 pb-0.5"
           >
             <MessageCircle className="w-5 h-5" />

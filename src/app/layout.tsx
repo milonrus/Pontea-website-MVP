@@ -2,9 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
 import Providers from './providers';
+import { getRequiredPublicEnv } from '@/lib/env/public';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://pontea.school'),
+  metadataBase: new URL(getRequiredPublicEnv('NEXT_PUBLIC_APP_URL')),
   title: 'PONTEA School | Architecture Exam Prep'
 };
 

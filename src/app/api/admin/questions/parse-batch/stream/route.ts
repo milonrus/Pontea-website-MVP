@@ -12,11 +12,16 @@ import {
   BulkParseResult
 } from '@/types';
 import { buildBatchParsingPrompt } from '@/data/prompts';
+import { getOptionalServerEnv } from '@/lib/env/server';
 
 const MAX_IMAGES = 50;
 const CONCURRENCY_LIMIT = 3;
 const TIMEOUT_PER_IMAGE = 30000;
 const MAX_RETRIES = 3;
+const OPENAI_PARSE_STREAM_MODEL =
+  getOptionalServerEnv('OPENAI_PARSE_STREAM_MODEL') ||
+  getOptionalServerEnv('OPENAI_PARSE_MODEL') ||
+  'gpt-4o-mini';
 
 const optionOrder = ['a', 'b', 'c', 'd', 'e'] as const;
 
@@ -191,7 +196,7 @@ async function parseImageWithRetry(
         },
         signal: linkedSignal,
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: OPENAI_PARSE_STREAM_MODEL,
           messages: [
             {
               role: 'system',

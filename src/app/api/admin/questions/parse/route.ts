@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, getAuthUser } from '@/lib/supabase/server';
 import { getParsingPrompt } from '@/data/prompts';
+import { getOptionalServerEnv } from '@/lib/env/server';
 
 const optionOrder = ['a', 'b', 'c', 'd', 'e'] as const;
+const OPENAI_PARSE_MODEL = getOptionalServerEnv('OPENAI_PARSE_MODEL') || 'gpt-5-mini';
 
 type ParsedOption = {
   id?: string;
@@ -101,7 +103,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini',
+        model: OPENAI_PARSE_MODEL,
         messages: [
           {
             role: 'system',

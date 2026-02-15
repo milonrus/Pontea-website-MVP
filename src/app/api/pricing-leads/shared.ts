@@ -1,3 +1,5 @@
+import { getOptionalServerEnv, getServerEnvInt } from '@/lib/env/server';
+
 const LEAD_TYPES = ['rub_intent', 'eur_application', 'mentorship_application'] as const;
 const PLAN_IDS = ['foundation', 'advanced', 'mentorship'] as const;
 const CURRENCIES = ['RUB', 'EUR'] as const;
@@ -16,9 +18,8 @@ const RUB_PRICE_BY_PLAN: Record<PlanId, number> = {
   mentorship: 321000,
 };
 
-export const MAX_WEBHOOK_ATTEMPTS = 3;
-const DEFAULT_PRICING_LEAD_WEBHOOK_URL =
-  'https://shumiha.app.n8n.cloud/webhook/71f89af7-71f5-42b4-9c86-4602218cbf7f';
+export const MAX_WEBHOOK_ATTEMPTS = getServerEnvInt('PRICING_WEBHOOK_MAX_ATTEMPTS', 3, { min: 1 });
+const WEBHOOK_TIMEOUT_MS = getServerEnvInt('WEBHOOK_TIMEOUT_MS', 5000, { min: 1000 });
 
 export type LeadType = (typeof LEAD_TYPES)[number];
 export type PlanId = (typeof PLAN_IDS)[number];
@@ -342,10 +343,7 @@ export async function deliverWebhookWithRetries(
   webhookUrlOverride?: string,
   webhookEnvName: string = 'PRICING_LEAD_WEBHOOK_URL'
 ): Promise<WebhookDeliveryResult> {
-  const webhookUrl =
-    webhookUrlOverride ||
-    process.env.PRICING_LEAD_WEBHOOK_URL ||
-    DEFAULT_PRICING_LEAD_WEBHOOK_URL;
+  const webhookUrl = webhookUrlOverride || getOptionalServerEnv('PRICING_LEAD_WEBHOOK_URL');
 
   if (!webhookUrl) {
     return {
@@ -365,7 +363,7 @@ export async function deliverWebhookWithRetries(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(buildWebhookPayload(lead)),
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(WEBHOOK_TIMEOUT_MS),
       });
 
       if (response.ok) {

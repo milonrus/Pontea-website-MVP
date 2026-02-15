@@ -3,11 +3,13 @@ import { createServerClient, getAuthUser } from '@/lib/supabase/server';
 import { getSubjects } from '@/lib/db';
 import { BulkParseRequest, BulkParseResponse, BulkParseResult, ParsedImageQuestion, SubjectModel, QuestionDifficulty } from '@/types';
 import { buildBatchParsingPrompt } from '@/data/prompts';
+import { getOptionalServerEnv } from '@/lib/env/server';
 
 const MAX_IMAGES = 50;
 const CONCURRENCY_LIMIT = 3;
 const TIMEOUT_PER_IMAGE = 30000;
 const MAX_RETRIES = 3;
+const OPENAI_PARSE_MODEL = getOptionalServerEnv('OPENAI_PARSE_MODEL') || 'gpt-5-mini';
 
 const optionOrder = ['a', 'b', 'c', 'd', 'e'] as const;
 
@@ -179,7 +181,7 @@ async function parseImageWithRetry(
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: 'gpt-5-mini',
+          model: OPENAI_PARSE_MODEL,
           messages: [
             {
               role: 'system',

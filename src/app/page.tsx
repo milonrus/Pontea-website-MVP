@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import RootLanguageProfileRedirect from '@/components/shared/RootLanguageProfileRedirect';
 import { LanguageSelectorCard } from '@/components/shared/LanguageSelectorVariants';
 import { getSuggestedLocaleFromAcceptLanguage } from '@/lib/i18n/routes';
+import { isRuOnlyMode } from '@/lib/i18n/mode';
 
 export const metadata: Metadata = {
   robots: {
@@ -15,6 +17,10 @@ export const metadata: Metadata = {
 };
 
 const LanguageGateway = async () => {
+  if (isRuOnlyMode()) {
+    redirect('/ru');
+  }
+
   const requestHeaders = await headers();
   const suggestedLocale = getSuggestedLocaleFromAcceptLanguage(
     requestHeaders.get('accept-language')

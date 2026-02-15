@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/shared/Button';
 import Modal from '@/components/shared/Modal';
+import { getOptionalPublicEnv, getRequiredPublicEnv } from '@/lib/env/public';
 import { RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN } from './data';
 import { RuPricingPlan } from './types';
 
@@ -75,20 +76,15 @@ const LATIN_ADDRESS_REGEX = /^[A-Za-z0-9\s,.'#/-]+$/;
 const POSTAL_CODE_REGEX = /^[A-Za-z0-9][A-Za-z0-9\s-]{0,15}$/;
 const HAS_LATIN_LETTER_REGEX = /[A-Za-z]/;
 
-const DEFAULT_RUB_PAYMENT_URL_FOUNDATION = 'https://payform.ru/b8aFIn1/';
-const DEFAULT_RUB_PAYMENT_URL_ADVANCED = 'https://payform.ru/j2aFIb3/';
-const DEFAULT_SUPPORT_TELEGRAM_URL = 'https://t.me/pontea_support_bot';
-
-const RUB_PAYMENT_URL_BY_PLAN: Record<'foundation' | 'advanced', string | undefined> = {
-  foundation: process.env.NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION || DEFAULT_RUB_PAYMENT_URL_FOUNDATION,
-  advanced: process.env.NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED || DEFAULT_RUB_PAYMENT_URL_ADVANCED,
+const RUB_PAYMENT_URL_BY_PLAN: Record<'foundation' | 'advanced', string> = {
+  foundation: getRequiredPublicEnv('NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION'),
+  advanced: getRequiredPublicEnv('NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED'),
 };
-const SUPPORT_TELEGRAM_URL =
-  process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM_URL || DEFAULT_SUPPORT_TELEGRAM_URL;
+const SUPPORT_TELEGRAM_URL = getRequiredPublicEnv('NEXT_PUBLIC_SUPPORT_TELEGRAM_URL');
 
 const RUB_INSTALLMENT_PAYMENT_URL_BY_PLAN: Record<'foundation' | 'advanced', string | undefined> = {
-  foundation: process.env.NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION_INSTALLMENT,
-  advanced: process.env.NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED_INSTALLMENT,
+  foundation: getOptionalPublicEnv('NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION_INSTALLMENT'),
+  advanced: getOptionalPublicEnv('NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED_INSTALLMENT'),
 };
 
 const RUB_FULL_PRICE_BY_PLAN: Record<'foundation' | 'advanced', number> = {
@@ -101,7 +97,7 @@ const RUB_INSTALLMENT_TOTAL_BY_PLAN: Record<'foundation' | 'advanced', number> =
   advanced: 149_000,
 };
 
-const INSTALLMENT_MONTHS = 4;
+const INSTALLMENT_MONTHS = 6;
 
 const formatRubAmount = (value: number) => `${value.toLocaleString('ru-RU')} ₽`;
 
@@ -697,10 +693,10 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       },
       {
         id: 'rub_installment',
-        amount: formatRubAmount(rubInstallmentMonthly),
+        amount: `от ${formatRubAmount(rubInstallmentMonthly)}`,
         amountHint: `х ${INSTALLMENT_MONTHS} = ${formatRubAmount(rubInstallmentTotal)}`,
-        title: `Рассрочка на ${INSTALLMENT_MONTHS} месяца`,
-        subtitle: 'Ежемесячная оплата',
+        title: `Оплата частями`,
+        subtitle: 'Ежемесячный платёж',
       },
       {
         id: 'eur',

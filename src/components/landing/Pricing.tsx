@@ -142,7 +142,7 @@ const Pricing: React.FC<PricingProps> = ({ locale = 'ru' }) => {
 
         <div className="max-w-xl mx-auto mt-12">
           <Link
-            href="/consultation"
+            href="/ru"
             className="flex items-center gap-4 bg-white rounded-2xl px-6 py-4 border border-gray-200 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 group"
           >
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">

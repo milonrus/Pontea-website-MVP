@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getAuthUser, createServerClient } from '@/lib/supabase/server';
+import { getOptionalServerEnv } from '@/lib/env/server';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const OPENAI_DIFFICULTY_MODEL = getOptionalServerEnv('OPENAI_DIFFICULTY_MODEL') || 'gpt-4o-mini';
 
 interface DifficultyDetectRequest {
   questions: Array<{
@@ -69,7 +71,7 @@ async function detectDifficulty(
 ): Promise<DifficultyResult> {
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: OPENAI_DIFFICULTY_MODEL,
       messages: [
         {
           role: 'system',

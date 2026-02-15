@@ -1,35 +1,42 @@
 import Link from 'next/link';
-import { Locale } from '@/lib/i18n/config';
+import { Locale, getActiveLocales } from '@/lib/i18n/config';
 
 interface LanguageSelectorCardProps {
   suggestedLocale: Locale;
 }
 
-const localeOptions: Array<{
+const localeOptionMap: Record<Locale, {
   locale: Locale;
   label: string;
   code: string;
   href: string;
-}> = [
-  {
+}> = {
+  ru: {
     locale: 'ru',
     label: 'Русский',
     code: 'RU',
     href: '/ru'
   },
-  {
+  en: {
     locale: 'en',
     label: 'English',
     code: 'EN',
     href: '/en'
   }
-];
+};
 
-function cn(...classes: Array<string | undefined | false>) {
-  return classes.filter(Boolean).join(' ');
+function getLocaleOptions(): Array<{
+  locale: Locale;
+  label: string;
+  code: string;
+  href: string;
+}> {
+  return getActiveLocales().map((locale) => localeOptionMap[locale]);
 }
 
 function getOrderedLocaleOptions(suggestedLocale: Locale) {
+  const localeOptions = getLocaleOptions();
+
   return [...localeOptions].sort((a, b) => {
     if (a.locale === suggestedLocale && b.locale !== suggestedLocale) {
       return -1;
@@ -39,6 +46,10 @@ function getOrderedLocaleOptions(suggestedLocale: Locale) {
     }
     return 0;
   });
+}
+
+function cn(...classes: Array<string | undefined | false>) {
+  return classes.filter(Boolean).join(' ');
 }
 
 const PonteaLogo = ({ className, colorClass = 'bg-primary' }: { className?: string; colorClass?: string }) => (
@@ -103,4 +114,3 @@ export const LanguageSelectorCard = ({ suggestedLocale }: LanguageSelectorCardPr
     </section>
   );
 };
-

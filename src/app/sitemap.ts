@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
+import { isRuOnlyMode } from '@/lib/i18n/mode';
 
-const PUBLIC_SITEMAP_PATHS = [
+const MULTILINGUAL_PUBLIC_SITEMAP_PATHS = [
   '/en',
   '/ru',
   '/consultation',
@@ -15,19 +16,26 @@ const PUBLIC_SITEMAP_PATHS = [
   '/ru/legal/cookies'
 ];
 
-function isSeoLockEnabled() {
-  return process.env.SEO_LOCK !== 'false';
-}
+const RU_ONLY_PUBLIC_SITEMAP_PATHS = [
+  '/ru',
+  '/ru/assessment',
+  '/ru/for-parents',
+  '/ru/refund',
+  '/ru/legal',
+  '/ru/legal/privacy',
+  '/ru/legal/consent',
+  '/ru/legal/terms',
+  '/ru/legal/cookies'
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  if (isSeoLockEnabled()) {
-    return [];
-  }
-
+  const publicSitemapPaths = isRuOnlyMode()
+    ? RU_ONLY_PUBLIC_SITEMAP_PATHS
+    : MULTILINGUAL_PUBLIC_SITEMAP_PATHS;
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pontea.school';
   const now = new Date();
 
-  return PUBLIC_SITEMAP_PATHS.map((path) => ({
+  return publicSitemapPaths.map((path) => ({
     url: `${siteUrl}${path}`,
     lastModified: now
   }));
