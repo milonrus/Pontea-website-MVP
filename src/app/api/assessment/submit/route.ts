@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServerClient } from '@/lib/supabase/server';
-import { getRequiredServerEnv } from '@/lib/env/server';
+import { getOptionalServerEnv } from '@/lib/env/server';
 import { normalizePhoneToE164 } from '@/lib/assessment/phone';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const APP_URL = getRequiredServerEnv('APP_URL').replace(/\/+$/, '');
-const ASSESSMENT_RESULTS_WEBHOOK_URL = getRequiredServerEnv('ASSESSMENT_RESULTS_WEBHOOK_URL');
 
 export async function POST(request: Request) {
   try {
@@ -88,6 +86,18 @@ export async function POST(request: Request) {
       });
 
     if (dbError) {
+      const isPhoneConstraintViolation =
+        dbError.code === '23514' &&
+        (dbError.message.includes('assessment_results_phone_e164_check') ||
+          dbError.details?.includes('assessment_results_phone_e164_check'));
+
+      if (isPhoneConstraintViolation) {
+        return NextResponse.json(
+          { error: 'phone must be in E.164 format' },
+          { status: 400 }
+        );
+      }
+
       console.error('Failed to insert assessment result:', dbError);
       return NextResponse.json(
         { error: 'Failed to save results' },
@@ -95,7 +105,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const resultsUrl = `${APP_URL}/ru/results/${shareToken}`;
+    const requestOrigin = new URL(request.url).origin.replace(/\/+$/, '');
+    const appUrl = getOptionalServerEnv('APP_URL')?.replace(/\/+$/, '') || requestOrigin;
+    const assessmentResultsWebhookUrl = getOptionalServerEnv('ASSESSMENT_RESULTS_WEBHOOK_URL');
+    const resultsUrl = `${appUrl}/ru/results/${shareToken}`;
     const compactDomainResults = Array.isArray(domainResults)
       ? domainResults.map((result: any) => ({
           domainLabel: result?.domainLabel,
@@ -107,29 +120,31 @@ export async function POST(request: Request) {
     const response = NextResponse.json({ token: shareToken });
 
     // Fire webhook to N8N after response is ready (fire-and-forget)
-    try {
-      void fetch(
-        ASSESSMENT_RESULTS_WEBHOOK_URL,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            version: 3,
-            name: normalizedName,
-            phone: normalizedPhone,
-            email: normalizedEmail,
-            consentPersonalData: true,
-            consentAt: normalizedConsentAt,
-            domainResults: compactDomainResults,
-            url: resultsUrl,
-            resultsUrl,
-            submittedAt: new Date().toISOString(),
-          }),
-          signal: AbortSignal.timeout(5000),
-        }
-      ).catch((err) => console.error('Failed to send results to webhook:', err));
-    } catch {
-      // ignore webhook errors entirely
+    if (assessmentResultsWebhookUrl) {
+      try {
+        void fetch(
+          assessmentResultsWebhookUrl,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              version: 3,
+              name: normalizedName,
+              phone: normalizedPhone,
+              email: normalizedEmail,
+              consentPersonalData: true,
+              consentAt: normalizedConsentAt,
+              domainResults: compactDomainResults,
+              url: resultsUrl,
+              resultsUrl,
+              submittedAt: new Date().toISOString(),
+            }),
+            signal: AbortSignal.timeout(5000),
+          }
+        ).catch((err) => console.error('Failed to send results to webhook:', err));
+      } catch {
+        // ignore webhook errors entirely
+      }
     }
 
     return response;
