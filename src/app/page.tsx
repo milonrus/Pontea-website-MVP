@@ -5,16 +5,17 @@ import RootLanguageProfileRedirect from '@/components/shared/RootLanguageProfile
 import { LanguageSelectorCard } from '@/components/shared/LanguageSelectorVariants';
 import { getSuggestedLocaleFromAcceptLanguage } from '@/lib/i18n/routes';
 import { isRuOnlyMode } from '@/lib/i18n/mode';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Choose Language',
+  description: 'Select your preferred language to continue to PONTEA School.',
+  canonical: '/',
   robots: {
     index: false,
     follow: true
-  },
-  alternates: {
-    canonical: '/'
   }
-};
+});
 
 const LanguageGateway = async () => {
   if (isRuOnlyMode()) {

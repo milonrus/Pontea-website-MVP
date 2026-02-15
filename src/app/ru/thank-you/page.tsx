@@ -1,22 +1,27 @@
 import type { Metadata } from 'next';
 import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
 import { isRuOnlyMode } from '@/lib/i18n/mode';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 
 const ruOnlyMode = isRuOnlyMode();
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: '/ru/thank-you',
-    ...(ruOnlyMode
-      ? {}
-      : {
-          languages: {
-            en: '/en/thank-you',
-            ru: '/ru/thank-you'
-          }
-        })
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Спасибо за регистрацию',
+  description: 'Спасибо за регистрацию в PONTEA School.',
+  canonical: '/ru/thank-you',
+  ...(ruOnlyMode
+    ? {}
+    : {
+        languages: {
+          en: '/en/thank-you',
+          ru: '/ru/thank-you'
+        }
+      }),
+  robots: {
+    index: false,
+    follow: false
   }
-};
+});
 
 const ThankYouPage = () => {
   return (

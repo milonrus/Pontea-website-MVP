@@ -1,15 +1,20 @@
 import type { Metadata } from 'next';
 import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: '/en/thank-you',
-    languages: {
-      en: '/en/thank-you',
-      ru: '/ru/thank-you'
-    }
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Thank You',
+  description: 'Thank you for registering for PONTEA School updates.',
+  canonical: '/en/thank-you',
+  languages: {
+    en: '/en/thank-you',
+    ru: '/ru/thank-you'
+  },
+  robots: {
+    index: false,
+    follow: false
   }
-};
+});
 
 const ThankYouPageEN = () => {
   return (

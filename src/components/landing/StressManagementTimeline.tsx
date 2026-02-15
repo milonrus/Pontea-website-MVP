@@ -25,7 +25,7 @@ const getWorries = (locale: 'en' | 'ru' = 'ru'): Worry[] => [
         id: 2,
         tag: locale === 'en' ? "there's not enough time" : "времени не хватит",
         title: locale === 'en' ? "I don't know my level or whether I'll make it in time" : "Не знаю свой уровень и успею ли вообще",
-        description: locale === 'en' ? "translate" : "Определим твою точку А и составим реалистичный план до точки Б, с котором ты всё успеешь.",
+        description: locale === 'en' ? "We'll map your current level and build a realistic plan to reach your target score in time." : "Определим твою точку А и составим реалистичный план до точки Б, с котором ты всё успеешь.",
         image: "/stress/time.png",
         color: 'orange',
     },

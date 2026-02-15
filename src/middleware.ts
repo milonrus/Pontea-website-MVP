@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  DEFAULT_LOCALE,
   LANGUAGE_COOKIE_MAX_AGE_SECONDS,
   LANGUAGE_COOKIE_NAME,
   isLocale
 } from '@/lib/i18n/config';
 import { getLocaleFromPathname } from '@/lib/i18n/routes';
 import { isRuOnlyMode } from '@/lib/i18n/mode';
+
+const LOCALE_REQUEST_HEADER_NAME = 'x-site-locale';
 
 function withLanguageCookie(response: NextResponse, locale: 'en' | 'ru') {
   response.cookies.set({
@@ -51,6 +54,12 @@ function getRuOnlyRedirectPath(pathname: string): string | null {
   return null;
 }
 
+function withLocaleRequestHeader(request: NextRequest, locale: 'en' | 'ru'): Headers {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(LOCALE_REQUEST_HEADER_NAME, locale);
+  return requestHeaders;
+}
+
 function createLocaleRedirectResponse(
   request: NextRequest,
   targetPath: string,
@@ -66,7 +75,10 @@ function createLocaleRedirectResponse(
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const cookieLocale = request.cookies.get(LANGUAGE_COOKIE_NAME)?.value;
+  const localeFromPath = getLocaleFromPathname(pathname);
   const ruOnlyMode = isRuOnlyMode();
+  const fallbackLocale = isLocale(cookieLocale) ? cookieLocale : DEFAULT_LOCALE;
+  const resolvedLocale: 'en' | 'ru' = ruOnlyMode ? 'ru' : (localeFromPath ?? fallbackLocale);
 
   if (ruOnlyMode) {
     const redirectPath = getRuOnlyRedirectPath(pathname);
@@ -82,14 +94,21 @@ export function middleware(request: NextRequest) {
     return redirectResponse;
   }
 
-  const localeFromPath = getLocaleFromPathname(pathname);
   if (localeFromPath) {
-    const response = NextResponse.next();
+    const response = NextResponse.next({
+      request: {
+        headers: withLocaleRequestHeader(request, localeFromPath)
+      }
+    });
     withLanguageCookie(response, localeFromPath);
     return response;
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: withLocaleRequestHeader(request, resolvedLocale)
+    }
+  });
 }
 
 export const config = {

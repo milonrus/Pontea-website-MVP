@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: '/ru/refund'
-  }
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Политика возврата',
+  description: 'Условия возврата средств и порядок оформления заявки на возврат.',
+  canonical: '/ru/refund'
+});
 
 const RefundPage = () => {
   return (

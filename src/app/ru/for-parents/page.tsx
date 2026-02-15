@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: '/ru/for-parents'
-  }
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Для родителей',
+  description:
+    'Страница для родителей о формате обучения, контроле прогресса и поддержке учеников.',
+  canonical: '/ru/for-parents'
+});
 
 const ForParentsPage = () => {
   return (

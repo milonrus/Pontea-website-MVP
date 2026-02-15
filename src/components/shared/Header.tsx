@@ -59,7 +59,7 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
   };
 
   const navLinks = [
-    { label: t.aboutCourse, path: `${localePrefix}/arched-prep-course`, type: 'link' as const },
+    { label: t.aboutCourse, path: localePrefix, type: 'link' as const },
     { label: t.pricing, id: 'pricing-cards', type: 'scroll' as const },
     { label: t.personalPlan, path: `${localePrefix}/assessment`, type: 'link' as const },
   ];

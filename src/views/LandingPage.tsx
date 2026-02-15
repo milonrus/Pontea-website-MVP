@@ -12,6 +12,7 @@ import Button from '@/components/shared/Button';
 import ExperienceBanner from '@/components/landing/ExperienceBanner';
 import PlatformShowcase from '@/components/landing/PlatformShowcaseVariations';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
+import { getRequiredPublicEnv } from '@/lib/env/public';
 
 import { TrendingUp, ArrowUpRight, CheckCircle2, HelpCircle, ArrowRight } from 'lucide-react';
 
@@ -292,6 +293,9 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ locale = 'ru' }) => {
+  const localePrefix = locale === 'en' ? '/en' : '/ru';
+  const supportTelegramUrl = getRequiredPublicEnv('NEXT_PUBLIC_SUPPORT_TELEGRAM_URL');
+
   const footerT = {
     en: { tagline: 'Architecture Entrance Prep', methodology: 'Methodology', pricing: 'Pricing', contact: 'Contact' },
     ru: { tagline: 'Подготовка к архитектурным экзаменам', methodology: 'Методология', pricing: 'Цены', contact: 'Контакты' }
@@ -317,9 +321,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ locale = 'ru' }) => {
               <p className="text-blue-200 text-sm">{footerT.tagline}</p>
             </div>
             <div className="flex gap-8 text-sm text-blue-200">
-              <Link href="/ru" className="hover:text-white py-2">{footerT.methodology}</Link>
+              <Link href={localePrefix} className="hover:text-white py-2">{footerT.methodology}</Link>
               <a href="#pricing-cards" className="hover:text-white py-2">{footerT.pricing}</a>
-              <a href="#" className="hover:text-white py-2">{footerT.contact}</a>
+              <a href={supportTelegramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white py-2">
+                {footerT.contact}
+              </a>
             </div>
             <div className="flex flex-col items-center md:items-end gap-3">
               <LanguageSwitcher className="bg-white/95" />

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useMemo, useState } from 'react';
 import Button from '@/components/shared/Button';
 import CourseOverviewPanel from '@/components/admin/roadmap/CourseOverviewPanel';

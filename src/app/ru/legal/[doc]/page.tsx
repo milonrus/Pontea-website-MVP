@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import Header from '@/components/shared/Header';
 import { RU_LEGAL_DOC_IDS, getRuLegalDoc, isRuLegalDocId } from '@/lib/legal/ruLegalDocs';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 
 type DocPageParams = {
   doc: string;
@@ -26,18 +27,21 @@ export async function generateMetadata({
   const { doc } = await params;
 
   if (!isRuLegalDocId(doc)) {
-    return {
-      alternates: {
-        canonical: '/ru/legal'
-      }
-    };
+    return buildPageMetadata({
+      title: 'Юридические документы',
+      description:
+        'Политика обработки данных, согласие, условия использования и политика cookie.',
+      canonical: '/ru/legal'
+    });
   }
 
-  return {
-    alternates: {
-      canonical: `/ru/legal/${doc}`
-    }
-  };
+  const legalDoc = await getRuLegalDoc(doc);
+
+  return buildPageMetadata({
+    title: legalDoc.title,
+    description: `${legalDoc.title} PONTEA School.`,
+    canonical: `/ru/legal/${doc}`
+  });
 }
 
 const RuLegalDocPage = async ({

@@ -2,12 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Header from '@/components/shared/Header';
 import { getRuLegalDocMetas } from '@/lib/legal/ruLegalDocs';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: '/ru/legal'
-  }
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Юридические документы',
+  description: 'Политика обработки данных, согласие, условия использования и политика cookie.',
+  canonical: '/ru/legal'
+});
 
 const RuLegalPage = async () => {
   const legalDocs = getRuLegalDocMetas();

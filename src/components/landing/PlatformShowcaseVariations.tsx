@@ -15,28 +15,28 @@ const getPlatformTabs = (locale: 'en' | 'ru' = 'ru'): PlatformTab[] => [
   {
     id: 'video-lectures',
     title: locale === 'en' ? 'Video Lectures' : 'Видео-лекции',
-    description: locale === 'en' ? 'translate' : '30+ часов записанных лекций с самыми доступными объяснениями',
+    description: locale === 'en' ? '30+ hours of recorded lectures with clear, exam-focused explanations.' : '30+ часов записанных лекций с самыми доступными объяснениями',
     icon: <Play className="w-5 h-5" />,
     videoSrc: '/platform/video-lectures'
   },
   {
     id: 'notes',
     title: locale === 'en' ? 'Study Notes' : 'Конспекты',
-    description: locale === 'en' ? 'translate' : '60 конспектов по всем темам для повторения материала',
+    description: locale === 'en' ? '60 concise notes across all topics for fast review and retention.' : '60 конспектов по всем темам для повторения материала',
     icon: <FileText className="w-5 h-5" />,
     videoSrc: '/platform/notes'
   },
   {
     id: 'question-bank',
     title: locale === 'en' ? 'Question Bank' : 'Банк заданий',
-    description: locale === 'en' ? 'translate' : '1000+ упражнений для закрепления тем',
+    description: locale === 'en' ? '1000+ targeted exercises to strengthen every exam topic.' : '1000+ упражнений для закрепления тем',
     icon: <BookOpen className="w-5 h-5" />,
     videoSrc: '/platform/question-bank'
   },
   {
     id: 'practice-exams',
     title: locale === 'en' ? 'Practice Exams' : 'Пробные экзамены',
-    description: locale === 'en' ? 'transltate' : '10 полноценных пробных экзаменов с полным погружением в реальные условия тестирования',
+    description: locale === 'en' ? '10 full mock exams that simulate real test timing and pressure.' : '10 полноценных пробных экзаменов с полным погружением в реальные условия тестирования',
     icon: <CheckSquare className="w-5 h-5" />,
     videoSrc: '/platform/practice-exams'
   },

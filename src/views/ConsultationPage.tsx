@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect } from 'react';
 import Header from '@/components/shared/Header';
 import { CheckCircle2, Star, Trophy, ShieldCheck, Clock, Video, Map, Target, MonitorPlay, HelpCircle } from 'lucide-react';

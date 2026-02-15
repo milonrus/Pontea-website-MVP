@@ -88,9 +88,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
           transition={{ delay: 0.1 }}
           className="mb-16"
         >
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-primary mb-6">
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-primary mb-6">
             Твой уровень
-          </h2>
+          </h1>
           <LevelResultsShowcase domainResults={results.domainResults} weeksUntilExam={weeksLeft} focusRecommendation={buildFocusRecommendation(roadmapOutput)} />
         </motion.div>
 

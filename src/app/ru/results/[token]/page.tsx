@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import ResultsPage from '@/views/ResultsPage';
 import { AssessmentResult, DomainResult } from '@/types';
 import type { CanonicalRoadmapOutput } from '@/lib/roadmap-generator/types';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 
 export async function generateMetadata({
   params
@@ -12,11 +13,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { token } = await params;
 
-  return {
-    alternates: {
-      canonical: `/ru/results/${token}`
+  return buildPageMetadata({
+    title: 'Результаты диагностики',
+    description: 'Персональные результаты диагностики и план подготовки.',
+    canonical: `/ru/results/${token}`,
+    robots: {
+      index: false,
+      follow: false
     }
-  };
+  });
 }
 
 export default async function TokenResultsPage({

@@ -98,7 +98,11 @@ const FeaturesGrid: React.FC = () => {
                      <div className="absolute bottom-10 left-6">
                         <div className="flex items-end gap-2">
                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
-                              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100" className="w-full h-full object-cover" />
+                              <img
+                                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100"
+                                alt="Mentor profile photo"
+                                className="w-full h-full object-cover"
+                              />
                            </div>
                            <div className="bg-primary p-3 rounded-2xl rounded-bl-none shadow-lg max-w-[180px]">
                               <p className="text-xs text-white font-medium">It's the integral of mass times radius squared...</p>

@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { isRuOnlyMode } from '@/lib/i18n/mode';
 
+const DEFAULT_SITEMAP_LAST_MODIFIED = '2026-01-25';
+
 const MULTILINGUAL_PUBLIC_SITEMAP_PATHS = [
   '/en',
   '/ru',
@@ -33,10 +35,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ? RU_ONLY_PUBLIC_SITEMAP_PATHS
     : MULTILINGUAL_PUBLIC_SITEMAP_PATHS;
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pontea.school';
-  const now = new Date();
+  const lastModified =
+    process.env.NEXT_PUBLIC_SITEMAP_LASTMOD || DEFAULT_SITEMAP_LAST_MODIFIED;
 
   return publicSitemapPaths.map((path) => ({
     url: `${siteUrl}${path}`,
-    lastModified: now
+    lastModified
   }));
 }

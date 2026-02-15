@@ -13,12 +13,12 @@ const nextConfig = {
       {
         source: '/ru/arched-prep-course',
         destination: '/ru',
-        permanent: false, // 302 redirect (temporary)
+        permanent: true,
       },
       {
         source: '/en/arched-prep-course',
         destination: localeMode === 'ru_only' ? '/ru' : '/en',
-        permanent: false, // 302 redirect (temporary)
+        permanent: true,
       },
     ];
   },
