@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import Header from '@/components/shared/Header';
 import ResultsSprintCarousel from '@/components/results/ResultsSprintCarousel';
 import LevelResultsShowcase from '@/components/results/LevelResultsShowcase';
@@ -82,25 +81,15 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
 
       <main className="flex-1 pt-28 pb-16 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
         {/* Section 1: Level Results */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-16"
-        >
+        <div className="mb-16">
           <h1 className="text-2xl md:text-3xl font-display font-bold text-primary mb-6">
             Твой уровень
           </h1>
           <LevelResultsShowcase domainResults={results.domainResults} weeksUntilExam={weeksLeft} focusRecommendation={buildFocusRecommendation(roadmapOutput)} />
-        </motion.div>
+        </div>
 
         {/* Section 2: Sprint Carousel */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mb-16"
-        >
+        <div className="mb-16">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-primary mb-2">
             Твой персональный план подготовки
           </h2>
@@ -119,17 +108,12 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults }) => {
               </p>
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Section 3: Pricing */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mb-12"
-        >
+        <div className="mb-12">
           <PricingRu />
-        </motion.div>
+        </div>
       </main>
 
       {/* Footer */}

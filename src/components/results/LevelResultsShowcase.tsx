@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 
 import { DomainResult } from '@/types';
 
@@ -65,22 +64,12 @@ const LevelResultsShowcase: React.FC<LevelResultsShowcaseProps> = ({ domainResul
     <div className="flex flex-col lg:flex-row items-stretch gap-8">
       {/* Action + Countdown card */}
       {weeksUntilExam != null && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="flex-shrink-0 w-64 rounded-2xl bg-white shadow-sm border border-slate-200/60 p-6 flex flex-col items-center justify-center text-center"
-        >
+        <div className="flex-shrink-0 w-64 rounded-2xl bg-white shadow-sm border border-slate-200/60 p-6 flex flex-col items-center justify-center text-center">
           {/* Countdown */}
           <p className="text-sm text-slate-500">До экзамена осталось</p>
-          <motion.span
-            className="text-6xl font-bold font-display text-primary mt-2 leading-none"
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.7, type: 'spring', stiffness: 200, damping: 12 }}
-          >
+          <span className="text-6xl font-bold font-display text-primary mt-2 leading-none">
             {weeksUntilExam}
-          </motion.span>
+          </span>
           <p className="text-lg font-semibold text-primary mt-1">{pluralWeeks(weeksUntilExam!)}</p>
 
           {/* Motivational text */}
@@ -95,7 +84,7 @@ const LevelResultsShowcase: React.FC<LevelResultsShowcaseProps> = ({ domainResul
           >
             Начать подготовку
           </a>
-        </motion.div>
+        </div>
       )}
 
       {/* Radar SVG */}
@@ -123,22 +112,18 @@ const LevelResultsShowcase: React.FC<LevelResultsShowcaseProps> = ({ domainResul
           })}
 
           {/* Data polygon */}
-          <motion.polygon
+          <polygon
             points={polygon}
             fill="rgba(37, 99, 235, 0.15)"
             stroke="#2563eb"
             strokeWidth={2}
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-            style={{ transformOrigin: `${cx}px ${cy}px` }}
           />
 
           {/* Data points */}
           {dataPoints.map((p, i) => {
             const domainClr = DOMAIN_COLOR[domainResults[i].domain] ?? '#94a3b8';
             return (
-              <motion.circle
+              <circle
                 key={i}
                 cx={p.x}
                 cy={p.y}
@@ -146,9 +131,6 @@ const LevelResultsShowcase: React.FC<LevelResultsShowcaseProps> = ({ domainResul
                 fill={domainClr}
                 stroke="white"
                 strokeWidth={2}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 + i * 0.1 }}
               />
             );
           })}
@@ -179,30 +161,23 @@ const LevelResultsShowcase: React.FC<LevelResultsShowcaseProps> = ({ domainResul
       <div className="max-w-sm w-full rounded-2xl bg-white shadow-sm border border-slate-200/60 divide-y divide-slate-100 overflow-hidden">
         {domainResults.map((d, i) => {
           const clr = DOMAIN_COLOR[d.domain] ?? '#94a3b8';
-          const delay = 0.3 + i * 0.08;
           return (
-            <motion.div
+            <div
               key={d.domain}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + i * 0.06 }}
               className="flex items-center gap-3 px-4 py-3"
             >
               <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: clr }} />
               <span className="text-sm font-medium text-slate-700">{getLabel(d)}</span>
               <div className="flex gap-1.5 items-center ml-auto">
                 {[1, 2, 3, 4, 5].map((dot) => (
-                  <motion.div
+                  <div
                     key={dot}
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: dot <= d.score ? '#01278b' : '#e2e8f0' }}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.3, delay: delay + dot * 0.06 }}
                   />
                 ))}
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>

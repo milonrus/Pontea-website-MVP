@@ -1,10 +1,14 @@
+'use client';
+
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { MessageCircle } from 'lucide-react';
 import { RU_PRICING_PLANS } from './data';
 import { RuPricingPlan } from './types';
 import VariantConversionFocus from './VariantConversionFocus';
-import PricingLeadModal from './PricingLeadModal';
 import { getRequiredPublicEnv } from '@/lib/env/public';
+
+const PricingLeadModal = dynamic(() => import('./PricingLeadModal'), { ssr: false });
 
 const SUPPORT_TELEGRAM_URL = getRequiredPublicEnv('NEXT_PUBLIC_SUPPORT_TELEGRAM_URL');
 

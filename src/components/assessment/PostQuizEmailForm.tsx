@@ -97,7 +97,7 @@ const PostQuizEmailForm: React.FC<PostQuizEmailFormProps> = ({ onSubmit, isLoadi
 
     const normalizedPhone = normalizePhoneToE164(normalizedPhoneInput);
     if (!normalizedPhone) {
-      setFieldError('phone', 'Введите номер телефона в международном формате (E.164).');
+      setFieldError('phone', 'Введите номер телефона в международном формате (+...).');
       return;
     }
 

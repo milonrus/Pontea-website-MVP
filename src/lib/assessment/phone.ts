@@ -56,5 +56,5 @@ export function getPhoneE164Error(raw: string): string {
 
   return normalizePhoneToE164(trimmed)
     ? ''
-    : 'Введите номер телефона в международном формате (E.164).';
+    : 'Введите номер телефона в международном формате (+...).';
 }
