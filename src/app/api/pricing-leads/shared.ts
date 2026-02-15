@@ -340,10 +340,10 @@ export function buildWebhookPayload(lead: Record<string, any>) {
 export async function deliverWebhookWithRetries(
   lead: Record<string, any>,
   maxAttempts: number = MAX_WEBHOOK_ATTEMPTS,
-  webhookUrlOverride?: string,
-  webhookEnvName: string = 'PRICING_LEAD_WEBHOOK_URL'
+  webhookEnvName: string,
+  webhookUrlOverride?: string
 ): Promise<WebhookDeliveryResult> {
-  const webhookUrl = webhookUrlOverride || getOptionalServerEnv('PRICING_LEAD_WEBHOOK_URL');
+  const webhookUrl = webhookUrlOverride || getOptionalServerEnv(webhookEnvName);
 
   if (!webhookUrl) {
     return {

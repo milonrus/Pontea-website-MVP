@@ -171,7 +171,7 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
                     </div>
                   </div>
                 </div>
-                <StatBox icon={PlayCircle} value="80" label={t.hours} />
+                <StatBox icon={PlayCircle} value="30+" label={t.hours} />
                 <StatBox icon={BookOpen} value="1000+" label={t.exercises} />
               </motion.div>
 

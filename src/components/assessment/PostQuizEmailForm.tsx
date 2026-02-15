@@ -3,6 +3,10 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Mail, ArrowRight, User, Phone } from 'lucide-react';
 import Button from '@/components/shared/Button';
+import {
+  getPhoneE164Error,
+  normalizePhoneToE164,
+} from '@/lib/assessment/phone';
 
 interface PostQuizEmailFormProps {
   onSubmit: (data: AssessmentContactSubmission) => void;
@@ -18,7 +22,6 @@ export interface AssessmentContactSubmission {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_PREFIX_REGEX = /^\+.+$/;
 
 interface FormErrors {
   name?: string;
@@ -33,14 +36,6 @@ const getEmailFormatError = (value: string): string => {
     return '';
   }
   return EMAIL_REGEX.test(normalized) ? '' : 'Введите корректный email.';
-};
-
-const getPhoneFormatError = (value: string): string => {
-  const normalized = value.trim();
-  if (!normalized) {
-    return '';
-  }
-  return PHONE_PREFIX_REGEX.test(normalized) ? '' : 'Номер должен начинаться с +.';
 };
 
 const PostQuizEmailForm: React.FC<PostQuizEmailFormProps> = ({ onSubmit, isLoading }) => {
@@ -66,7 +61,7 @@ const PostQuizEmailForm: React.FC<PostQuizEmailFormProps> = ({ onSubmit, isLoadi
     e.preventDefault();
     const normalizedName = name.trim();
     const normalizedEmail = email.trim();
-    const normalizedPhone = phone.trim();
+    const normalizedPhoneInput = phone.trim();
 
     const nextErrors: FormErrors = {};
 
@@ -83,10 +78,10 @@ const PostQuizEmailForm: React.FC<PostQuizEmailFormProps> = ({ onSubmit, isLoadi
       }
     }
 
-    if (!normalizedPhone) {
+    if (!normalizedPhoneInput) {
       nextErrors.phone = 'Введите номер телефона.';
     } else {
-      const phoneFormatError = getPhoneFormatError(normalizedPhone);
+      const phoneFormatError = getPhoneE164Error(normalizedPhoneInput);
       if (phoneFormatError) {
         nextErrors.phone = phoneFormatError;
       }
@@ -99,6 +94,12 @@ const PostQuizEmailForm: React.FC<PostQuizEmailFormProps> = ({ onSubmit, isLoadi
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) return;
+
+    const normalizedPhone = normalizePhoneToE164(normalizedPhoneInput);
+    if (!normalizedPhone) {
+      setFieldError('phone', 'Введите номер телефона в международном формате (E.164).');
+      return;
+    }
 
     onSubmit({
       name: normalizedName,
@@ -159,7 +160,7 @@ const PostQuizEmailForm: React.FC<PostQuizEmailFormProps> = ({ onSubmit, isLoadi
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  onBlur={() => setFieldError('phone', getPhoneFormatError(phone))}
+                  onBlur={() => setFieldError('phone', getPhoneE164Error(phone))}
                   placeholder="+393331234567"
                   autoComplete="off"
                   className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all text-sm"

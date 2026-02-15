@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
-import { deliverWebhookWithRetries } from '../shared';
+import { MAX_WEBHOOK_ATTEMPTS, deliverWebhookWithRetries } from '../shared';
+
+const PRICING_EUR_INVOICE_WEBHOOK_ENV = 'PRICING_EUR_INVOICE_WEBHOOK_URL';
+const PRICING_MENTORSHIP_APPLICATION_WEBHOOK_ENV = 'PRICING_MENTORSHIP_APPLICATION_WEBHOOK_URL';
 
 const extractOrderNumber = (lead: Record<string, any>): number | null =>
   typeof lead.invoice_order_number === 'number' ? lead.invoice_order_number : null;
@@ -60,7 +63,25 @@ export async function POST(request: Request) {
       });
     }
 
-    const webhookResult = await deliverWebhookWithRetries(lead);
+    const webhookEnvName =
+      lead.lead_type === 'eur_application'
+        ? PRICING_EUR_INVOICE_WEBHOOK_ENV
+        : lead.lead_type === 'mentorship_application'
+          ? PRICING_MENTORSHIP_APPLICATION_WEBHOOK_ENV
+          : null;
+
+    if (!webhookEnvName) {
+      return NextResponse.json(
+        { error: `Webhook retry is not supported for lead_type: ${lead.lead_type}` },
+        { status: 400 }
+      );
+    }
+
+    const webhookResult = await deliverWebhookWithRetries(
+      lead,
+      MAX_WEBHOOK_ATTEMPTS,
+      webhookEnvName
+    );
     const previousAttempts = typeof lead.webhook_attempts === 'number' ? lead.webhook_attempts : 0;
     const totalAttempts = previousAttempts + webhookResult.attempts;
 

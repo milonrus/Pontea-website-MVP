@@ -1,5 +1,4 @@
 import {
-  RuPricingFeatureRow,
   RuPricingPlan,
   RuPricingPlanId,
 } from './types';
@@ -144,116 +143,6 @@ export const RU_PRICING_PLANS: RuPricingPlan[] = [
   },
 ];
 
-export const RU_PRICING_FEATURE_ROWS: RuPricingFeatureRow[] = [
-  {
-    label: 'Полный теоретический курс по 5 разделам экзамена',
-    availability: {
-      foundation: true,
-      advanced: true,
-      mentorship: true,
-    },
-  },
-  {
-    label: '30+ часов видео-лекций',
-    availability: {
-      foundation: true,
-      advanced: true,
-      mentorship: true,
-    },
-  },
-  {
-    label: 'Стартовый диагностический и итоговый пробный экзамены',
-    availability: {
-      foundation: true,
-      advanced: true,
-      mentorship: true,
-    },
-  },
-  {
-    label: 'Групповые онлайн-уроки по каждому предмету с разбором сложных тем',
-    availability: {
-      foundation: false,
-      advanced: true,
-      mentorship: true,
-    },
-  },
-  {
-    label: '1300+ экзаменационных заданий и 10 пробных тестов',
-    availability: {
-      foundation: false,
-      advanced: true,
-      mentorship: true,
-    },
-  },
-  {
-    label: '3 экзаменационные симуляции с анализом результатов',
-    availability: {
-      foundation: false,
-      advanced: true,
-      mentorship: true,
-    },
-  },
-  {
-    label: 'Индивидуальный учебный план + прогресс-сессия с ментором каждые 2 недели',
-    availability: {
-      foundation: false,
-      advanced: true,
-      mentorship: true,
-    },
-  },
-  {
-    label: 'Чат с преподавателями и другими учениками',
-    availability: {
-      foundation: false,
-      advanced: true,
-      mentorship: true,
-    },
-  },
-  {
-    label: '20 персональных занятий с топ-преподавателями',
-    availability: {
-      foundation: false,
-      advanced: false,
-      mentorship: true,
-    },
-  },
-  {
-    label: 'Персональный ментор с приоритетной поддержкой',
-    availability: {
-      foundation: false,
-      advanced: false,
-      mentorship: true,
-    },
-  },
-  {
-    label: '3 стратегические встречи с основательницами',
-    availability: {
-      foundation: false,
-      advanced: false,
-      mentorship: true,
-    },
-  },
-  {
-    label: 'Персональная аналитика + стратегия поведения на экзамене',
-    availability: {
-      foundation: false,
-      advanced: false,
-      mentorship: true,
-    },
-  },
-  {
-    label: 'Бонус: антистресс-подготовка',
-    availability: {
-      foundation: false,
-      advanced: false,
-      mentorship: true,
-    },
-  },
-];
-
-export const formatRub = (value: number) =>
-  `≈ ${value.toLocaleString('ru-RU')} ₽`;
-
 export const COURSE_DURATION_MONTHS = 5;
 
 const eurPerMonthFormatter = new Intl.NumberFormat('ru-RU', {
@@ -263,9 +152,6 @@ const eurPerMonthFormatter = new Intl.NumberFormat('ru-RU', {
 
 export const formatEurPerMonth = (totalEur: number) =>
   eurPerMonthFormatter.format(totalEur / COURSE_DURATION_MONTHS);
-
-export const formatFullPriceLine = (priceEur: number, priceRub: number) =>
-  `Полная стоимость: €${priceEur} / ≈ ${priceRub.toLocaleString('ru-RU')} ₽ за ${COURSE_DURATION_MONTHS} месяцев`;
 
 export const RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN: Record<RuPricingPlanId, string> = {
   foundation: 'Начать подготовку',

@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServerClient } from '@/lib/supabase/server';
 import { getRequiredServerEnv } from '@/lib/env/server';
+import { normalizePhoneToE164 } from '@/lib/assessment/phone';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_PREFIX_REGEX = /^\+.+$/;
 const APP_URL = getRequiredServerEnv('APP_URL').replace(/\/+$/, '');
 const ASSESSMENT_RESULTS_WEBHOOK_URL = getRequiredServerEnv('ASSESSMENT_RESULTS_WEBHOOK_URL');
 
@@ -33,7 +33,8 @@ export async function POST(request: Request) {
 
     const normalizedName = typeof name === 'string' ? name.trim() : '';
     const normalizedEmail = typeof email === 'string' ? email.trim() : '';
-    const normalizedPhone = typeof phone === 'string' ? phone.trim() : '';
+    const normalizedPhoneInput = typeof phone === 'string' ? phone.trim() : '';
+    const normalizedPhone = normalizePhoneToE164(normalizedPhoneInput);
 
     const parsedConsentAt = typeof consentAt === 'string' ? new Date(consentAt) : null;
     const normalizedConsentAt =
@@ -41,10 +42,16 @@ export async function POST(request: Request) {
         ? parsedConsentAt.toISOString()
         : '';
 
+    if (!normalizedPhone) {
+      return NextResponse.json(
+        { error: 'phone must be in E.164 format' },
+        { status: 400 }
+      );
+    }
+
     const isPayloadValid =
       normalizedName.length > 0 &&
       EMAIL_REGEX.test(normalizedEmail) &&
-      PHONE_PREFIX_REGEX.test(normalizedPhone) &&
       consentPersonalData === true &&
       normalizedConsentAt.length > 0 &&
       Array.isArray(answers) &&

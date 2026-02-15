@@ -24,11 +24,6 @@ export interface RuPricingPlan {
   bonus?: string;
 }
 
-export interface RuPricingFeatureRow {
-  label: string;
-  availability: Record<RuPricingPlanId, boolean>;
-}
-
 export interface RuPricingVariantProps {
   plans: RuPricingPlan[];
   onBuy: (plan: RuPricingPlan) => void;

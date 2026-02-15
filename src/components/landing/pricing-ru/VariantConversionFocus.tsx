@@ -101,7 +101,7 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
                 {RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN[plan.id]}
               </Button>
               <p className="text-center text-xs font-medium text-gray-500">
-                Доступна рассрочка
+                Доступна оплата частями
               </p>
             </div>
           </article>
