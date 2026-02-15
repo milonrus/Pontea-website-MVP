@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Button from './Button';
 import { useAuth } from '@/contexts/AuthContext';
+import { getRequiredPublicEnv } from '@/lib/env/public';
 
 interface HeaderProps {
   locale?: 'en' | 'ru';
@@ -43,9 +44,7 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
   }, []);
 
   const localePrefix = locale === 'en' ? '/en' : '/ru';
-  const DEFAULT_SUPPORT_TELEGRAM_URL = 'https://t.me/pontea_support_bot';
-  const supportTelegramUrl =
-    process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM_URL || DEFAULT_SUPPORT_TELEGRAM_URL;
+  const supportTelegramUrl = getRequiredPublicEnv('NEXT_PUBLIC_SUPPORT_TELEGRAM_URL');
 
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false);

@@ -4,10 +4,9 @@ import { RU_PRICING_PLANS } from './data';
 import { RuPricingPlan } from './types';
 import VariantConversionFocus from './VariantConversionFocus';
 import PricingLeadModal from './PricingLeadModal';
+import { getRequiredPublicEnv } from '@/lib/env/public';
 
-const DEFAULT_SUPPORT_TELEGRAM_URL = 'https://t.me/pontea_support_bot';
-const SUPPORT_TELEGRAM_URL =
-  process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM_URL || DEFAULT_SUPPORT_TELEGRAM_URL;
+const SUPPORT_TELEGRAM_URL = getRequiredPublicEnv('NEXT_PUBLIC_SUPPORT_TELEGRAM_URL');
 
 const PricingRu: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<RuPricingPlan | null>(null);

@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServerClient } from '@/lib/supabase/server';
+import { getRequiredServerEnv } from '@/lib/env/server';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PREFIX_REGEX = /^\+.+$/;
+const APP_URL = getRequiredServerEnv('APP_URL').replace(/\/+$/, '');
+const ASSESSMENT_RESULTS_WEBHOOK_URL = getRequiredServerEnv('ASSESSMENT_RESULTS_WEBHOOK_URL');
 
 export async function POST(request: Request) {
   try {
@@ -85,7 +88,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const resultsUrl = `https://pontea.school/ru/results/${shareToken}`;
+    const resultsUrl = `${APP_URL}/ru/results/${shareToken}`;
     const compactDomainResults = Array.isArray(domainResults)
       ? domainResults.map((result: any) => ({
           domainLabel: result?.domainLabel,
@@ -99,7 +102,7 @@ export async function POST(request: Request) {
     // Fire webhook to N8N after response is ready (fire-and-forget)
     try {
       void fetch(
-        'https://shumiha.app.n8n.cloud/webhook/f501c972-35ca-4300-83bf-dca634f20fb2',
+        ASSESSMENT_RESULTS_WEBHOOK_URL,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

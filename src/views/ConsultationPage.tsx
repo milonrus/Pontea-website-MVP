@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react';
 import Header from '@/components/shared/Header';
 import { CheckCircle2, Star, Trophy, ShieldCheck, Clock, Video, Map, Target, MonitorPlay, HelpCircle } from 'lucide-react';
+import { getRequiredPublicEnv } from '@/lib/env/public';
 
 const ConsultationPage: React.FC = () => {
+  const calendlyUrl = getRequiredPublicEnv('NEXT_PUBLIC_CALENDLY_URL');
+
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://assets.calendly.com/assets/external/widget.js";
@@ -121,7 +124,7 @@ const ConsultationPage: React.FC = () => {
             <div className="md:w-2/3 relative bg-white">
                <div 
                  className="calendly-inline-widget" 
-                 data-url="https://calendly.com/my-mulyar/consulation?hide_gdpr_banner=1&background_color=ffffff&text_color=01278b&hide_event_type_details=1" 
+                 data-url={`${calendlyUrl}?hide_gdpr_banner=1&background_color=ffffff&text_color=01278b&hide_event_type_details=1`}
                  style={{ minWidth: '320px', height: '100%', width: '100%' }} 
                />
             </div>

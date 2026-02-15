@@ -1,3 +1,5 @@
+import { isRuOnlyMode } from './mode';
+
 export const SUPPORTED_LOCALES = ['en', 'ru'] as const;
 
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
@@ -20,3 +22,8 @@ export function getLocaleHome(locale: Locale): string {
   return LOCALE_HOMES[locale];
 }
 
+const RU_ONLY_ACTIVE_LOCALES = ['ru'] as const;
+
+export function getActiveLocales(): readonly Locale[] {
+  return isRuOnlyMode() ? RU_ONLY_ACTIVE_LOCALES : SUPPORTED_LOCALES;
+}

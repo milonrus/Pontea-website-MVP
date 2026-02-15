@@ -132,12 +132,27 @@ dig +short www.pontea.school
 
 Ключевые переменные (примерный список, значения не коммитятся):
 
+* `APP_URL`
 * `NEXT_PUBLIC_APP_URL`
+* `NEXT_PUBLIC_CALENDLY_URL`
 * `NEXT_PUBLIC_SUPABASE_URL`
 * `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 * `SUPABASE_SERVICE_ROLE_KEY`
 * `OPENAI_API_KEY`
-* `SEO_LOCK`
+* `ASSESSMENT_RESULTS_WEBHOOK_URL`
+* `PRICING_LEAD_WEBHOOK_URL`
+* `PRICING_PAYMENT_INTENT_WEBHOOK_URL`
+* `NEXT_PUBLIC_SUPPORT_TELEGRAM_URL`
+* `NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION`
+* `NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED`
+* `NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION_INSTALLMENT` (optional)
+* `NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED_INSTALLMENT` (optional)
+* `LOCALE_MODE`
+* `OPENAI_PARSE_MODEL`
+* `OPENAI_PARSE_STREAM_MODEL`
+* `OPENAI_DIFFICULTY_MODEL`
+* `PRICING_WEBHOOK_MAX_ATTEMPTS`
+* `WEBHOOK_TIMEOUT_MS`
 
 **Важно:** `NEXT_PUBLIC_*` переменные в Next.js **вшиваются в клиент при `npm run build`**.
 Поэтому просто поменять `.env.production` и сделать `pm2 restart` недостаточно — нужен `npm run build`.

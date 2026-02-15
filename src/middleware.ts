@@ -5,12 +5,7 @@ import {
   isLocale
 } from '@/lib/i18n/config';
 import { getLocaleFromPathname } from '@/lib/i18n/routes';
-
-const SEO_LOCK_HEADER_VALUE = 'noindex, nofollow, noarchive';
-
-function isSeoLockEnabled() {
-  return process.env.SEO_LOCK !== 'false';
-}
+import { isRuOnlyMode } from '@/lib/i18n/mode';
 
 function withLanguageCookie(response: NextResponse, locale: 'en' | 'ru') {
   response.cookies.set({
@@ -22,45 +17,79 @@ function withLanguageCookie(response: NextResponse, locale: 'en' | 'ru') {
   });
 }
 
-function withSeoLockHeaders(response: NextResponse, pathname: string) {
-  if (isSeoLockEnabled() && !pathname.startsWith('/_next/')) {
-    response.headers.set('X-Robots-Tag', SEO_LOCK_HEADER_VALUE);
+function normalizePath(pathname: string): string {
+  if (!pathname || pathname === '/') {
+    return '/';
   }
-  return response;
+
+  return pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+}
+
+function getRuOnlyRedirectPath(pathname: string): string | null {
+  const normalized = normalizePath(pathname);
+
+  if (normalized === '/') {
+    return '/ru';
+  }
+
+  if (normalized === '/consultation' || normalized === '/methodology') {
+    return '/ru';
+  }
+
+  if (normalized === '/en') {
+    return '/ru';
+  }
+
+  if (normalized === '/en/thank-you') {
+    return '/ru/thank-you';
+  }
+
+  if (normalized.startsWith('/en/')) {
+    return '/ru';
+  }
+
+  return null;
+}
+
+function createLocaleRedirectResponse(
+  request: NextRequest,
+  targetPath: string,
+  locale: 'en' | 'ru'
+) {
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.pathname = targetPath;
+  const redirectResponse = NextResponse.redirect(redirectUrl, 302);
+  withLanguageCookie(redirectResponse, locale);
+  return redirectResponse;
 }
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const cookieLocale = request.cookies.get(LANGUAGE_COOKIE_NAME)?.value;
-  const seoLockEnabled = isSeoLockEnabled();
+  const ruOnlyMode = isRuOnlyMode();
 
-  if (seoLockEnabled && pathname === '/sitemap.xml') {
-    return withSeoLockHeaders(
-      new NextResponse('Not Found', {
-        status: 404,
-        headers: {
-          'content-type': 'text/plain; charset=utf-8'
-        }
-      }),
-      pathname
-    );
+  if (ruOnlyMode) {
+    const redirectPath = getRuOnlyRedirectPath(pathname);
+    if (redirectPath) {
+      return createLocaleRedirectResponse(request, redirectPath, 'ru');
+    }
   }
 
   if (pathname === '/' && isLocale(cookieLocale)) {
     const redirectUrl = new URL(`/${cookieLocale}`, request.url);
     const redirectResponse = NextResponse.redirect(redirectUrl, 302);
     withLanguageCookie(redirectResponse, cookieLocale);
-    return withSeoLockHeaders(redirectResponse, pathname);
+    return redirectResponse;
   }
 
   const localeFromPath = getLocaleFromPathname(pathname);
   if (localeFromPath) {
     const response = NextResponse.next();
     withLanguageCookie(response, localeFromPath);
-    return withSeoLockHeaders(response, pathname);
+    return response;
   }
 
-  return withSeoLockHeaders(NextResponse.next(), pathname);
+  return NextResponse.next();
 }
 
 export const config = {

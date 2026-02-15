@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Locale, SUPPORTED_LOCALES } from '@/lib/i18n/config';
+import { Locale, getActiveLocales } from '@/lib/i18n/config';
 import { getLocaleFromPathname, getSwitchLocalePath } from '@/lib/i18n/routes';
 
 interface LanguageSwitcherProps {
@@ -19,8 +19,9 @@ const LanguageSwitcherInner = ({ className }: LanguageSwitcherProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentLocale = getLocaleFromPathname(pathname);
+  const activeLocales = getActiveLocales();
 
-  if (!currentLocale) {
+  if (!currentLocale || activeLocales.length < 2) {
     return null;
   }
 
@@ -31,7 +32,7 @@ const LanguageSwitcherInner = ({ className }: LanguageSwitcherProps) => {
       aria-label="Language selector"
       className={`inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white p-1 shadow-sm ${className || ''}`}
     >
-      {SUPPORTED_LOCALES.map((locale) => {
+      {activeLocales.map((locale) => {
         const isActive = locale === currentLocale;
         const label = locale === 'en' ? 'EN' : 'RU';
 
@@ -63,4 +64,3 @@ const LanguageSwitcher = ({ className }: LanguageSwitcherProps) => {
 };
 
 export default LanguageSwitcher;
-

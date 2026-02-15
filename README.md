@@ -24,20 +24,29 @@ npm install
 ```
 
 ### 2) Configure environment
-Create a `.env.local` file in the repo root:
+Create a `.env.local` file in the repo root (or start from `.env.example`):
 ```bash
+APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_CALENDLY_URL=https://calendly.com/your-user/your-event
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=... # optional, server-side admin tasks
-GEMINI_API_KEY=...            # optional, image parsing
-NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION=... # optional, RU payment link for Foundation
-NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED=...   # optional, RU payment link for Advanced
+SUPABASE_SERVICE_ROLE_KEY=... # required for server-side admin routes
+OPENAI_API_KEY=...            # required for admin parsing/difficulty routes
+ASSESSMENT_RESULTS_WEBHOOK_URL=...         # required webhook for assessment submissions
+PRICING_LEAD_WEBHOOK_URL=...               # required webhook for EUR/Mentorship leads
+PRICING_PAYMENT_INTENT_WEBHOOK_URL=...     # required webhook for RUB payment intents
+NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION=... # required RU payment link for Foundation
+NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED=...   # required RU payment link for Advanced
 NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION_INSTALLMENT=... # optional, RU installment link for Foundation
 NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED_INSTALLMENT=...   # optional, RU installment link for Advanced
-NEXT_PUBLIC_SUPPORT_TELEGRAM_URL=...       # optional, support button URL
-PRICING_LEAD_WEBHOOK_URL=...               # optional, webhook for EUR/Mentorship leads
-PRICING_PAYMENT_INTENT_WEBHOOK_URL=...     # optional, webhook for RUB payment intents
-SEO_LOCK=true                 # default safety mode (noindex + robots disallow)
+NEXT_PUBLIC_SUPPORT_TELEGRAM_URL=...       # required, support button URL
+LOCALE_MODE=multilingual      # multilingual | ru_only
+OPENAI_PARSE_MODEL=gpt-5-mini
+OPENAI_PARSE_STREAM_MODEL=gpt-4o-mini
+OPENAI_DIFFICULTY_MODEL=gpt-4o-mini
+PRICING_WEBHOOK_MAX_ATTEMPTS=3
+WEBHOOK_TIMEOUT_MS=5000
 ```
 
 ### 3) Run the dev server
@@ -47,15 +56,23 @@ npm run dev
 
 App will be available at `http://localhost:3000`.
 
-### SEO Lock Mode (Temporary)
-- Lock mode is **enabled by default** unless you explicitly set `SEO_LOCK=false`.
-- When lock mode is on:
-  - `X-Robots-Tag: noindex, nofollow, noarchive` is added on site responses.
-  - `robots.txt` disallows all crawlers.
-  - `sitemap.xml` is blocked.
-- When you're ready to launch SEO, set:
+### Locale Mode
+- Locale mode defaults to `multilingual`.
+- To temporarily run RU-only launch mode, set:
 ```bash
-SEO_LOCK=false
+LOCALE_MODE=ru_only
+```
+- RU-only mode behavior:
+  - `/` redirects to `/ru`
+  - `/en...` redirects to `/ru` (or `/ru/thank-you` for `/en/thank-you`)
+  - `/consultation` and `/methodology` redirect to `/ru`
+
+### RU-Only Launch Checklist
+Before RU-only production launch, set:
+```bash
+LOCALE_MODE=ru_only
+APP_URL=https://<your-production-domain>
+NEXT_PUBLIC_APP_URL=https://<your-production-domain>
 ```
 
 ## Scripts

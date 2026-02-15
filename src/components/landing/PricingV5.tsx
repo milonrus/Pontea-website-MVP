@@ -226,7 +226,7 @@ const PricingV5: React.FC = () => {
                   >
                     Купить
                   </Button>
-                  <Link href="/consultation" className="flex-1">
+                  <Link href="/ru" className="flex-1">
                     <Button variant="outline" size="lg" fullWidth>
                       Записаться на консультацию
                     </Button>
@@ -325,7 +325,7 @@ const PricingV5: React.FC = () => {
 
         <div className="text-center mt-10">
           <Link
-            href="/consultation"
+            href="/ru"
             className="inline-flex items-center gap-2 text-primary hover:text-highlight font-medium transition-colors text-base border-b-2 border-dashed border-primary/30 hover:border-highlight/50 pb-0.5"
           >
             <MessageCircle className="w-5 h-5" />

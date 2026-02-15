@@ -277,7 +277,7 @@ const MethodologyPreview = () => (
       </div>
 
       <div className="text-center">
-        <Link href="/methodology">
+        <Link href="/ru">
           <Button variant="outline" className="border-primary text-primary hover:bg-blue-50">
             Explore the Methodology
           </Button>
@@ -317,7 +317,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ locale = 'ru' }) => {
               <p className="text-blue-200 text-sm">{footerT.tagline}</p>
             </div>
             <div className="flex gap-8 text-sm text-blue-200">
-              <Link href="/methodology" className="hover:text-white py-2">{footerT.methodology}</Link>
+              <Link href="/ru" className="hover:text-white py-2">{footerT.methodology}</Link>
               <a href="#pricing-cards" className="hover:text-white py-2">{footerT.pricing}</a>
               <a href="#" className="hover:text-white py-2">{footerT.contact}</a>
             </div>

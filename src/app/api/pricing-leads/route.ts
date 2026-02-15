@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
+import { getRequiredServerEnv } from '@/lib/env/server';
 import {
   MAX_WEBHOOK_ATTEMPTS,
   deliverWebhookWithRetries,
   validateAndNormalizeLeadPayload,
 } from './shared';
-
-const DEFAULT_PAYMENT_INTENT_WEBHOOK_URL =
-  'https://shumiha.app.n8n.cloud/webhook/475ee6a9-aa1a-40f3-b080-f5790f023441';
+const PRICING_PAYMENT_INTENT_WEBHOOK_URL = getRequiredServerEnv('PRICING_PAYMENT_INTENT_WEBHOOK_URL');
 
 const BACKWARD_COMPAT_OPTIONAL_COLUMNS = [
   'consent_offer',
@@ -256,12 +255,10 @@ export async function POST(request: Request) {
     }
 
     if (payload.leadType === 'rub_intent') {
-      const paymentIntentWebhookUrl =
-        process.env.PRICING_PAYMENT_INTENT_WEBHOOK_URL || DEFAULT_PAYMENT_INTENT_WEBHOOK_URL;
       const webhookResult = await deliverWebhookWithRetries(
         lead,
         MAX_WEBHOOK_ATTEMPTS,
-        paymentIntentWebhookUrl,
+        PRICING_PAYMENT_INTENT_WEBHOOK_URL,
         'PRICING_PAYMENT_INTENT_WEBHOOK_URL'
       );
 

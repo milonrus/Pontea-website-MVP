@@ -1,20 +1,8 @@
 import type { MetadataRoute } from 'next';
-
-function isSeoLockEnabled() {
-  return process.env.SEO_LOCK !== 'false';
-}
+import { getRequiredPublicEnv } from '@/lib/env/public';
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pontea.school';
-
-  if (isSeoLockEnabled()) {
-    return {
-      rules: {
-        userAgent: '*',
-        disallow: '/'
-      }
-    };
-  }
+  const siteUrl = getRequiredPublicEnv('NEXT_PUBLIC_APP_URL');
 
   return {
     rules: {

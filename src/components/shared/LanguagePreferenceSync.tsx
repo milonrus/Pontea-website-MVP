@@ -9,6 +9,7 @@ import {
   LANGUAGE_COOKIE_NAME,
   isLocale
 } from '@/lib/i18n/config';
+import { isRuOnlyMode } from '@/lib/i18n/mode';
 import { getLocaleFromPathname } from '@/lib/i18n/routes';
 
 function setLanguageCookie(locale: 'en' | 'ru') {
@@ -28,6 +29,10 @@ const LanguagePreferenceSync = () => {
     }
 
     setLanguageCookie(localeFromPath);
+
+    if (isRuOnlyMode()) {
+      return;
+    }
 
     if (!currentUser || !userProfile) {
       return;
@@ -77,4 +82,3 @@ const LanguagePreferenceSync = () => {
 };
 
 export default LanguagePreferenceSync;
-

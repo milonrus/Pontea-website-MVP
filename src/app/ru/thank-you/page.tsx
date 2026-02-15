@@ -1,13 +1,20 @@
 import type { Metadata } from 'next';
 import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
+import { isRuOnlyMode } from '@/lib/i18n/mode';
+
+const ruOnlyMode = isRuOnlyMode();
 
 export const metadata: Metadata = {
   alternates: {
     canonical: '/ru/thank-you',
-    languages: {
-      en: '/en/thank-you',
-      ru: '/ru/thank-you'
-    }
+    ...(ruOnlyMode
+      ? {}
+      : {
+          languages: {
+            en: '/en/thank-you',
+            ru: '/ru/thank-you'
+          }
+        })
   }
 };
 
