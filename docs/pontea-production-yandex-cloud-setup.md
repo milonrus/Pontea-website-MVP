@@ -1,6 +1,6 @@
 # Pontea (Next.js) — Production сетап в Yandex Cloud (Compute VM + Nginx + PM2 + Let’s Encrypt)
 
-**Дата актуализации:** 2026-02-13  
+**Дата актуализации:** 2026-02-15  
 **Проект:** Pontea website MVP  
 **Репозиторий (локально у владельца):** `/Users/mikhail/Documents/vibe-coding/Pontea-website-MVP`  
 **Стек:** Next.js 15 (App Router), React 19, Tailwind, Supabase, OpenAI API  
@@ -12,11 +12,12 @@
 
 Поток запросов:
 
-1. Пользователь → `https://pontea.school` (или `https://www.pontea.school`)
+1. Пользователь → `https://pontea.school` (канонический хост; `www` принудительно редиректится)
 2. DNS A-record → **публичный статический IP** VM: `89.232.188.98`
 3. Nginx на VM принимает 80/443:
-   - 80 → 301 редирект на 443 (certbot настроил)
-   - 443 → reverse proxy на `http://127.0.0.1:3000`
+   - `www` (80/443) → single-hop `301` на `https://pontea.school$request_uri`
+   - `pontea.school` на 80 → `301` на `https://pontea.school$request_uri`
+   - `pontea.school` на 443 → reverse proxy на `http://127.0.0.1:3000`
 4. Next.js app работает на `127.0.0.1:3000`, управляется PM2 (`npm run start`)
 
 ---
@@ -220,13 +221,90 @@ sudo systemctl status pm2-mikhail --no-pager -l
 
 Активный сайт:
 
-* `/etc/nginx/sites-available/pontea`
+* `/etc/nginx/sites-available/pontea` (канонический редирект `www` → non-www настроен)
 * `/etc/nginx/sites-enabled/pontea` → symlink на sites-available
 
-До настройки домена в `server_name` стоял `_`, что мешало нормальной доменной конфигурации и certbot.
-Исправлено на:
+С 2026-02-15 используется явное разделение primary/secondary host без `if ($host)`:
 
-* `server_name pontea.school www.pontea.school;`
+* `pontea.school` = canonical host
+* `www.pontea.school` = secondary host, всегда `301` на canonical
+
+Полный рабочий конфиг:
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name www.pontea.school;
+
+    return 301 https://pontea.school$request_uri;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name pontea.school;
+
+    return 301 https://pontea.school$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name www.pontea.school;
+
+    ssl_certificate /etc/letsencrypt/live/pontea.school/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/pontea.school/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    return 301 https://pontea.school$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name pontea.school;
+
+    ssl_certificate /etc/letsencrypt/live/pontea.school/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/pontea.school/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 5s;
+    }
+}
+```
+
+Применение изменений и rollback:
+
+```bash
+# backup
+sudo cp /etc/nginx/sites-available/pontea /etc/nginx/sites-available/pontea.bak.$(date +%F-%H%M%S)
+
+# edit /etc/nginx/sites-available/pontea
+
+# validate + reload
+sudo nginx -t
+sudo systemctl reload nginx
+
+# rollback (если нужно)
+sudo cp /etc/nginx/sites-available/pontea.bak.<timestamp> /etc/nginx/sites-available/pontea
+sudo nginx -t
+sudo systemctl reload nginx
+```
 
 Проверка конфигов:
 
@@ -289,17 +367,21 @@ Certbot автоматом:
 sudo certbot renew --dry-run
 ```
 
-Проверка редиректа:
+Проверка редиректов:
 
 ```bash
 curl -I http://pontea.school
+curl -I http://www.pontea.school
+curl -I https://www.pontea.school
 curl -I https://pontea.school
 ```
 
 Ожидаемо:
 
-* HTTP → 301 на HTTPS
-* HTTPS → 200 OK
+* `http://www.pontea.school/*` → `301` на `https://pontea.school/*` (single-hop)
+* `https://www.pontea.school/*` → `301` на `https://pontea.school/*` (single-hop)
+* `http://pontea.school/*` → `301` на `https://pontea.school/*`
+* `https://pontea.school/*` → `200`/`30x` только по логике приложения
 
 ---
 
@@ -313,7 +395,7 @@ curl -I https://pontea.school
 * **Redirect URLs** (минимум):
 
   * `https://pontea.school/auth/callback`
-  * `https://www.pontea.school/auth/callback` (если используется www)
+  * `https://www.pontea.school/auth/callback` (опционально на переходный период, чтобы старые ссылки не ломались)
 
 Если это не обновить:
 
@@ -422,7 +504,20 @@ curl -I http://127.0.0.1
 ```bash
 curl -I http://pontea.school
 curl -I https://pontea.school
+curl -I http://www.pontea.school/ru/legal?x=1
+curl -I https://www.pontea.school/ru/legal?x=1
+curl -s -o /dev/null -w 'final=%{url_effective} code=%{http_code} redirects=%{num_redirects}\n' -L "http://www.pontea.school/ru/legal?x=1"
+curl -s -L https://www.pontea.school/ru/legal | rg 'rel="canonical"'
+curl -I https://www.pontea.school/sitemap.xml
+curl -s https://pontea.school/sitemap.xml | rg '<loc>https://pontea.school/'
 ```
+
+Ожидаемо:
+
+* `www` всегда отдает `301` на non-www с сохранением path + query string
+* для `http://www.../ru/legal?x=1` количество редиректов после `-L` = `1`
+* canonical и sitemap содержат только `https://pontea.school/...`
+* для `/` может быть дополнительный редирект приложения (`/` → `/ru`) — это не проблема host-canonicalization
 
 ### 12.5 Проверка egress (важно для apt/OpenAI/Supabase)
 
@@ -469,19 +564,21 @@ curl -4 -I --max-time 8 https://archive.ubuntu.com/ubuntu/ | head -n 1
 
 ---
 
-## 14) Текущие “истины” окружения (на 2026-02-13)
+## 14) Текущие “истины” окружения (на 2026-02-15)
 
 * **IP:** `89.232.188.98` (статический)
 * **Домены:** `pontea.school`, `www.pontea.school`
+* **Canonical host policy:** `www` → `301` на `https://pontea.school$request_uri` (single-hop)
 * **HTTPS:** включён, сертификат действителен, renew dry-run проходит
 * **Приложение:** PM2 `pontea` online
 * **Proxy:** Nginx → `127.0.0.1:3000`
-* **NEXT_PUBLIC_APP_URL:** `https://pontea.school` (пересобрано и перезапущено)
+* **APP_URL / NEXT_PUBLIC_APP_URL:** `https://pontea.school`
 
 ---
 
 ## 15) TODO (если ещё не сделано)
 
+* [x] Nginx canonical host: `www` → `https://pontea.school$request_uri` (single-hop)
 * [ ] Supabase Auth: Site URL + Redirect URLs обновлены на `https://pontea.school`
 * [ ] Ротация `OPENAI_API_KEY` выполнена (старый ключ отозван)
 * [ ] Убедиться, что нет временного SSH правила `0.0.0.0/0` (если когда-либо добавлялось)

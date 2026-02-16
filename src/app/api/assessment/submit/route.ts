@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createServerClient } from '@/lib/supabase/server';
-import { getOptionalServerEnv } from '@/lib/env/server';
+import { getOptionalServerEnv, getRequiredServerEnv } from '@/lib/env/server';
 import { normalizePhoneToE164 } from '@/lib/assessment/phone';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ASSESSMENT_RESULTS_WEBHOOK_URL = getRequiredServerEnv('ASSESSMENT_RESULTS_WEBHOOK_URL');
 
 export async function POST(request: Request) {
   try {
@@ -107,7 +108,6 @@ export async function POST(request: Request) {
 
     const requestOrigin = new URL(request.url).origin.replace(/\/+$/, '');
     const appUrl = getOptionalServerEnv('APP_URL')?.replace(/\/+$/, '') || requestOrigin;
-    const assessmentResultsWebhookUrl = getOptionalServerEnv('ASSESSMENT_RESULTS_WEBHOOK_URL');
     const resultsUrl = `${appUrl}/ru/results/${shareToken}`;
     const compactDomainResults = Array.isArray(domainResults)
       ? domainResults.map((result: any) => ({
@@ -120,31 +120,29 @@ export async function POST(request: Request) {
     const response = NextResponse.json({ token: shareToken });
 
     // Fire webhook to N8N after response is ready (fire-and-forget)
-    if (assessmentResultsWebhookUrl) {
-      try {
-        void fetch(
-          assessmentResultsWebhookUrl,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              version: 3,
-              name: normalizedName,
-              phone: normalizedPhone,
-              email: normalizedEmail,
-              consentPersonalData: true,
-              consentAt: normalizedConsentAt,
-              domainResults: compactDomainResults,
-              url: resultsUrl,
-              resultsUrl,
-              submittedAt: new Date().toISOString(),
-            }),
-            signal: AbortSignal.timeout(5000),
-          }
-        ).catch((err) => console.error('Failed to send results to webhook:', err));
-      } catch {
-        // ignore webhook errors entirely
-      }
+    try {
+      void fetch(
+        ASSESSMENT_RESULTS_WEBHOOK_URL,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            version: 3,
+            name: normalizedName,
+            phone: normalizedPhone,
+            email: normalizedEmail,
+            consentPersonalData: true,
+            consentAt: normalizedConsentAt,
+            domainResults: compactDomainResults,
+            url: resultsUrl,
+            resultsUrl,
+            submittedAt: new Date().toISOString(),
+          }),
+          signal: AbortSignal.timeout(5000),
+        }
+      ).catch((err) => console.error('Failed to send results to webhook:', err));
+    } catch {
+      // ignore webhook errors entirely
     }
 
     return response;
