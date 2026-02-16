@@ -1,6 +1,6 @@
 # Pontea (Next.js) — Production сетап в Yandex Cloud (Compute VM + Nginx + PM2 + Let’s Encrypt)
 
-**Дата актуализации:** 2026-02-15  
+**Дата актуализации:** 2026-02-16  
 **Проект:** Pontea website MVP  
 **Репозиторий (локально у владельца):** `/Users/mikhail/Documents/vibe-coding/Pontea-website-MVP`  
 **Стек:** Next.js 15 (App Router), React 19, Tailwind, Supabase, OpenAI API  
@@ -192,6 +192,13 @@ pm2 save
 ```bash
 pm2 status
 pm2 logs pontea --lines 100 --nostream
+```
+
+Если в non-interactive shell команда `pm2` не находится, сначала загрузить nvm:
+
+```bash
+source ~/.nvm/nvm.sh
+pm2 status
 ```
 
 ### 6.2 Автозапуск PM2 (systemd)
@@ -447,9 +454,12 @@ chown mikhail:mikhail /var/www/pontea-app/.env.production
 
 ```bash
 cd /var/www/pontea-app
-git pull
+source ~/.nvm/nvm.sh
 
-npm install
+git fetch origin
+git merge --ff-only origin/main
+
+npm ci --no-audit --no-fund
 npm run build
 
 pm2 restart pontea --update-env
@@ -471,6 +481,7 @@ pm2 restart pontea --update-env
 ### 12.1 Сервисы
 
 ```bash
+source ~/.nvm/nvm.sh
 pm2 status
 pm2 logs pontea --lines 100 --nostream
 
@@ -516,7 +527,9 @@ curl -s https://pontea.school/sitemap.xml | rg '<loc>https://pontea.school/'
 * `www` всегда отдает `301` на non-www с сохранением path + query string
 * для `http://www.../ru/legal?x=1` количество редиректов после `-L` = `1`
 * canonical и sitemap содержат только `https://pontea.school/...`
-* для `/` может быть дополнительный редирект приложения (`/` → `/ru`) — это не проблема host-canonicalization
+* `/` без cookie отдает `200` (EN homepage)
+* `/` с cookie `pontea_lang=ru` отдает `307` на `/ru/` c `Cache-Control: private, no-store` и `Vary: Cookie`
+* `Accept-Language` сам по себе не должен принудительно редиректить на `/ru/`
 
 ### 12.5 Проверка egress (важно для apt/OpenAI/Supabase)
 
@@ -563,7 +576,7 @@ curl -4 -I --max-time 8 https://archive.ubuntu.com/ubuntu/ | head -n 1
 
 ---
 
-## 14) Текущие “истины” окружения (на 2026-02-15)
+## 14) Текущие “истины” окружения (на 2026-02-16)
 
 * **IP:** `89.232.188.98` (статический)
 * **Домены:** `pontea.school`, `www.pontea.school`
@@ -572,6 +585,8 @@ curl -4 -I --max-time 8 https://archive.ubuntu.com/ubuntu/ | head -n 1
 * **Приложение:** PM2 `pontea` online
 * **Proxy:** Nginx → `127.0.0.1:3000`
 * **APP_URL / NEXT_PUBLIC_APP_URL:** `https://pontea.school`
+* **Deploy commit (main):** `a28f357` (`fix: restore main build after merge for RU locale routes`)
+* **Locale behavior on root:** EN по умолчанию на `/`, RU-редирект только по явному выбору (cookie/query override), без IP/Accept-Language форс-редиректа
 
 ---
 
