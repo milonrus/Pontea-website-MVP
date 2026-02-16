@@ -1,7 +1,7 @@
 import { permanentRedirect } from 'next/navigation';
 
-const ArchedPrepCoursePageEN = () => {
-  permanentRedirect('/en');
+const EnLegacyArchedPrepCoursePage = () => {
+  permanentRedirect('/');
 };
 
-export default ArchedPrepCoursePageEN;
+export default EnLegacyArchedPrepCoursePage;

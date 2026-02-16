@@ -1,7 +1,7 @@
 import { permanentRedirect } from 'next/navigation';
 
 const ArchedPrepCoursePage = () => {
-  permanentRedirect('/ru');
+  permanentRedirect('/ru/');
 };
 
 export default ArchedPrepCoursePage;

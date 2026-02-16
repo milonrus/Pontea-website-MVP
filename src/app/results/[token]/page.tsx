@@ -14,9 +14,9 @@ export async function generateMetadata({
   const { token } = await params;
 
   return buildPageMetadata({
-    title: 'Результаты диагностики',
-    description: 'Персональные результаты диагностики и план подготовки.',
-    canonical: `/ru/results/${token}/`,
+    title: 'Diagnostic Results',
+    description: 'Your personal diagnostic results and preparation roadmap.',
+    canonical: `/results/${token}/`,
     robots: {
       index: false,
       follow: false
@@ -61,5 +61,5 @@ export default async function TokenResultsPage({
     submittedAt: data.submitted_at,
   };
 
-  return <ResultsPage initialResults={results} locale="ru" />;
+  return <ResultsPage initialResults={results} locale="en" />;
 }

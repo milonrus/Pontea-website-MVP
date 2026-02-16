@@ -58,7 +58,7 @@ const ArchedHero: React.FC = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Link href="/ru/assessment">
+              <Link href="/assessment/">
                 <Button
                   size="lg"
                   variant="secondary"
@@ -68,7 +68,7 @@ const ArchedHero: React.FC = () => {
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link href="/ru">
+              <Link href="/">
                 <Button
                   size="lg"
                   variant="outline"

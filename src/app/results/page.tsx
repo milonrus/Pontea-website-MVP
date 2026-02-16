@@ -4,9 +4,9 @@ import ResultsPage from '@/views/ResultsPage';
 import { buildPageMetadata } from '@/lib/seo/metadata';
 
 export const metadata: Metadata = buildPageMetadata({
-  title: 'Результаты диагностики',
-  description: 'Персональные результаты диагностики и план подготовки.',
-  canonical: '/ru/results/',
+  title: 'Diagnostic Results',
+  description: 'Your personal diagnostic results and preparation roadmap.',
+  canonical: '/results/',
   robots: {
     index: false,
     follow: false
@@ -14,5 +14,5 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default function Page() {
-  return <ResultsPage locale="ru" />;
+  return <ResultsPage locale="en" />;
 }

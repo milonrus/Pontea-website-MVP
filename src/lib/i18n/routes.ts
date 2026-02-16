@@ -1,13 +1,10 @@
 import { DEFAULT_LOCALE, Locale, getLocaleHome } from './config';
-import { isRuOnlyMode } from './mode';
 
-const LOCALE_PREFIX_PATTERN = /^\/(en|ru)(\/|$)/;
+const RU_PREFIX_PATTERN = /^\/ru(\/|$)/;
 const SWITCHABLE_STATIC_PATHS = new Set([
   '/',
   '/thank-you',
   '/assessment',
-  '/for-parents',
-  '/refund',
   '/legal',
   '/results',
   '/arched-prep-course',
@@ -17,41 +14,6 @@ function normalizePath(pathname: string): string {
   if (!pathname) return '/';
   if (pathname === '/') return '/';
   return pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-}
-
-export function getLocaleFromPathname(pathname: string): Locale | null {
-  const normalized = normalizePath(pathname);
-  const match = normalized.match(LOCALE_PREFIX_PATTERN);
-
-  if (!match) {
-    return null;
-  }
-
-  const locale = match[1];
-  return locale === 'en' || locale === 'ru' ? locale : null;
-}
-
-function getPathWithoutLocalePrefix(pathname: string): string | null {
-  const normalized = normalizePath(pathname);
-  const locale = getLocaleFromPathname(normalized);
-
-  if (!locale) {
-    return null;
-  }
-
-  if (normalized === `/${locale}`) {
-    return '/';
-  }
-
-  return normalized.slice(3);
-}
-
-function buildLocalePath(locale: Locale, pathWithoutLocale: string): string {
-  if (pathWithoutLocale === '/') {
-    return getLocaleHome(locale);
-  }
-
-  return `/${locale}${pathWithoutLocale}`;
 }
 
 function isSwitchableDynamicPath(pathWithoutLocale: string): boolean {
@@ -66,18 +28,74 @@ function isSwitchableDynamicPath(pathWithoutLocale: string): boolean {
   return false;
 }
 
-export function getSwitchLocalePath(pathname: string, targetLocale: Locale): string {
-  if (isRuOnlyMode()) {
-    return '/ru';
+function isSwitchablePath(pathWithoutLocale: string): boolean {
+  return SWITCHABLE_STATIC_PATHS.has(pathWithoutLocale) || isSwitchableDynamicPath(pathWithoutLocale);
+}
+
+function isEnglishLocalizedPath(pathname: string): boolean {
+  return isSwitchablePath(pathname);
+}
+
+function ensureTrailingSlash(pathname: string): string {
+  if (pathname === '/') {
+    return pathname;
   }
 
+  return pathname.endsWith('/') ? pathname : `${pathname}/`;
+}
+
+export function getLocaleFromPathname(pathname: string): Locale | null {
+  const normalized = normalizePath(pathname);
+
+  if (RU_PREFIX_PATTERN.test(normalized)) {
+    return 'ru';
+  }
+
+  if (isEnglishLocalizedPath(normalized)) {
+    return 'en';
+  }
+
+  return null;
+}
+
+function getPathWithoutLocalePrefix(pathname: string): string | null {
+  const normalized = normalizePath(pathname);
+
+  if (normalized === '/ru') {
+    return '/';
+  }
+
+  if (normalized.startsWith('/ru/')) {
+    return normalized.slice(3);
+  }
+
+  if (isEnglishLocalizedPath(normalized)) {
+    return normalized;
+  }
+
+  return null;
+}
+
+function buildLocalePath(locale: Locale, pathWithoutLocale: string): string {
+  if (pathWithoutLocale === '/') {
+    return getLocaleHome(locale);
+  }
+
+  if (locale === 'en') {
+    return ensureTrailingSlash(pathWithoutLocale);
+  }
+
+  return ensureTrailingSlash(`/ru${pathWithoutLocale}`);
+}
+
+export function getSwitchLocalePath(pathname: string, targetLocale: Locale): string {
   const pathWithoutLocale = getPathWithoutLocalePrefix(pathname);
 
   if (!pathWithoutLocale) {
     return getLocaleHome(targetLocale);
   }
 
-  if (SWITCHABLE_STATIC_PATHS.has(pathWithoutLocale) || isSwitchableDynamicPath(pathWithoutLocale)) {
+  if (isSwitchablePath(pathWithoutLocale)) {
     return buildLocalePath(targetLocale, pathWithoutLocale);
   }
 
@@ -85,10 +103,6 @@ export function getSwitchLocalePath(pathname: string, targetLocale: Locale): str
 }
 
 export function getSuggestedLocaleFromAcceptLanguage(acceptLanguageHeader: string | null): Locale {
-  if (isRuOnlyMode()) {
-    return 'ru';
-  }
-
   if (!acceptLanguageHeader) {
     return DEFAULT_LOCALE;
   }

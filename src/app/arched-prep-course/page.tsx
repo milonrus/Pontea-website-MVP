@@ -1,7 +1,7 @@
 import { permanentRedirect } from 'next/navigation';
 
-const EnLegacyHomePage = () => {
+const ArchedPrepCoursePageEN = () => {
   permanentRedirect('/');
 };
 
-export default EnLegacyHomePage;
+export default ArchedPrepCoursePageEN;

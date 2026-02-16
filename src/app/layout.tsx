@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     title: 'PONTEA School | Architecture Exam Prep',
     description:
       'Online ARCHED and TIL-A preparation with diagnostics, structured study plans, and mentor support.',
-    url: '/en',
+    url: '/',
     images: [{ url: '/pontea-logo.webp' }]
   },
   twitter: {

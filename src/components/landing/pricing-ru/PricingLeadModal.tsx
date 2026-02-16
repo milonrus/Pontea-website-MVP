@@ -431,7 +431,8 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   const [isRetrying, setIsRetrying] = useState(false);
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOptionId | null>(null);
   const t = PRICING_MODAL_TEXT[locale];
-  const localePrefix = locale === 'en' ? '/en' : '/ru';
+  const localePrefix = locale === 'en' ? '' : '/ru';
+  const localeHome = locale === 'en' ? '/' : '/ru/';
 
   const isMentorship = plan?.id === 'mentorship';
 
@@ -472,7 +473,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   const getTrackingContext = () => {
     if (typeof window === 'undefined') {
       return {
-        pagePath: localePrefix,
+        pagePath: localeHome,
         referrer: undefined as string | undefined,
         utmSource: undefined as string | undefined,
         utmMedium: undefined as string | undefined,
@@ -976,7 +977,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             <span>
               {t.acceptOfferPrefix}{' '}
               <a
-                href={`${localePrefix}/legal/terms`}
+                href={`${localePrefix}/legal/terms/`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-primary underline underline-offset-2"
@@ -1094,7 +1095,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                 <span className="text-xs leading-snug text-slate-600">
                   {t.consentPersonalDataPrefix}{' '}
                   <a
-                    href={`${localePrefix}/legal/consent`}
+                    href={`${localePrefix}/legal/consent/`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline decoration-slate-400 underline-offset-2 text-slate-600"
@@ -1124,7 +1125,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
               <p className="px-1 text-center text-[10px] leading-snug text-slate-500">
                 {t.mentorshipLegalPrefix}{' '}
                 <a
-                  href={`${localePrefix}/legal/privacy`}
+                  href={`${localePrefix}/legal/privacy/`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline decoration-slate-300 underline-offset-2 text-slate-500"
@@ -1310,7 +1311,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
               <span className="text-[11px] leading-snug text-slate-600">
                 {t.consentShortPrefix}{' '}
                 <a
-                  href={`${localePrefix}/legal/consent`}
+                  href={`${localePrefix}/legal/consent/`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline decoration-slate-400 underline-offset-2 text-slate-600"
@@ -1337,7 +1338,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
               <span className="text-[11px] leading-snug text-slate-600">
                 {t.acceptOfferPrefix}{' '}
                 <a
-                  href={`${localePrefix}/legal/terms`}
+                  href={`${localePrefix}/legal/terms/`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline decoration-slate-400 underline-offset-2 transition-colors hover:text-primary"
@@ -1358,7 +1359,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             <p className="px-1 text-center text-[9px] leading-snug text-slate-500">
               {t.submitLegalPrefix}{' '}
               <a
-                href={`${localePrefix}/legal/privacy`}
+                href={`${localePrefix}/legal/privacy/`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline decoration-slate-300 underline-offset-2 text-slate-500"
