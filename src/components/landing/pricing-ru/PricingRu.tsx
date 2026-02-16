@@ -45,7 +45,7 @@ const PricingRu: React.FC<PricingRuProps> = ({ locale = 'ru' }) => {
     <section id="pricing" className="section-padding bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto text-center">
-          <h2 className="text-3xl font-display font-bold text-primary md:text-5xl md:whitespace-nowrap">
+          <h2 className="text-3xl font-display font-bold text-primary md:text-5xl lg:whitespace-nowrap">
             {t.heading}
           </h2>
         </div>
