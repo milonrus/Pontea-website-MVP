@@ -3,6 +3,7 @@ import { BadgeCheck } from 'lucide-react';
 import Button from '@/components/shared/Button';
 import {
   formatEurPerMonth,
+  getPlanInstallmentMonthlyRub,
   getPricingPrimaryCtaLabel,
 } from './data';
 import { RuPricingPlan, RuPricingVariantProps } from './types';
@@ -29,14 +30,19 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
   onBuy,
   locale,
 }) => {
+  const formatRubAmount = (value: number) => `${value.toLocaleString('ru-RU')} ₽`;
+
+  const inheritedPlanPoints = locale === 'en'
+    ? ['Includes everything in Starter', 'Includes everything in Core']
+    : ['Включает всё из Стартового', 'Включает всё из Основного'];
+
   const t = locale === 'en'
     ? {
-        includeLabel: 'Included',
         installmentHint: 'Installments available',
       }
     : {
-        includeLabel: 'Что включено',
-        installmentHint: 'Доступна оплата частями',
+        installmentHintPrefix: 'Доступна оплата частями от',
+        installmentHintSuffix: 'в мес',
       };
 
   return (
@@ -75,21 +81,19 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
               ) : null}
             </div>
 
-            <div className="mt-4 min-h-6">
-              <p
-                className={`text-sm font-semibold ${
-                  isRecommended ? 'text-primary' : 'text-primary/85'
-                }`}
-              >
-                {plan.includesFrom ?? t.includeLabel}
-              </p>
-            </div>
-
-            <ul className="mt-3 flex-1 space-y-2.5 text-sm text-gray-700">
+            <ul className="mt-4 flex-1 space-y-2.5 text-sm text-gray-700">
               {plan.summary.map((point) => (
                 <li key={point} className="flex items-start gap-2">
                   <BadgeCheck className="mt-0.5 h-4 w-4 flex-none text-green-600" />
-                  <span>{point}</span>
+                  <span
+                    className={
+                      inheritedPlanPoints.some((prefix) => point.startsWith(prefix))
+                        ? 'font-bold text-gray-800'
+                        : undefined
+                    }
+                  >
+                    {point}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -103,7 +107,9 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
                 {getPricingPrimaryCtaLabel(locale, plan.id)}
               </Button>
               <p className="text-center text-xs font-medium text-gray-500">
-                {t.installmentHint}
+                {locale === 'en'
+                  ? t.installmentHint
+                  : `${t.installmentHintPrefix} ${formatRubAmount(getPlanInstallmentMonthlyRub(plan))} ${t.installmentHintSuffix}`}
               </p>
             </div>
           </article>

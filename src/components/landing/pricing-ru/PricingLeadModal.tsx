@@ -12,7 +12,11 @@ import {
 import Button from '@/components/shared/Button';
 import Modal from '@/components/shared/Modal';
 import { getOptionalPublicEnv, getRequiredPublicEnv } from '@/lib/env/public';
-import { getPricingPrimaryCtaLabel } from './data';
+import {
+  getPricingPrimaryCtaLabel,
+  INSTALLMENT_MONTHS,
+  RUB_INSTALLMENT_TOTAL_BY_PLAN,
+} from './data';
 import { PricingLocale, RuPricingPlan } from './types';
 
 type ModalStep = 'currency' | 'lead_form' | 'success';
@@ -92,13 +96,6 @@ const RUB_FULL_PRICE_BY_PLAN: Record<'foundation' | 'advanced', number> = {
   foundation: 82_000,
   advanced: 137_000,
 };
-
-const RUB_INSTALLMENT_TOTAL_BY_PLAN: Record<'foundation' | 'advanced', number> = {
-  foundation: 89_000,
-  advanced: 149_000,
-};
-
-const INSTALLMENT_MONTHS = 6;
 
 const formatRubAmount = (value: number) => `${value.toLocaleString('ru-RU')} ₽`;
 

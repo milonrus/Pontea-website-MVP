@@ -14,7 +14,7 @@ const RU_PRICING_PLANS: RuPricingPlan[] = [
     installmentAvailable: false,
     summary: [
       'Сильная теоретическая база по всем 5 разделам экзамена',
-      '30+ часов видео с разбором ключевых тем и экзаменационных заданий',
+      '30+ часов видео лекций с разбором ключевых тем и экзаменационных заданий',
       'Примеры экзаменационных заданий с пояснениями',
       'Диагностика на старте и пробный экзамен в финале',
     ],
@@ -47,9 +47,9 @@ const RU_PRICING_PLANS: RuPricingPlan[] = [
     priceRub: 137000,
     badge: 'Выбор 80% учеников',
     installmentAvailable: true,
-    includesFrom: 'Включает всё из Стартового, а также:',
     summary: [
-      '1300+ заданий, 10 пробных тестов и 3 экзаменационные симуляции',
+      'Включает всё из Стартового, а также',
+      '1300+ заданий, 10 экзаменов и 3 симуляции "как в жизни"',
       'Групповые онлайн-уроки по каждому предмету с разбором сложных тем',
       'Чат с преподавателями и другими учениками',
       'Индивидуальный учебный план и прогресс-сессия с ментором каждые 2 недели',
@@ -94,10 +94,10 @@ const RU_PRICING_PLANS: RuPricingPlan[] = [
     priceRub: 321000,
     badge: 'Количество мест ограничено',
     installmentAvailable: true,
-    includesFrom: 'Включает всё из Основного, а также:',
     summary: [
-      '20 персональных занятий с топ-преподавателями',
-      'Персональный ментор и приоритетная поддержка в рабочие часы',
+      'Включает всё из Основного, а также',
+      'Персональные занятия 1 на 1 с преподавателем каждую неделю',
+      'Личный ментор всегда на связи',
       'Стратегические встречи с основательницами и персональная аналитика',
     ],
     groups: [
@@ -187,8 +187,8 @@ const EN_PRICING_PLANS: RuPricingPlan[] = [
     priceRub: 137000,
     badge: 'Chosen by 80% of students',
     installmentAvailable: true,
-    includesFrom: 'Everything in Starter, plus:',
     summary: [
+      'Includes everything in Starter',
       '1300+ tasks, 10 mock tests, and 3 full exam simulations',
       'Live group online classes for every subject',
       'Chat with teachers and other students',
@@ -234,8 +234,8 @@ const EN_PRICING_PLANS: RuPricingPlan[] = [
     priceRub: 321000,
     badge: 'Limited seats',
     installmentAvailable: true,
-    includesFrom: 'Everything in Core, plus:',
     summary: [
+      'Includes everything in Core',
       '20 one-on-one sessions with top instructors',
       'Personal mentor with priority support during working hours',
       'Strategic sessions with founders and personal analytics',
@@ -290,6 +290,14 @@ export const PRICING_PLANS_BY_LOCALE: Record<PricingLocale, RuPricingPlan[]> = {
 };
 
 export const COURSE_DURATION_MONTHS = 5;
+export const INSTALLMENT_MONTHS = 6;
+
+type RubPaymentPlanId = Exclude<RuPricingPlanId, 'mentorship'>;
+
+export const RUB_INSTALLMENT_TOTAL_BY_PLAN: Record<RubPaymentPlanId, number> = {
+  foundation: 89_000,
+  advanced: 149_000,
+};
 
 const eurPerMonthFormatter = new Intl.NumberFormat('ru-RU', {
   minimumFractionDigits: 0,
@@ -298,6 +306,16 @@ const eurPerMonthFormatter = new Intl.NumberFormat('ru-RU', {
 
 export const formatEurPerMonth = (totalEur: number) =>
   eurPerMonthFormatter.format(totalEur / COURSE_DURATION_MONTHS);
+
+export const getPlanInstallmentMonthlyRub = (
+  plan: Pick<RuPricingPlan, 'id' | 'priceRub'>
+) => {
+  const installmentTotal = plan.id === 'mentorship'
+    ? plan.priceRub
+    : RUB_INSTALLMENT_TOTAL_BY_PLAN[plan.id];
+
+  return Math.round(installmentTotal / INSTALLMENT_MONTHS);
+};
 
 const PRICING_PRIMARY_CTA_LABEL_BY_PLAN: Record<PricingLocale, Record<RuPricingPlanId, string>> = {
   en: {

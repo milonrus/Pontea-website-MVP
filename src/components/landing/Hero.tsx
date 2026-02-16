@@ -33,7 +33,7 @@ const translations = {
     h1Line2: 'подготовки к ARCHED и TIL-A',
     subtitle: 'Подготовим с любого уровня на высокий балл!',
     cta1: 'Получить план подготовки',
-    subLabel: 'Опрос займет 5 минут. Бесплатно.',
+    subLabel: 'Тест займет 5 минут. Бесплатно.',
     cta2: 'Выбрать курс',
     statLabel: 'Поступают в целевые вузы',
     footnote: '*среди тех, кто прошел курс до конца',
@@ -123,8 +123,8 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
                 <Link href={`${localePrefix}/assessment/`} className="block">
                   <Button
                     size="lg"
-                    variant="primary"
-                    className="shadow-xl shadow-accent/20 w-full h-16 border-transparent !text-base whitespace-nowrap"
+                    variant="outline"
+                    className="w-full h-16 border-2 border-primary/10 hover:border-primary text-primary hover:bg-blue-50 !text-base whitespace-nowrap"
                   >
                     {t.cta1}
                   </Button>
@@ -138,8 +138,8 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
                 <Link href="#pricing-cards" className="block">
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="w-full h-16 border-2 border-primary/10 hover:border-primary text-primary hover:bg-blue-50 !text-base"
+                    variant="primary"
+                    className="shadow-xl shadow-accent/20 w-full h-16 border-transparent !text-base"
                   >
                     {t.cta2}
                   </Button>
