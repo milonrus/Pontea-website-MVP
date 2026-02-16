@@ -24,7 +24,7 @@ const translations = {
   ru: {
     aboutCourse: 'О курсе',
     pricing: 'Цены',
-    personalPlan: 'Персональный план',
+    personalPlan: 'План подготовки',
     needHelp: 'Нужна помощь с выбором?',
   },
 };
