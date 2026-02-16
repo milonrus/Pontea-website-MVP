@@ -3,9 +3,6 @@ import Link from 'next/link';
 import Header from '@/components/shared/Header';
 import { getRuLegalDocMetas } from '@/lib/legal/ruLegalDocs';
 import { buildPageMetadata } from '@/lib/seo/metadata';
-import { isRuOnlyMode } from '@/lib/i18n/mode';
-
-const ruOnlyMode = isRuOnlyMode();
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Юридические документы',

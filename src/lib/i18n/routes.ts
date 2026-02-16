@@ -55,27 +55,7 @@ export function getLocaleFromPathname(pathname: string): Locale | null {
     return 'en';
   }
 
-  return normalized.slice(3);
-}
-
-function buildLocalePath(locale: Locale, pathWithoutLocale: string): string {
-  if (pathWithoutLocale === '/') {
-    return getLocaleHome(locale);
-  }
-
-  return `/${locale}${pathWithoutLocale}`;
-}
-
-function isSwitchableDynamicPath(pathWithoutLocale: string): boolean {
-  if (pathWithoutLocale.startsWith('/legal/')) {
-    return pathWithoutLocale.split('/').length === 3;
-  }
-
-  if (pathWithoutLocale.startsWith('/results/')) {
-    return pathWithoutLocale.split('/').length === 3;
-  }
-
-  return false;
+  return null;
 }
 
 function getPathWithoutLocalePrefix(pathname: string): string | null {

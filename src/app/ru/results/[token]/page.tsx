@@ -5,7 +5,6 @@ import ResultsPage from '@/views/ResultsPage';
 import { AssessmentResult, DomainResult } from '@/types';
 import type { CanonicalRoadmapOutput } from '@/lib/roadmap-generator/types';
 import { buildPageMetadata } from '@/lib/seo/metadata';
-import { isRuOnlyMode } from '@/lib/i18n/mode';
 
 export async function generateMetadata({
   params
@@ -13,7 +12,6 @@ export async function generateMetadata({
   params: Promise<{ token: string }>;
 }): Promise<Metadata> {
   const { token } = await params;
-  const ruOnlyMode = isRuOnlyMode();
 
   return buildPageMetadata({
     title: 'Результаты диагностики',

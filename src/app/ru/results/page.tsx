@@ -2,9 +2,6 @@ import type { Metadata } from 'next';
 
 import ResultsPage from '@/views/ResultsPage';
 import { buildPageMetadata } from '@/lib/seo/metadata';
-import { isRuOnlyMode } from '@/lib/i18n/mode';
-
-const ruOnlyMode = isRuOnlyMode();
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Результаты диагностики',

@@ -6,7 +6,6 @@ import ReactMarkdown from 'react-markdown';
 import Header from '@/components/shared/Header';
 import { RU_LEGAL_DOC_IDS, getRuLegalDoc, isRuLegalDocId } from '@/lib/legal/ruLegalDocs';
 import { buildPageMetadata } from '@/lib/seo/metadata';
-import { isRuOnlyMode } from '@/lib/i18n/mode';
 
 type DocPageParams = {
   doc: string;
@@ -26,7 +25,6 @@ export async function generateMetadata({
   params: Promise<DocPageParams>;
 }): Promise<Metadata> {
   const { doc } = await params;
-  const ruOnlyMode = isRuOnlyMode();
 
   if (!isRuLegalDocId(doc)) {
     return buildPageMetadata({
