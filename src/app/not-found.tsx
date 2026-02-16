@@ -20,13 +20,13 @@ const NotFound = () => {
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
-            href="/ru"
+            href="/ru/"
             className="rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
           >
             На главную
           </Link>
           <Link
-            href="/en"
+            href="/"
             className="rounded-lg border border-primary/20 px-5 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
           >
             Go to English home

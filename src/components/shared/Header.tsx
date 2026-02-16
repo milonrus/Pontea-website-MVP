@@ -5,6 +5,7 @@ import { Menu, X, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Button from './Button';
+import LanguageSwitcher from './LanguageSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { getRequiredPublicEnv } from '@/lib/env/public';
 
@@ -34,6 +35,9 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
   const { currentUser, isAdmin } = useAuth();
 
   const t = translations[locale];
+  const isEnglish = locale === 'en';
+  const homePath = isEnglish ? '/' : '/ru/';
+  const assessmentPath = isEnglish ? '/assessment/' : '/ru/assessment/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,13 +47,20 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const localePrefix = locale === 'en' ? '/en' : '/ru';
   const supportTelegramUrl = getRequiredPublicEnv('NEXT_PUBLIC_SUPPORT_TELEGRAM_URL');
+
+  const normalizePath = (path: string) => {
+    if (path === '/') {
+      return '/';
+    }
+
+    return path.endsWith('/') ? path.slice(0, -1) : path;
+  };
 
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false);
-    if (pathname !== '/' && pathname !== `${localePrefix}`) {
-      window.location.href = `${localePrefix}#${id}`;
+    if (normalizePath(pathname) !== normalizePath(homePath)) {
+      window.location.href = `${homePath}#${id}`;
       return;
     }
     const element = document.getElementById(id);
@@ -59,9 +70,9 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
   };
 
   const navLinks = [
-    { label: t.aboutCourse, path: localePrefix, type: 'link' as const },
+    { label: t.aboutCourse, path: homePath, type: 'link' as const },
     { label: t.pricing, id: 'pricing-cards', type: 'scroll' as const },
-    { label: t.personalPlan, path: `${localePrefix}/assessment`, type: 'link' as const },
+    { label: t.personalPlan, path: assessmentPath, type: 'link' as const },
   ];
 
   return (
@@ -71,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        <Link href={localePrefix} className="z-50">
+        <Link href={homePath} className="z-50">
           <div
             className={`w-auto transition-all duration-300 ${isScrolled ? 'h-5' : 'h-7'}`}
             style={{
@@ -113,6 +124,8 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
             )
           ))}
 
+          <LanguageSwitcher />
+
           {isAdmin && (
             <Link href="/admin" className="text-sm font-bold text-primary hover:text-accent transition-colors">
               Admin
@@ -132,6 +145,10 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
             <Button size="sm" variant="primary">{t.needHelp}</Button>
           </a>
         </nav>
+
+        <div className="md:hidden mr-2">
+          <LanguageSwitcher />
+        </div>
 
         {/* Mobile Toggle */}
         <button
@@ -164,6 +181,8 @@ const Header: React.FC<HeaderProps> = ({ locale = 'ru' }) => {
                 </button>
                )
             ))}
+
+            <LanguageSwitcher />
 
             {isAdmin && (
               <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>

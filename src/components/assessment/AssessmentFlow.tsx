@@ -84,6 +84,7 @@ interface AssessmentFlowProps {
 
 const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ locale = 'ru' }) => {
   const router = useRouter();
+  const localePrefix = locale === 'en' ? '' : '/ru';
   const [step, setStep] = useState<Step>('quiz');
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -201,7 +202,7 @@ const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ locale = 'ru' }) => {
 
       if (res.ok) {
         const { token } = await res.json();
-        router.push(`/${locale}/results/${token}`);
+        router.push(`${localePrefix}/results/${token}/`);
       } else {
         // Fallback: save to localStorage and redirect to old route
         saveFallback(contact);
@@ -229,7 +230,7 @@ const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ locale = 'ru' }) => {
       submittedAt: new Date().toISOString(),
     };
     localStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(result));
-    router.push(`/${locale}/results`);
+    router.push(`${localePrefix}/results/`);
   };
 
   if (step === 'contact' && computedResults) {

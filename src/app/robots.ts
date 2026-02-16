@@ -12,12 +12,12 @@ export default function robots(): MetadataRoute.Robots {
         '/admin/',
         '/auth/',
         '/api/',
-        '/en/results',
-        '/en/results/',
+        '/results',
+        '/results/',
         '/ru/results',
         '/ru/results/',
-        '/en/thank-you',
-        '/en/thank-you/',
+        '/thank-you',
+        '/thank-you/',
         '/ru/thank-you',
         '/ru/thank-you/'
       ]

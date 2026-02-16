@@ -1,35 +1,32 @@
 import { test, expect } from '@playwright/test';
 
-test('root shows language gateway when no language cookie is set', async ({ page }) => {
+test('root is the English homepage (no gateway)', async ({ page }) => {
   await page.context().clearCookies();
   await page.goto('/');
 
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole('heading', { name: /Choose your language/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /English/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Русский/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Online school/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Choose your language/i })).toHaveCount(0);
 });
 
-test('public RU and EN mirrored routes are reachable', async ({ request }) => {
+test('public EN-root and RU mirrored routes are reachable', async ({ request }) => {
+  test.setTimeout(120_000);
+
   const paths = [
-    '/en',
-    '/ru',
-    '/en/assessment',
-    '/ru/assessment',
-    '/en/for-parents',
-    '/ru/for-parents',
-    '/en/refund',
-    '/ru/refund',
-    '/en/legal',
-    '/ru/legal',
-    '/en/legal/consent',
-    '/ru/legal/consent',
-    '/en/arched-prep-course',
-    '/ru/arched-prep-course',
-    '/en/thank-you',
-    '/ru/thank-you',
-    '/en/results',
-    '/ru/results',
+    '/',
+    '/ru/',
+    '/assessment/',
+    '/ru/assessment/',
+    '/legal/',
+    '/ru/legal/',
+    '/legal/consent/',
+    '/ru/legal/consent/',
+    '/arched-prep-course/',
+    '/ru/arched-prep-course/',
+    '/thank-you/',
+    '/ru/thank-you/',
+    '/results/',
+    '/ru/results/',
   ];
 
   for (const path of paths) {
@@ -38,48 +35,107 @@ test('public RU and EN mirrored routes are reachable', async ({ request }) => {
   }
 });
 
-test('results fallback redirects to locale assessment when no saved results exist', async ({ page }) => {
-  await page.goto('/en');
-  await page.evaluate(() => localStorage.removeItem('pontea_results_v2'));
-  await page.goto('/en/results');
-  await expect(page).toHaveURL(/\/en\/assessment$/, { timeout: 15_000 });
+test('removed for-parents and refund routes return 404 in both locales', async ({ request }) => {
+  const removedPaths = [
+    '/for-parents/',
+    '/ru/for-parents/',
+    '/refund/',
+    '/ru/refund/',
+  ];
 
-  await page.goto('/ru');
+  for (const path of removedPaths) {
+    const response = await request.get(path, { failOnStatusCode: false });
+    expect(response.status(), `Removed path should 404: ${path}`).toBe(404);
+  }
+});
+
+test('results fallback redirects to locale assessment when no saved results exist', async ({ page }) => {
+  await page.goto('/');
   await page.evaluate(() => localStorage.removeItem('pontea_results_v2'));
-  await page.goto('/ru/results');
-  await expect(page).toHaveURL(/\/ru\/assessment$/, { timeout: 15_000 });
+  await page.goto('/results/');
+  await expect(page).toHaveURL(/\/assessment\/$/, { timeout: 15_000 });
+
+  await page.goto('/ru/');
+  await page.evaluate(() => localStorage.removeItem('pontea_results_v2'));
+  await page.goto('/ru/results/');
+  await expect(page).toHaveURL(/\/ru\/assessment\/$/, { timeout: 15_000 });
 });
 
 test('language switcher keeps mirrored path on localized content pages', async ({ page }) => {
-  await page.goto('/en/refund');
+  await page.goto('/assessment/');
 
-  const switcher = page.locator('nav[aria-label="Language selector"]');
-  await expect(switcher).toBeVisible();
-  await expect(switcher.getByRole('link', { name: 'RU' })).toHaveAttribute('href', '/ru/refund');
+  const toggle = page.getByRole('button', { name: 'Open language menu' });
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+
+  const menu = page.getByRole('menu', { name: 'Language selector' });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Русский' })).toHaveAttribute('href', '/ru/assessment/');
 });
 
-test('sitemap includes mirrored EN/RU hreflang pairs and excludes retired pages', async ({ request }) => {
-  const response = await request.get('/sitemap.xml');
-  expect(response.status()).toBe(200);
-  const xml = await response.text();
+test('indexable pages expose hreflang, while noindex pages do not', async ({ request }) => {
+  const assessmentResponse = await request.get('/assessment/');
+  expect(assessmentResponse.status()).toBe(200);
+  const assessmentHtml = await assessmentResponse.text();
 
-  expect(xml).toContain('<loc>https://pontea.school/en</loc>');
-  expect(xml).toContain('<loc>https://pontea.school/ru</loc>');
-  expect(xml).toContain('hreflang="en" href="https://pontea.school/en"');
-  expect(xml).toContain('hreflang="ru" href="https://pontea.school/ru"');
-  expect(xml).toContain('hreflang="x-default" href="https://pontea.school/en"');
+  expect(assessmentHtml).toContain('hrefLang=\"en\"');
+  expect(assessmentHtml).toContain('hrefLang=\"ru\"');
+  expect(assessmentHtml).toContain('hrefLang=\"x-default\"');
 
-  expect(xml).not.toContain('/consultation');
-  expect(xml).not.toContain('/methodology');
+  const resultsResponse = await request.get('/results/');
+  expect(resultsResponse.status()).toBe(200);
+  const resultsHtml = await resultsResponse.text();
+
+  expect(resultsHtml).toContain('noindex');
+  expect(resultsHtml).not.toContain('hrefLang=\"en\"');
+  expect(resultsHtml).not.toContain('hrefLang=\"ru\"');
+  expect(resultsHtml).not.toContain('hrefLang=\"x-default\"');
 });
 
-test('robots disallows private EN/RU result and thank-you pages', async ({ request }) => {
+test('sitemap index references per-language sitemaps and excludes deleted pages', async ({ request }) => {
+  const indexResponse = await request.get('/sitemap.xml');
+  expect(indexResponse.status()).toBe(200);
+  const indexXml = await indexResponse.text();
+
+  expect(indexXml).toContain('<loc>https://pontea.school/sitemap-en.xml</loc>');
+  expect(indexXml).toContain('<loc>https://pontea.school/sitemap-ru.xml</loc>');
+
+  const enResponse = await request.get('/sitemap-en.xml');
+  expect(enResponse.status()).toBe(200);
+  const enXml = await enResponse.text();
+
+  expect(enXml).toContain('<loc>https://pontea.school/</loc>');
+  expect(enXml).toContain('<loc>https://pontea.school/assessment/</loc>');
+  expect(enXml).not.toContain('/for-parents/');
+  expect(enXml).not.toContain('/refund/');
+  expect(enXml).not.toContain('/consultation/');
+  expect(enXml).not.toContain('/methodology/');
+
+  const ruResponse = await request.get('/sitemap-ru.xml');
+  expect(ruResponse.status()).toBe(200);
+  const ruXml = await ruResponse.text();
+
+  expect(ruXml).toContain('<loc>https://pontea.school/ru/</loc>');
+  expect(ruXml).toContain('<loc>https://pontea.school/ru/assessment/</loc>');
+  expect(ruXml).not.toContain('/ru/for-parents/');
+  expect(ruXml).not.toContain('/ru/refund/');
+});
+
+test('robots disallows private results and thank-you pages for EN root and RU', async ({ request }) => {
   const response = await request.get('/robots.txt');
   expect(response.status()).toBe(200);
   const robots = await response.text();
 
-  expect(robots).toContain('Disallow: /en/results');
+  expect(robots).toContain('Disallow: /results');
   expect(robots).toContain('Disallow: /ru/results');
-  expect(robots).toContain('Disallow: /en/thank-you');
+  expect(robots).toContain('Disallow: /thank-you');
   expect(robots).toContain('Disallow: /ru/thank-you');
+});
+
+test('deleted consultation and methodology pages return 404', async ({ request }) => {
+  const consultation = await request.get('/consultation/', { failOnStatusCode: false });
+  const methodology = await request.get('/methodology/', { failOnStatusCode: false });
+
+  expect(consultation.status()).toBe(404);
+  expect(methodology.status()).toBe(404);
 });

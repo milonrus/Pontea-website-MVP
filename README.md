@@ -42,7 +42,6 @@ NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED=...   # required RU payment link for Advanc
 NEXT_PUBLIC_RUB_PAYMENT_URL_FOUNDATION_INSTALLMENT=... # optional, RU installment link for Foundation
 NEXT_PUBLIC_RUB_PAYMENT_URL_ADVANCED_INSTALLMENT=...   # optional, RU installment link for Advanced
 NEXT_PUBLIC_SUPPORT_TELEGRAM_URL=...       # required, support button URL
-LOCALE_MODE=multilingual      # multilingual | ru_only
 OPENAI_PARSE_MODEL=gpt-5-mini
 OPENAI_PARSE_STREAM_MODEL=gpt-4o-mini
 OPENAI_DIFFICULTY_MODEL=gpt-4o-mini
@@ -57,24 +56,10 @@ npm run dev
 
 App will be available at `http://localhost:3000`.
 
-### Locale Mode
-- Locale mode defaults to `multilingual`.
-- To temporarily run RU-only launch mode, set:
-```bash
-LOCALE_MODE=ru_only
-```
-- RU-only mode behavior:
-  - `/` redirects to `/ru`
-  - `/en...` redirects to `/ru` (or `/ru/thank-you` for `/en/thank-you`)
-  - `/consultation` and `/methodology` redirect to `/ru`
-
-### RU-Only Launch Checklist
-Before RU-only production launch, set:
-```bash
-LOCALE_MODE=ru_only
-APP_URL=https://<your-production-domain>
-NEXT_PUBLIC_APP_URL=https://<your-production-domain>
-```
+### Language URL Structure
+- English is canonical at `/`.
+- Russian is served at `/ru/`.
+- Legacy `/en/*` paths redirect permanently to the matching English root path.
 
 ## Scripts
 ```bash
@@ -117,6 +102,9 @@ Tailwind CSS with a custom palette and fonts defined in `tailwind.config.cjs`.
 
 ## Deployment
 This is a standard Next.js app (see `vercel.json`). In production, builds go to the `dist/` directory (see `next.config.mjs`).
+
+## Multilingual SEO Logic
+- See `docs/multilingual-locale-seo-logic.md` for the routing, redirect, switcher, and SEO contract (`/` = EN, `/ru/` = RU).
 
 ---
 

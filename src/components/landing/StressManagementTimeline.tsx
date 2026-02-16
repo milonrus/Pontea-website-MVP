@@ -112,7 +112,7 @@ const translations = {
 
 const StressManagementTimeline: React.FC<StressManagementTimelineProps> = ({ locale = 'ru' }) => {
     const t = translations[locale];
-    const localePrefix = locale === 'en' ? '/en' : '/ru';
+    const localePrefix = locale === 'en' ? '' : '/ru';
     const WORRIES = getWorries(locale);
 
     return (
@@ -221,7 +221,7 @@ const StressManagementTimeline: React.FC<StressManagementTimelineProps> = ({ loc
                                 </div>
 
                                 <div className="flex justify-center lg:justify-end">
-                                    <Link href={`${localePrefix}/assessment`} className="block w-full max-w-[320px] lg:w-auto">
+                                    <Link href={`${localePrefix}/assessment/`} className="block w-full max-w-[320px] lg:w-auto">
                                         <Button
                                             size="lg"
                                             variant="primary"

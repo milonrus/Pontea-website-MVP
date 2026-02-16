@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Button from '@/components/shared/Button';
+import PreferRussianBanner from '@/components/shared/PreferRussianBanner';
 import { BookOpen, GraduationCap, PlayCircle, Trophy, Users } from 'lucide-react';
 
 interface HeroProps {
@@ -72,7 +73,7 @@ const StatBox = ({
 
 const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
   const t = translations[locale];
-  const localePrefix = locale === 'en' ? '/en' : '/ru';
+  const localePrefix = locale === 'en' ? '' : '/ru';
 
   return (
     <section className="relative pt-20 pb-12 lg:pt-28 lg:pb-16 overflow-hidden bg-gradient-to-br from-blue-50 via-white to-white">
@@ -80,6 +81,8 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-accent/5 to-transparent rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {locale === 'en' && <PreferRussianBanner />}
+
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <motion.div
             initial={{ opacity: 0, x: -16 }}
@@ -117,7 +120,7 @@ const Hero: React.FC<HeroProps> = ({ locale = 'ru' }) => {
 
             <div className="flex flex-col sm:flex-row gap-4 mb-8 max-w-2xl items-start">
               <div className="w-full sm:w-auto sm:min-w-[280px]">
-                <Link href={`${localePrefix}/assessment`} className="block">
+                <Link href={`${localePrefix}/assessment/`} className="block">
                   <Button
                     size="lg"
                     variant="primary"

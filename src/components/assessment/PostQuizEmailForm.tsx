@@ -116,7 +116,7 @@ const PostQuizEmailForm: React.FC<PostQuizEmailFormProps> = ({
   const [errors, setErrors] = useState<FormErrors>({});
 
   const t = translations[locale];
-  const localePrefix = locale === 'en' ? '/en' : '/ru';
+  const localePrefix = locale === 'en' ? '' : '/ru';
 
   const setFieldError = (field: keyof FormErrors, message: string) => {
     setErrors((prev) => {
@@ -281,7 +281,7 @@ const PostQuizEmailForm: React.FC<PostQuizEmailFormProps> = ({
               <span className="text-xs text-slate-600 leading-snug">
                 {t.consentPrefix}{' '}
                 <Link
-                  href={`${localePrefix}/legal/consent`}
+                  href={`${localePrefix}/legal/consent/`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline decoration-slate-400 underline-offset-2 text-slate-600"
@@ -312,7 +312,7 @@ const PostQuizEmailForm: React.FC<PostQuizEmailFormProps> = ({
           <p className="px-1 text-center text-[10px] leading-snug text-slate-500">
             {t.legalPrefix}{' '}
             <Link
-              href={`${localePrefix}/legal/privacy`}
+              href={`${localePrefix}/legal/privacy/`}
               target="_blank"
               rel="noopener noreferrer"
               className="underline decoration-slate-300 underline-offset-2 text-slate-500"

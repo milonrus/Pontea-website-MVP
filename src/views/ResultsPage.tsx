@@ -83,7 +83,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults, locale = 'ru'
   const router = useRouter();
   const [results, setResults] = useState<AssessmentResult | null>(initialResults ?? null);
   const weeksLeft = getWeeksUntilExam();
-  const localePrefix = locale === 'en' ? '/en' : '/ru';
+  const localePrefix = locale === 'en' ? '' : '/ru';
+  const localeHome = locale === 'en' ? '/' : '/ru/';
   const t = locale === 'en'
     ? {
         levelHeading: 'Your level',
@@ -110,7 +111,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults, locale = 'ru'
     if (initialResults) return;
     const data = localStorage.getItem('pontea_results_v2');
     if (!data) {
-      router.replace(`${localePrefix}/assessment`);
+      router.replace(`${localePrefix}/assessment/`);
       return;
     }
     setResults(JSON.parse(data));
@@ -175,9 +176,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ initialResults, locale = 'ru'
               <p className="text-blue-200 text-sm">{t.tagline}</p>
             </div>
             <div className="flex gap-8 text-sm text-blue-200">
-              <Link href={localePrefix} className="hover:text-white transition-colors">{t.methodology}</Link>
-              <Link href={localePrefix} className="hover:text-white transition-colors">{t.home}</Link>
-              <Link href={`${localePrefix}/assessment`} className="hover:text-white transition-colors">{t.assessment}</Link>
+              <Link href={localeHome} className="hover:text-white transition-colors">{t.methodology}</Link>
+              <Link href={localeHome} className="hover:text-white transition-colors">{t.home}</Link>
+              <Link href={`${localePrefix}/assessment/`} className="hover:text-white transition-colors">{t.assessment}</Link>
             </div>
             <div className="text-xs text-blue-300">
               &copy; 2026 Pontea School.

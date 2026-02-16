@@ -65,7 +65,7 @@ const ProgressTracking = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Link href="/ru/assessment">
+              <Link href="/assessment/">
                 <Button size="lg" className="shadow-lg shadow-primary/20 group w-full sm:w-auto">
                   Get Your Personal Matrix
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -278,7 +278,7 @@ const MethodologyPreview = () => (
       </div>
 
       <div className="text-center">
-        <Link href="/ru">
+        <Link href="/">
           <Button variant="outline" className="border-primary text-primary hover:bg-blue-50">
             Explore the Methodology
           </Button>
@@ -293,7 +293,7 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ locale = 'ru' }) => {
-  const localePrefix = locale === 'en' ? '/en' : '/ru';
+  const localeHome = locale === 'en' ? '/' : '/ru/';
   const supportTelegramUrl = getRequiredPublicEnv('NEXT_PUBLIC_SUPPORT_TELEGRAM_URL');
 
   const footerT = {
@@ -321,7 +321,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ locale = 'ru' }) => {
               <p className="text-blue-200 text-sm">{footerT.tagline}</p>
             </div>
             <div className="flex gap-8 text-sm text-blue-200">
-              <Link href={localePrefix} className="hover:text-white py-2">{footerT.methodology}</Link>
+              <Link href={localeHome} className="hover:text-white py-2">{footerT.methodology}</Link>
               <a href="#pricing-cards" className="hover:text-white py-2">{footerT.pricing}</a>
               <a href={supportTelegramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white py-2">
                 {footerT.contact}

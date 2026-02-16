@@ -16,16 +16,34 @@ const LOCALE_TO_OG_LOCALE = {
   ru: 'ru_RU'
 } as const;
 
-function inferLocaleFromCanonical(canonical: string): 'en' | 'ru' | null {
-  if (canonical === '/en' || canonical.startsWith('/en/')) {
-    return 'en';
+function ensureTrailingSlash(path: string): string {
+  if (!path || path === '/') {
+    return '/';
   }
 
-  if (canonical === '/ru' || canonical.startsWith('/ru/')) {
+  return path.endsWith('/') ? path : `${path}/`;
+}
+
+function inferLocaleFromCanonical(canonical: string): 'en' | 'ru' | null {
+  if (canonical === '/ru/' || canonical === '/ru' || canonical.startsWith('/ru/')) {
     return 'ru';
   }
 
+  if (canonical.startsWith('/')) {
+    return 'en';
+  }
+
   return null;
+}
+
+function normalizeLanguages(languages?: LanguageAlternates): LanguageAlternates | undefined {
+  if (!languages) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(languages).map(([key, value]) => [key, ensureTrailingSlash(String(value))])
+  ) as LanguageAlternates;
 }
 
 function withXDefault(languages?: LanguageAlternates): LanguageAlternates | undefined {
@@ -37,14 +55,10 @@ function withXDefault(languages?: LanguageAlternates): LanguageAlternates | unde
     return languages;
   }
 
-  if ('en' in languages && typeof languages.en === 'string') {
-    return {
-      ...languages,
-      'x-default': languages.en
-    } as LanguageAlternates;
-  }
-
-  return languages;
+  return {
+    ...languages,
+    'x-default': '/'
+  } as LanguageAlternates;
 }
 
 export function buildPageMetadata({
@@ -54,8 +68,9 @@ export function buildPageMetadata({
   languages,
   robots
 }: BuildPageMetadataOptions): Metadata {
-  const normalizedLanguages = withXDefault(languages);
-  const pageLocale = inferLocaleFromCanonical(canonical);
+  const normalizedCanonical = ensureTrailingSlash(canonical);
+  const normalizedLanguages = withXDefault(normalizeLanguages(languages));
+  const pageLocale = inferLocaleFromCanonical(normalizedCanonical);
   const openGraphLocale = pageLocale ? LOCALE_TO_OG_LOCALE[pageLocale] : undefined;
   const alternateLocale = normalizedLanguages
     ? (Object.keys(normalizedLanguages) as Array<keyof typeof normalizedLanguages>)
@@ -68,7 +83,7 @@ export function buildPageMetadata({
     title,
     description,
     alternates: {
-      canonical,
+      canonical: normalizedCanonical,
       ...(normalizedLanguages ? { languages: normalizedLanguages } : {})
     },
     ...(robots ? { robots } : {}),
@@ -78,7 +93,7 @@ export function buildPageMetadata({
       ...(alternateLocale.length > 0 ? { alternateLocale } : {}),
       title,
       description,
-      url: canonical,
+      url: normalizedCanonical,
       siteName: 'PONTEA School',
       images: [{ url: DEFAULT_SOCIAL_IMAGE }]
     },
