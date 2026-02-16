@@ -4,9 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import Header from '@/components/shared/Header';
-import { RU_LEGAL_DOC_IDS, getRuLegalDoc, isRuLegalDocId } from '@/lib/legal/ruLegalDocs';
+import { EN_LEGAL_DOC_IDS, getEnLegalDoc, isEnLegalDocId } from '@/lib/legal/enLegalDocs';
 import { buildPageMetadata } from '@/lib/seo/metadata';
-import { isRuOnlyMode } from '@/lib/i18n/mode';
 
 type DocPageParams = {
   doc: string;
@@ -17,7 +16,7 @@ type MarkdownLinkProps = ComponentPropsWithoutRef<'a'> & {
 };
 
 export function generateStaticParams() {
-  return RU_LEGAL_DOC_IDS.map((doc) => ({ doc }));
+  return EN_LEGAL_DOC_IDS.map((doc) => ({ doc }));
 }
 
 export async function generateMetadata({
@@ -26,64 +25,54 @@ export async function generateMetadata({
   params: Promise<DocPageParams>;
 }): Promise<Metadata> {
   const { doc } = await params;
-  const ruOnlyMode = isRuOnlyMode();
 
-  if (!isRuLegalDocId(doc)) {
+  if (!isEnLegalDocId(doc)) {
     return buildPageMetadata({
-      title: 'Юридические документы',
-      description:
-        'Политика обработки данных, согласие, условия использования и политика cookie.',
-      canonical: '/ru/legal',
-      ...(ruOnlyMode
-        ? {}
-        : {
-            languages: {
-              en: '/en/legal',
-              ru: '/ru/legal'
-            }
-          })
+      title: 'Legal Documents',
+      description: 'Privacy policy, consent, terms of use, and cookie policy.',
+      canonical: '/en/legal',
+      languages: {
+        en: '/en/legal',
+        ru: '/ru/legal'
+      }
     });
   }
 
-  const legalDoc = await getRuLegalDoc(doc);
+  const legalDoc = await getEnLegalDoc(doc);
 
   return buildPageMetadata({
     title: legalDoc.title,
     description: `${legalDoc.title} PONTEA School.`,
-    canonical: `/ru/legal/${doc}`,
-    ...(ruOnlyMode
-      ? {}
-      : {
-          languages: {
-            en: `/en/legal/${doc}`,
-            ru: `/ru/legal/${doc}`
-          }
-        })
+    canonical: `/en/legal/${doc}`,
+    languages: {
+      en: `/en/legal/${doc}`,
+      ru: `/ru/legal/${doc}`
+    }
   });
 }
 
-const RuLegalDocPage = async ({
+const EnLegalDocPage = async ({
   params
 }: {
   params: Promise<DocPageParams>;
 }) => {
   const { doc } = await params;
 
-  if (!isRuLegalDocId(doc)) {
+  if (!isEnLegalDocId(doc)) {
     notFound();
   }
 
-  const legalDoc = await getRuLegalDoc(doc);
+  const legalDoc = await getEnLegalDoc(doc);
 
   return (
     <div className="min-h-screen bg-white">
-      <Header locale="ru" />
+      <Header locale="en" />
       <div className="mx-auto max-w-7xl px-4 pb-12 pt-28 text-black">
         <Link
-          href="/ru/legal"
+          href="/en/legal"
           className="mb-6 inline-block text-sm font-medium text-black underline underline-offset-4 transition-colors hover:text-black/70"
         >
-          К документам
+          Back to documents
         </Link>
 
         <ReactMarkdown
@@ -122,4 +111,4 @@ const RuLegalDocPage = async ({
   );
 };
 
-export default RuLegalDocPage;
+export default EnLegalDocPage;

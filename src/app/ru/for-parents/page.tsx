@@ -1,12 +1,23 @@
 import type { Metadata } from 'next';
 import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
 import { buildPageMetadata } from '@/lib/seo/metadata';
+import { isRuOnlyMode } from '@/lib/i18n/mode';
+
+const ruOnlyMode = isRuOnlyMode();
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Для родителей',
   description:
     'Страница для родителей о формате обучения, контроле прогресса и поддержке учеников.',
-  canonical: '/ru/for-parents'
+  canonical: '/ru/for-parents',
+  ...(ruOnlyMode
+    ? {}
+    : {
+        languages: {
+          en: '/en/for-parents',
+          ru: '/ru/for-parents'
+        }
+      })
 });
 
 const ForParentsPage = () => {

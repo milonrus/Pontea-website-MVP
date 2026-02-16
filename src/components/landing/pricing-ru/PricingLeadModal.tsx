@@ -12,8 +12,8 @@ import {
 import Button from '@/components/shared/Button';
 import Modal from '@/components/shared/Modal';
 import { getOptionalPublicEnv, getRequiredPublicEnv } from '@/lib/env/public';
-import { RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN } from './data';
-import { RuPricingPlan } from './types';
+import { getPricingPrimaryCtaLabel } from './data';
+import { PricingLocale, RuPricingPlan } from './types';
 
 type ModalStep = 'currency' | 'lead_form' | 'success';
 type PaymentOptionId = 'rub_full' | 'rub_installment' | 'eur';
@@ -22,6 +22,7 @@ interface PricingLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
   plan: RuPricingPlan | null;
+  locale?: PricingLocale;
 }
 
 interface LeadFormState {
@@ -112,12 +113,170 @@ const mentorshipFieldClassName =
   'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20';
 const mentorshipErrorClassName = 'mt-1 text-xs text-red-500';
 
-const MENTORSHIP_CONSULTATION_POINTS = [
-  'Определим цели поступления',
-  'Обсудим план обучения',
-  'Покажем, как устроена школа',
-  'Ответим на все вопросы',
-];
+const PRICING_MODAL_TEXT = {
+  en: {
+    mentorshipPoints: [
+      'Define admission goals',
+      'Discuss the study plan',
+      'Show how the school works',
+      'Answer all your questions',
+    ],
+    modalTitleCurrency: 'Choose payment method',
+    modalTitleLeadFormMentorship: 'Application for Individual plan',
+    modalTitleLeadFormEur: 'Pay in EUR',
+    modalTitleSuccess: 'Application sent',
+    errors: {
+      firstName: 'Enter name (minimum 2 characters).',
+      fullName: 'Enter first and last name (at least two words).',
+      fullNameLatin: 'First and last name must be in Latin letters.',
+      email: 'Enter a valid email.',
+      phone: 'Enter phone number in international format.',
+      countryLatin: 'Enter country in Latin letters.',
+      cityLatin: 'Enter city in Latin letters.',
+      postalCodeLatin: 'Enter postal code in Latin letters and numbers (for example, 20121 or SW1A 1AA).',
+      addressLatin: 'Enter address in Latin letters.',
+      countryRequired: 'Enter country.',
+      cityRequired: 'Enter city.',
+      postalCodeRequired: 'Enter postal code.',
+      addressRequired: 'Enter address.',
+      consentPersonalData: 'Consent to personal data processing is required.',
+      consentOffer: 'To continue, accept the public offer terms.',
+      submitFailed: 'Failed to submit application. Please try again.',
+      submitNetworkFailed: 'Network error. Check your connection and try again.',
+      retryFailed: 'Failed to resend the application. Please try again.',
+      retryNetworkFailed: 'Network error during retry.',
+      paymentLinkUnavailable: 'Payment link is temporarily unavailable. Please try later.',
+      installmentLinkUnavailable: 'Installment payment link is temporarily unavailable. Please try later.',
+    },
+    unsupportedPlan: 'This payment format is available only for Starter and Core plans.',
+    proceedToCheckout: 'Continue to checkout',
+    proceedToPayment: 'Proceed to payment',
+    paymentOptionRubFullTitle: 'Pay with RU card',
+    paymentOptionRubFullSubtitle: 'One-time payment in RUB',
+    paymentOptionInstallmentTitle: 'Installment payment',
+    paymentOptionInstallmentSubtitle: 'Monthly payment',
+    paymentOptionEurTitle: 'Foreign bank card (EUR)',
+    paymentOptionEurSubtitle: 'Bank transfer by invoice in EUR',
+    fromLabel: 'from',
+    installmentAmountPrefix: 'x',
+    accessNotePrefix: 'Access for 6 months. Plan',
+    acceptOfferPrefix: 'I accept the',
+    acceptOfferLink: 'public offer terms',
+    mentorshipHeading: 'Personal preparation format',
+    fillDetails: 'Fill in your details',
+    labelName: 'Name',
+    placeholderName: 'Your name',
+    labelPhone: 'Phone',
+    placeholderPhone: '+39 333 123 45 67',
+    consentPersonalDataPrefix: 'I consent to processing of',
+    consentPersonalDataLink: 'personal data',
+    mentorshipSubmitIdle: 'Book consultation',
+    mentorshipSubmitLoading: 'Saving...',
+    mentorshipLegalPrefix: 'By clicking “Book consultation”, you confirm that you have read the',
+    privacyPolicyLink: 'Privacy Policy',
+    contactTelegram: 'Or contact us via Telegram',
+    writeButton: 'Write',
+    eurTariffPrefix: 'Plan',
+    eurTariffInfo: 'We will send a contract and invoice with bank transfer details to our company account.',
+    labelFullName: 'First and last name',
+    contractHeading: 'For contract details',
+    labelCountry: 'Country',
+    labelCity: 'City',
+    labelPostalCode: 'Postal code',
+    labelAddress: 'Address',
+    consentShortPrefix: 'I agree to processing of',
+    submitApplication: 'Submit application',
+    submitLegalPrefix: 'By clicking “Submit application”, you confirm that you have read the',
+    successTitle: 'Thank you, your application was received',
+    successDescription: 'We will contact you within one business day to confirm the next steps.',
+    orderNumber: 'Order number:',
+    close: 'Close',
+    back: 'Back',
+    support: 'Contact support',
+    retry: 'Retry sending',
+  },
+  ru: {
+    mentorshipPoints: [
+      'Определим цели поступления',
+      'Обсудим план обучения',
+      'Покажем, как устроена школа',
+      'Ответим на все вопросы',
+    ],
+    modalTitleCurrency: 'Выберите способ оплаты',
+    modalTitleLeadFormMentorship: 'Заявка на тариф «Индивидуальный»',
+    modalTitleLeadFormEur: 'Оплата в евро',
+    modalTitleSuccess: 'Заявка отправлена',
+    errors: {
+      firstName: 'Введите имя (минимум 2 символа).',
+      fullName: 'Введите имя и фамилию (минимум два слова).',
+      fullNameLatin: 'Имя и фамилия должны быть латиницей.',
+      email: 'Введите корректный email.',
+      phone: 'Введите номер телефона в международном формате.',
+      countryLatin: 'Укажите страну латиницей.',
+      cityLatin: 'Укажите город латиницей.',
+      postalCodeLatin: 'Укажите индекс латиницей и цифрами (например, 20121 или SW1A 1AA).',
+      addressLatin: 'Укажите адрес латиницей.',
+      countryRequired: 'Укажите страну.',
+      cityRequired: 'Укажите город.',
+      postalCodeRequired: 'Укажите почтовый индекс.',
+      addressRequired: 'Укажите адрес.',
+      consentPersonalData: 'Нужно согласие на обработку персональных данных.',
+      consentOffer: 'Чтобы продолжить, примите условия публичной оферты.',
+      submitFailed: 'Не удалось отправить заявку. Попробуйте ещё раз.',
+      submitNetworkFailed: 'Ошибка сети. Проверьте соединение и повторите отправку.',
+      retryFailed: 'Не удалось повторно отправить заявку. Попробуйте ещё раз.',
+      retryNetworkFailed: 'Ошибка сети при повторной отправке.',
+      paymentLinkUnavailable: 'Ссылка на оплату временно недоступна. Попробуйте позже.',
+      installmentLinkUnavailable: 'Ссылка на оплату в рассрочку временно недоступна. Попробуйте позже.',
+    },
+    unsupportedPlan: 'Оплата в этом формате доступна только для тарифов Стартовый и Основной.',
+    proceedToCheckout: 'Перейти к оформлению',
+    proceedToPayment: 'Перейти к оплате',
+    paymentOptionRubFullTitle: 'Оплата картой РФ',
+    paymentOptionRubFullSubtitle: 'Один платеж в рублях',
+    paymentOptionInstallmentTitle: 'Оплата частями',
+    paymentOptionInstallmentSubtitle: 'Ежемесячный платёж',
+    paymentOptionEurTitle: 'Карты зарубежного банка (EUR)',
+    paymentOptionEurSubtitle: 'Перевод по реквизитам в евро',
+    fromLabel: 'от',
+    installmentAmountPrefix: 'х',
+    accessNotePrefix: 'Доступ на 6 месяцев. Тариф',
+    acceptOfferPrefix: 'Принимаю условия',
+    acceptOfferLink: 'публичной оферты',
+    mentorshipHeading: 'Персональный формат подготовки',
+    fillDetails: 'Заполните данные',
+    labelName: 'Имя',
+    placeholderName: 'Ваше имя',
+    labelPhone: 'Телефон',
+    placeholderPhone: '+7 999 123 45 67',
+    consentPersonalDataPrefix: 'Даю согласие на обработку',
+    consentPersonalDataLink: 'персональных данных',
+    mentorshipSubmitIdle: 'Записаться на консультацию',
+    mentorshipSubmitLoading: 'Сохраняем...',
+    mentorshipLegalPrefix: 'Нажимая «Записаться на консультацию», вы подтверждаете ознакомление с',
+    privacyPolicyLink: 'Политикой обработки персональных данных',
+    contactTelegram: 'Или свяжитесь с нами в Telegram',
+    writeButton: 'Написать',
+    eurTariffPrefix: 'Тариф',
+    eurTariffInfo: 'Мы отправим договор и инвойс с реквизитами для банковского перевода на счет нашей компании.',
+    labelFullName: 'Имя и фамилия',
+    contractHeading: 'Для оформления договора',
+    labelCountry: 'Страна',
+    labelCity: 'Город',
+    labelPostalCode: 'Индекс',
+    labelAddress: 'Адрес',
+    consentShortPrefix: 'Согласен на обработку',
+    submitApplication: 'Отправить заявку',
+    submitLegalPrefix: 'Нажимая «Отправить заявку», вы подтверждаете ознакомление с',
+    successTitle: 'Спасибо, заявка получена',
+    successDescription: 'Свяжемся с вами в течение рабочего дня, чтобы согласовать следующие шаги.',
+    orderNumber: 'Номер заказа:',
+    close: 'Закрыть',
+    back: 'Назад',
+    support: 'Написать в поддержку',
+    retry: 'Повторить отправку',
+  },
+} as const;
 
 const normalizeWhitespace = (value: string) => value.trim().replace(/\s+/g, ' ');
 const parseOrderNumber = (value: unknown): number | null =>
@@ -199,7 +358,12 @@ const normalizePhoneToE164 = (rawPhone: string): string | null => {
   return E164_PHONE_REGEX.test(normalized) ? normalized : null;
 };
 
-const getTextFieldFormatError = (field: LeadTextField, rawValue: string): string => {
+const getTextFieldFormatError = (
+  field: LeadTextField,
+  rawValue: string,
+  locale: PricingLocale
+): string => {
+  const t = PRICING_MODAL_TEXT[locale];
   const normalized = normalizeWhitespace(rawValue);
   if (!normalized) {
     return '';
@@ -207,45 +371,45 @@ const getTextFieldFormatError = (field: LeadTextField, rawValue: string): string
 
   if (field === 'firstName') {
     if (normalized.length < 2) {
-      return 'Введите имя (минимум 2 символа).';
+      return t.errors.firstName;
     }
     return '';
   }
 
   if (field === 'fullName') {
     if (!parseFullName(normalized)) {
-      return 'Введите имя и фамилию (минимум два слова).';
+      return t.errors.fullName;
     }
-    return isLatinTextValue(normalized) ? '' : 'Имя и фамилия должны быть латиницей.';
+    return isLatinTextValue(normalized) ? '' : t.errors.fullNameLatin;
   }
 
   if (field === 'email') {
-    return EMAIL_REGEX.test(normalized) ? '' : 'Введите корректный email.';
+    return EMAIL_REGEX.test(normalized) ? '' : t.errors.email;
   }
 
   if (field === 'phone') {
-    return normalizePhoneToE164(rawValue) ? '' : 'Введите номер телефона в международном формате.';
+    return normalizePhoneToE164(rawValue) ? '' : t.errors.phone;
   }
 
   if (field === 'contractCountry') {
-    return isLatinTextValue(normalized) ? '' : 'Укажите страну латиницей.';
+    return isLatinTextValue(normalized) ? '' : t.errors.countryLatin;
   }
 
   if (field === 'contractCity') {
-    return isLatinTextValue(normalized) ? '' : 'Укажите город латиницей.';
+    return isLatinTextValue(normalized) ? '' : t.errors.cityLatin;
   }
 
   if (field === 'contractPostalCode') {
     return POSTAL_CODE_REGEX.test(normalized)
       ? ''
-      : 'Укажите индекс латиницей и цифрами (например, 20121 или SW1A 1AA).';
+      : t.errors.postalCodeLatin;
   }
 
   if (
     !LATIN_ADDRESS_REGEX.test(normalized) ||
     !HAS_LATIN_LETTER_REGEX.test(normalized)
   ) {
-    return 'Укажите адрес латиницей.';
+    return t.errors.addressLatin;
   }
 
   return '';
@@ -255,6 +419,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   isOpen,
   onClose,
   plan,
+  locale = 'ru',
 }) => {
   const [step, setStep] = useState<ModalStep>('currency');
   const [leadForm, setLeadForm] = useState<LeadFormState>(DEFAULT_LEAD_FORM);
@@ -265,6 +430,8 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentOptionId | null>(null);
+  const t = PRICING_MODAL_TEXT[locale];
+  const localePrefix = locale === 'en' ? '/en' : '/ru';
 
   const isMentorship = plan?.id === 'mentorship';
 
@@ -273,8 +440,8 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       return '';
     }
 
-    return RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN[plan.id];
-  }, [plan]);
+    return getPricingPrimaryCtaLabel(locale, plan.id);
+  }, [plan, locale]);
 
   useEffect(() => {
     if (!isOpen || !plan) {
@@ -297,15 +464,15 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   }
 
   const modalTitleByStep: Record<ModalStep, string> = {
-    currency: 'Выберите способ оплаты',
-    lead_form: isMentorship ? 'Заявка на тариф «Индивидуальный»' : 'Оплата в евро',
-    success: 'Заявка отправлена',
+    currency: t.modalTitleCurrency,
+    lead_form: isMentorship ? t.modalTitleLeadFormMentorship : t.modalTitleLeadFormEur,
+    success: t.modalTitleSuccess,
   };
 
   const getTrackingContext = () => {
     if (typeof window === 'undefined') {
       return {
-        pagePath: '/ru',
+        pagePath: localePrefix,
         referrer: undefined as string | undefined,
         utmSource: undefined as string | undefined,
         utmMedium: undefined as string | undefined,
@@ -341,8 +508,8 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     isChecked: boolean
   ) => {
     const messageByField: Record<'consentPersonalData' | 'consentOffer', string> = {
-      consentPersonalData: 'Нужно согласие на обработку персональных данных.',
-      consentOffer: 'Чтобы продолжить, примите условия публичной оферты.',
+      consentPersonalData: t.errors.consentPersonalData,
+      consentOffer: t.errors.consentOffer,
     };
 
     setErrors((prev) => {
@@ -357,7 +524,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
   };
 
   const handleTextFieldBlur = (field: LeadTextField, value: string) => {
-    const formatError = getTextFieldFormatError(field, value);
+    const formatError = getTextFieldFormatError(field, value, locale);
     setErrors((prev) => {
       const next = { ...prev };
       if (formatError) {
@@ -381,15 +548,15 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
     if (isMentorship) {
       if (!normalizedFirstName || normalizedFirstName.length < 2) {
-        nextErrors.firstName = 'Введите имя (минимум 2 символа).';
+        nextErrors.firstName = t.errors.firstName;
       }
 
       if (!normalizedPhone) {
-        nextErrors.phone = 'Введите номер телефона в международном формате.';
+        nextErrors.phone = t.errors.phone;
       }
 
       if (!leadForm.consentPersonalData) {
-        nextErrors.consentPersonalData = 'Нужно согласие на обработку персональных данных.';
+        nextErrors.consentPersonalData = t.errors.consentPersonalData;
       }
 
       return {
@@ -402,53 +569,52 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     const parsedFullName = parseFullName(normalizedFullName);
 
     if (!parsedFullName) {
-      nextErrors.fullName = 'Введите имя и фамилию (минимум два слова).';
+      nextErrors.fullName = t.errors.fullName;
     } else if (!isLatinTextValue(normalizedFullName)) {
-      nextErrors.fullName = 'Имя и фамилия должны быть латиницей.';
+      nextErrors.fullName = t.errors.fullNameLatin;
     }
 
     if (!EMAIL_REGEX.test(leadForm.email.trim())) {
-      nextErrors.email = 'Введите корректный email.';
+      nextErrors.email = t.errors.email;
     }
 
     if (!normalizedPhone) {
-      nextErrors.phone = 'Введите номер телефона в международном формате.';
+      nextErrors.phone = t.errors.phone;
     }
 
     if (!normalizedCountry) {
-      nextErrors.contractCountry = 'Укажите страну.';
+      nextErrors.contractCountry = t.errors.countryRequired;
     } else if (!isLatinTextValue(normalizedCountry)) {
-      nextErrors.contractCountry = 'Укажите страну латиницей.';
+      nextErrors.contractCountry = t.errors.countryLatin;
     }
 
     if (!normalizedCity) {
-      nextErrors.contractCity = 'Укажите город.';
+      nextErrors.contractCity = t.errors.cityRequired;
     } else if (!isLatinTextValue(normalizedCity)) {
-      nextErrors.contractCity = 'Укажите город латиницей.';
+      nextErrors.contractCity = t.errors.cityLatin;
     }
 
     if (!normalizedPostalCode) {
-      nextErrors.contractPostalCode = 'Укажите почтовый индекс.';
+      nextErrors.contractPostalCode = t.errors.postalCodeRequired;
     } else if (!POSTAL_CODE_REGEX.test(normalizedPostalCode)) {
-      nextErrors.contractPostalCode =
-        'Укажите индекс латиницей и цифрами (например, 20121 или SW1A 1AA).';
+      nextErrors.contractPostalCode = t.errors.postalCodeLatin;
     }
 
     if (!normalizedAddress) {
-      nextErrors.contractAddress = 'Укажите адрес.';
+      nextErrors.contractAddress = t.errors.addressRequired;
     } else if (
       !LATIN_ADDRESS_REGEX.test(normalizedAddress) ||
       !HAS_LATIN_LETTER_REGEX.test(normalizedAddress)
     ) {
-      nextErrors.contractAddress = 'Укажите адрес латиницей.';
+      nextErrors.contractAddress = t.errors.addressLatin;
     }
 
     if (!leadForm.consentPersonalData) {
-      nextErrors.consentPersonalData = 'Нужно согласие на обработку персональных данных.';
+      nextErrors.consentPersonalData = t.errors.consentPersonalData;
     }
 
     if (!leadForm.consentOffer) {
-      nextErrors.consentOffer = 'Чтобы продолжить, примите условия публичной оферты.';
+      nextErrors.consentOffer = t.errors.consentOffer;
     }
 
     return {
@@ -521,7 +687,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       }
 
       if (!response.ok) {
-        setApiError(data?.error || 'Не удалось отправить заявку. Попробуйте ещё раз.');
+        setApiError(data?.error || t.errors.submitFailed);
         setRetryLeadId(typeof data?.leadId === 'string' ? data.leadId : null);
         return;
       }
@@ -531,7 +697,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       setErrors({});
     } catch (error) {
       console.error('Lead submit failed:', error);
-      setApiError('Ошибка сети. Проверьте соединение и повторите отправку.');
+      setApiError(t.errors.submitNetworkFailed);
     } finally {
       setIsSubmitting(false);
     }
@@ -563,7 +729,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       }
 
       if (!response.ok) {
-        setApiError(data?.error || 'Не удалось повторно отправить заявку. Попробуйте ещё раз.');
+        setApiError(data?.error || t.errors.retryFailed);
         return;
       }
 
@@ -571,7 +737,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       setRetryLeadId(null);
     } catch (error) {
       console.error('Webhook retry failed:', error);
-      setApiError('Ошибка сети при повторной отправке.');
+      setApiError(t.errors.retryNetworkFailed);
     } finally {
       setIsRetrying(false);
     }
@@ -593,7 +759,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
     setErrors((prev) => ({
       ...prev,
-      consentOffer: 'Чтобы продолжить, примите условия публичной оферты.',
+      consentOffer: t.errors.consentOffer,
     }));
     return false;
   };
@@ -602,7 +768,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     if (plan.id !== 'foundation' && plan.id !== 'advanced') {
       return (
         <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Оплата в этом формате доступна только для тарифов Стартовый и Основной.
+          {t.unsupportedPlan}
         </div>
       );
     }
@@ -617,7 +783,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     const shouldShowOfferConsent =
       hasSelectedPaymentOption && selectedPaymentOption !== 'eur';
     const actionButtonLabel =
-      selectedPaymentOption === 'eur' ? 'Перейти к оформлению' : 'Перейти к оплате';
+      selectedPaymentOption === 'eur' ? t.proceedToCheckout : t.proceedToPayment;
 
     const clearOfferConsentError = () => {
       setErrors((prev) => {
@@ -646,7 +812,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
         const paymentUrl = RUB_PAYMENT_URL_BY_PLAN[plan.id];
 
         if (!paymentUrl) {
-          setApiError('Ссылка на оплату временно недоступна. Попробуйте позже.');
+          setApiError(t.errors.paymentLinkUnavailable);
           return;
         }
 
@@ -658,7 +824,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
         const paymentUrl = RUB_INSTALLMENT_PAYMENT_URL_BY_PLAN[plan.id];
 
         if (!paymentUrl) {
-          setApiError('Ссылка на оплату в рассрочку временно недоступна. Попробуйте позже.');
+          setApiError(t.errors.installmentLinkUnavailable);
           return;
         }
 
@@ -679,34 +845,42 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
     };
 
     const formatEurAmount = (value: number) =>
-      new Intl.NumberFormat('ru-RU', {
+      new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'ru-RU', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
       }).format(value);
 
-    const paymentOptions: PaymentOption[] = [
-      {
+    const paymentOptionsById: Record<PaymentOptionId, PaymentOption> = {
+      rub_full: {
         id: 'rub_full',
         amount: formatRubAmount(rubFullPrice),
-        title: 'Оплата картой РФ',
-        subtitle: 'Один платеж в рублях',
+        title: t.paymentOptionRubFullTitle,
+        subtitle: t.paymentOptionRubFullSubtitle,
       },
-      {
+      rub_installment: {
         id: 'rub_installment',
-        amount: `от ${formatRubAmount(rubInstallmentMonthly)}`,
-        amountHint: `х ${INSTALLMENT_MONTHS} = ${formatRubAmount(rubInstallmentTotal)}`,
-        title: `Оплата частями`,
-        subtitle: 'Ежемесячный платёж',
+        amount: `${t.fromLabel} ${formatRubAmount(rubInstallmentMonthly)}`,
+        amountHint: `${t.installmentAmountPrefix} ${INSTALLMENT_MONTHS} = ${formatRubAmount(rubInstallmentTotal)}`,
+        title: t.paymentOptionInstallmentTitle,
+        subtitle: t.paymentOptionInstallmentSubtitle,
       },
-      {
+      eur: {
         id: 'eur',
         amount: `€${formatEurAmount(plan.price)}`,
-        title: 'Карты зарубежного банка (EUR)',
-        subtitle: 'Перевод по реквизитам в евро',
+        title: t.paymentOptionEurTitle,
+        subtitle: t.paymentOptionEurSubtitle,
       },
-    ];
+    };
 
-    const accessNote = `Доступ на 6 месяцев. Тариф ${plan.name}.`;
+    const paymentOptionOrder: PaymentOptionId[] = locale === 'en'
+      ? ['eur', 'rub_full', 'rub_installment']
+      : ['rub_full', 'rub_installment', 'eur'];
+
+    const paymentOptions: PaymentOption[] = paymentOptionOrder.map(
+      (id) => paymentOptionsById[id]
+    );
+
+    const accessNote = `${t.accessNotePrefix} ${plan.name}.`;
 
     const submitCurrencyStep = (event: React.FormEvent) => {
       event.preventDefault();
@@ -800,14 +974,14 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
               className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
             />
             <span>
-              Принимаю условия{' '}
+              {t.acceptOfferPrefix}{' '}
               <a
-                href="/ru/legal/terms"
+                href={`${localePrefix}/legal/terms`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-primary underline underline-offset-2"
               >
-                публичной оферты
+                {t.acceptOfferLink}
               </a>
             </span>
           </label>
@@ -840,11 +1014,11 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
         <div className="overflow-hidden rounded-2xl bg-white md:-m-5 md:grid md:grid-cols-[1.03fr_0.97fr]">
           <section className="bg-gray-50 px-4 py-5 sm:px-6 sm:py-6 md:px-7 md:py-7">
             <h4 className="max-w-[16ch] text-4xl font-display font-bold leading-[0.95] text-primary sm:text-5xl">
-              Персональный формат подготовки
+              {t.mentorshipHeading}
             </h4>
 
             <ul className="mt-8 border-y border-gray-200">
-              {MENTORSHIP_CONSULTATION_POINTS.map((point) => (
+              {t.mentorshipPoints.map((point) => (
                 <li
                   key={point}
                   className="flex items-start gap-3 border-b border-gray-200 py-3 text-lg leading-snug text-gray-700 last:border-b-0"
@@ -858,13 +1032,13 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
           <section className="border-t border-gray-100 bg-brand-purple/25 px-4 py-5 sm:px-6 sm:py-6 md:border-l md:border-t-0 md:px-7 md:py-7">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/70">
-              Заполните данные
+              {t.fillDetails}
             </p>
 
             <div className="mt-6 space-y-4">
               <div className="space-y-1">
                 <label htmlFor="lead-first-name" className={mentorshipLabelClassName}>
-                  Имя
+                  {t.labelName}
                 </label>
                 <div className="relative">
                   <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -877,7 +1051,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                     onChange={(event) => setLeadForm((prev) => ({ ...prev, firstName: event.target.value }))}
                     onBlur={() => handleTextFieldBlur('firstName', leadForm.firstName)}
                     className={`${mentorshipFieldClassName} pl-10`}
-                    placeholder="Ваше имя"
+                    placeholder={t.placeholderName}
                   />
                 </div>
                 {errors.firstName && <p className={mentorshipErrorClassName}>{errors.firstName}</p>}
@@ -885,7 +1059,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
               <div className="space-y-1">
                 <label htmlFor="lead-phone-mentorship" className={mentorshipLabelClassName}>
-                  Телефон
+                  {t.labelPhone}
                 </label>
                 <div className="relative">
                   <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -898,7 +1072,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                     onChange={(event) => setLeadForm((prev) => ({ ...prev, phone: event.target.value }))}
                     onBlur={() => handleTextFieldBlur('phone', leadForm.phone)}
                     className={`${mentorshipFieldClassName} pl-10`}
-                    placeholder="+7 999 123 45 67"
+                    placeholder={t.placeholderPhone}
                   />
                 </div>
                 {errors.phone && <p className={mentorshipErrorClassName}>{errors.phone}</p>}
@@ -918,14 +1092,14 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                   className="mt-0.5 h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30"
                 />
                 <span className="text-xs leading-snug text-slate-600">
-                  Даю согласие на обработку{' '}
+                  {t.consentPersonalDataPrefix}{' '}
                   <a
-                    href="/ru/legal/consent"
+                    href={`${localePrefix}/legal/consent`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline decoration-slate-400 underline-offset-2 text-slate-600"
                   >
-                    персональных данных
+                    {t.consentPersonalDataLink}
                   </a>
                 </span>
               </label>
@@ -942,20 +1116,20 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                 disabled={isSubmitting}
                 className="group !py-3"
               >
-                {isSubmitting ? 'Сохраняем...' : 'Записаться на консультацию'}
+                {isSubmitting ? t.mentorshipSubmitLoading : t.mentorshipSubmitIdle}
                 {!isSubmitting && (
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 )}
               </Button>
               <p className="px-1 text-center text-[10px] leading-snug text-slate-500">
-                Нажимая «Записаться на консультацию», вы подтверждаете ознакомление с{' '}
+                {t.mentorshipLegalPrefix}{' '}
                 <a
-                  href="/ru/legal/privacy"
+                  href={`${localePrefix}/legal/privacy`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline decoration-slate-300 underline-offset-2 text-slate-500"
                 >
-                  Политикой обработки персональных данных
+                  {t.privacyPolicyLink}
                 </a>
                 .
               </p>
@@ -964,7 +1138,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             <div className="mt-6 border-t border-gray-200 pt-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-slate-700 sm:text-base">
-                  Или свяжитесь с нами в Telegram
+                  {t.contactTelegram}
                 </p>
                 <a
                   href={SUPPORT_TELEGRAM_URL}
@@ -972,7 +1146,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center rounded-lg border-2 border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
                 >
-                  Написать
+                  {t.writeButton}
                 </a>
               </div>
             </div>
@@ -981,15 +1155,15 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       ) : (
         <>
           <div className="space-y-1">
-            <p className="text-lg font-display font-bold text-primary">Тариф {plan.name}. €{plan.price}</p>
+            <p className="text-lg font-display font-bold text-primary">{t.eurTariffPrefix} {plan.name}. €{plan.price}</p>
             <p className="text-sm leading-snug text-slate-600">
-              Мы отправим договор и инвойс с реквизитами для банковского перевода на счет нашей компании.
+              {t.eurTariffInfo}
             </p>
           </div>
 
           <div className="space-y-1">
             <label htmlFor="lead-full-name" className={eurLabelClassName}>
-              Имя и фамилия
+              {t.labelFullName}
             </label>
             <input
               id="lead-full-name"
@@ -1007,7 +1181,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
           <div className="space-y-1">
             <label htmlFor="lead-phone-eur" className={eurLabelClassName}>
-              Телефон
+              {t.labelPhone}
             </label>
             <input
               id="lead-phone-eur"
@@ -1018,7 +1192,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
               onChange={(event) => setLeadForm((prev) => ({ ...prev, phone: event.target.value }))}
               onBlur={() => handleTextFieldBlur('phone', leadForm.phone)}
               className={eurFieldClassName}
-              placeholder="+7 999 123 45 67"
+              placeholder={t.placeholderPhone}
             />
             {errors.phone && <p className={errorClassName}>{errors.phone}</p>}
           </div>
@@ -1041,12 +1215,12 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             {errors.email && <p className={errorClassName}>{errors.email}</p>}
           </div>
 
-          <h4 className="pt-1 text-lg font-display font-bold text-primary">Для оформления договора</h4>
+          <h4 className="pt-1 text-lg font-display font-bold text-primary">{t.contractHeading}</h4>
 
           <div className="grid gap-2.5 sm:grid-cols-3">
             <div className="space-y-1">
               <label htmlFor="lead-contract-country" className={eurLabelClassName}>
-                Страна
+                {t.labelCountry}
               </label>
               <input
                 id="lead-contract-country"
@@ -1066,7 +1240,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
             <div className="space-y-1">
               <label htmlFor="lead-contract-city" className={eurLabelClassName}>
-                Город
+                {t.labelCity}
               </label>
               <input
                 id="lead-contract-city"
@@ -1084,7 +1258,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
             <div className="space-y-1">
               <label htmlFor="lead-contract-postal-code" className={eurLabelClassName}>
-                Индекс
+                {t.labelPostalCode}
               </label>
               <input
                 id="lead-contract-postal-code"
@@ -1105,7 +1279,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
           <div className="space-y-1">
             <label htmlFor="lead-contract-address" className={eurLabelClassName}>
-              Адрес
+              {t.labelAddress}
             </label>
             <input
               id="lead-contract-address"
@@ -1134,14 +1308,14 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                 className="mt-0.5 h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30"
               />
               <span className="text-[11px] leading-snug text-slate-600">
-                Согласен на обработку{' '}
+                {t.consentShortPrefix}{' '}
                 <a
-                  href="/ru/legal/consent"
+                  href={`${localePrefix}/legal/consent`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline decoration-slate-400 underline-offset-2 text-slate-600"
                 >
-                  персональных данных
+                  {t.consentPersonalDataLink}
                 </a>
               </span>
             </label>
@@ -1161,14 +1335,14 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                 className="mt-0.5 h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30"
               />
               <span className="text-[11px] leading-snug text-slate-600">
-                Принимаю условия{' '}
+                {t.acceptOfferPrefix}{' '}
                 <a
-                  href="/ru/legal/terms"
+                  href={`${localePrefix}/legal/terms`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline decoration-slate-400 underline-offset-2 transition-colors hover:text-primary"
                 >
-                  публичной оферты
+                  {t.acceptOfferLink}
                 </a>
               </span>
             </label>
@@ -1179,17 +1353,17 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
 
           <div className="space-y-1 pt-0.5">
             <Button type="submit" size="md" fullWidth isLoading={isSubmitting} className="!py-2.5">
-              Отправить заявку
+              {t.submitApplication}
             </Button>
             <p className="px-1 text-center text-[9px] leading-snug text-slate-500">
-              Нажимая «Отправить заявку», вы подтверждаете ознакомление с{' '}
+              {t.submitLegalPrefix}{' '}
               <a
-                href="/ru/legal/privacy"
+                href={`${localePrefix}/legal/privacy`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline decoration-slate-300 underline-offset-2 text-slate-500"
               >
-                Политикой обработки персональных данных
+                {t.privacyPolicyLink}
               </a>
               .
             </p>
@@ -1204,19 +1378,19 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600">
         <CheckCircle2 className="h-7 w-7" />
       </div>
-      <h4 className="mt-4 text-xl font-bold text-primary">Спасибо, заявка получена</h4>
+      <h4 className="mt-4 text-xl font-bold text-primary">{t.successTitle}</h4>
       <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-gray-600">
-        Свяжемся с вами в течение рабочего дня, чтобы согласовать следующие шаги.
+        {t.successDescription}
       </p>
       {orderNumber !== null ? (
         <div className="mx-auto mt-4 max-w-md rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <span className="font-semibold">Номер заказа:</span> {orderNumber}
+          <span className="font-semibold">{t.orderNumber}</span> {orderNumber}
         </div>
       ) : null}
 
       <div className="mt-5">
         <Button onClick={closeWithReset} fullWidth size="sm">
-          Закрыть
+          {t.close}
         </Button>
       </div>
     </div>
@@ -1248,7 +1422,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span>Назад</span>
+            <span>{t.back}</span>
           </button>
         ) : null
       }
@@ -1260,7 +1434,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             rel="noopener noreferrer"
             className="inline-flex items-center rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:border-primary/30 hover:bg-primary/5"
           >
-            Написать в поддержку
+            {t.support}
           </a>
         ) : null
       }
@@ -1274,7 +1448,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
             </div>
             {orderNumber !== null ? (
               <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-900">
-                <span className="font-semibold">Номер заказа:</span> {orderNumber}
+                <span className="font-semibold">{t.orderNumber}</span> {orderNumber}
               </div>
             ) : null}
             {retryLeadId && (
@@ -1286,7 +1460,7 @@ const PricingLeadModal: React.FC<PricingLeadModalProps> = ({
                   isLoading={isRetrying}
                   onClick={retryWebhook}
                 >
-                  Повторить отправку
+                  {t.retry}
                 </Button>
               </div>
             )}

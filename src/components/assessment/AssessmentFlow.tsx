@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   OptionId,
@@ -12,8 +12,9 @@ import {
 } from '@/types';
 import type { CanonicalRoadmapOutput } from '@/lib/roadmap-generator/types';
 import {
-  ALL_ASSESSMENT_QUESTIONS,
+  AssessmentLocale,
   TOTAL_QUESTIONS,
+  getAssessmentQuestions,
 } from '@/data/assessmentQuestions';
 import {
   getDifficultyForScore,
@@ -43,7 +44,8 @@ interface ComputedResults {
 
 function getResolvedQuestion(
   index: number,
-  answers: AssessmentAnswer[]
+  answers: AssessmentAnswer[],
+  questions: ReturnType<typeof getAssessmentQuestions>
 ): {
   questionId: string;
   prompt: string;
@@ -51,7 +53,7 @@ function getResolvedQuestion(
   label?: string;
   correctOptionId?: OptionId;
 } {
-  const qDef = ALL_ASSESSMENT_QUESTIONS[index];
+  const qDef = questions[index];
 
   if (qDef.type === 'self_assessment') {
     const q = qDef as SelfAssessmentQuestion;
@@ -76,7 +78,11 @@ function getResolvedQuestion(
   };
 }
 
-const AssessmentFlow: React.FC = () => {
+interface AssessmentFlowProps {
+  locale?: AssessmentLocale;
+}
+
+const AssessmentFlow: React.FC<AssessmentFlowProps> = ({ locale = 'ru' }) => {
   const router = useRouter();
   const [step, setStep] = useState<Step>('quiz');
 
@@ -87,8 +93,11 @@ const AssessmentFlow: React.FC = () => {
 
   const [computedResults, setComputedResults] = useState<ComputedResults | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const assessmentQuestions = useMemo(() => getAssessmentQuestions(locale), [locale]);
 
-  const resolved = step === 'quiz' ? getResolvedQuestion(currentIndex, answers) : null;
+  const resolved = step === 'quiz'
+    ? getResolvedQuestion(currentIndex, answers, assessmentQuestions)
+    : null;
 
   const handleSelect = (optionId: OptionId) => {
     if (selectedOptionId !== null) return;
@@ -98,7 +107,7 @@ const AssessmentFlow: React.FC = () => {
   const handleNext = () => {
     if (selectedOptionId === null || !resolved) return;
 
-    const qDef = ALL_ASSESSMENT_QUESTIONS[currentIndex];
+    const qDef = assessmentQuestions[currentIndex];
     const timeMs = Date.now() - questionStartTime;
 
     const answer: AssessmentAnswer = {
@@ -138,7 +147,7 @@ const AssessmentFlow: React.FC = () => {
   };
 
   const finishQuiz = (finalAnswers: AssessmentAnswer[]) => {
-    const domainResults = computeDomainResults(finalAnswers);
+    const domainResults = computeDomainResults(finalAnswers, locale);
     const weakestDomains = getWeakestDomains(domainResults);
     const studyPlan = generateStudyPlan(domainResults);
 
@@ -176,6 +185,7 @@ const AssessmentFlow: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          locale,
           name: contact.name,
           email: contact.email,
           phone: contact.phone,
@@ -191,7 +201,7 @@ const AssessmentFlow: React.FC = () => {
 
       if (res.ok) {
         const { token } = await res.json();
-        router.push(`/ru/results/${token}`);
+        router.push(`/${locale}/results/${token}`);
       } else {
         // Fallback: save to localStorage and redirect to old route
         saveFallback(contact);
@@ -219,18 +229,20 @@ const AssessmentFlow: React.FC = () => {
       submittedAt: new Date().toISOString(),
     };
     localStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(result));
-    router.push('/ru/results');
+    router.push(`/${locale}/results`);
   };
 
   if (step === 'contact' && computedResults) {
-    return <PostQuizEmailForm onSubmit={handleContactSubmit} isLoading={isSubmitting} />;
+    return <PostQuizEmailForm onSubmit={handleContactSubmit} isLoading={isSubmitting} locale={locale} />;
   }
 
   if (step === 'submitting') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
         <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-gray-500 text-sm">Сохраняем ваши результаты...</p>
+        <p className="text-gray-500 text-sm">
+          {locale === 'en' ? 'Saving your results...' : 'Сохраняем ваши результаты...'}
+        </p>
       </div>
     );
   }
@@ -239,7 +251,7 @@ const AssessmentFlow: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center p-4 py-8">
         <div className="w-full max-w-2xl">
-          <ProgressBar current={currentIndex + 1} total={TOTAL_QUESTIONS} />
+          <ProgressBar current={currentIndex + 1} total={TOTAL_QUESTIONS} locale={locale} />
           <QuestionCard
             questionId={resolved.questionId}
             prompt={resolved.prompt}
@@ -250,6 +262,7 @@ const AssessmentFlow: React.FC = () => {
             onNext={handleNext}
             currentNumber={currentIndex + 1}
             isLastQuestion={currentIndex === TOTAL_QUESTIONS - 1}
+            locale={locale}
           />
         </div>
       </div>
@@ -258,7 +271,7 @@ const AssessmentFlow: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center py-12">
-      Загрузка...
+      {locale === 'en' ? 'Loading...' : 'Загрузка...'}
     </div>
   );
 };

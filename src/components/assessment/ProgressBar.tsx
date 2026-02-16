@@ -1,12 +1,17 @@
 import React from 'react';
+import { AssessmentLocale } from '@/data/assessmentQuestions';
 
-const ProgressBar: React.FC<{ current: number; total: number }> = ({ current, total }) => {
+const ProgressBar: React.FC<{ current: number; total: number; locale?: AssessmentLocale }> = ({
+  current,
+  total,
+  locale = 'ru',
+}) => {
   const progress = (current / total) * 100;
   
   return (
     <div className="w-full mb-4">
       <div className="flex justify-between text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">
-        <span>Progress</span>
+        <span>{locale === 'en' ? 'Progress' : 'Прогресс'}</span>
         <span>{current} / {total}</span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">

@@ -3,6 +3,7 @@ export type RuPricingCurrency = 'RUB' | 'EUR';
 export type PricingLeadType = 'rub_intent' | 'eur_application' | 'mentorship_application';
 export type PayerType = 'individual' | 'legal_entity';
 export type MessengerType = 'telegram' | 'whatsapp';
+export type PricingLocale = 'en' | 'ru';
 
 export interface RuPricingGroup {
   title: string;
@@ -27,4 +28,5 @@ export interface RuPricingPlan {
 export interface RuPricingVariantProps {
   plans: RuPricingPlan[];
   onBuy: (plan: RuPricingPlan) => void;
+  locale: PricingLocale;
 }

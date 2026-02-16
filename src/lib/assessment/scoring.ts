@@ -4,7 +4,7 @@ import {
   DomainGrade,
   DomainResult,
 } from '@/types';
-import { DOMAIN_LABELS } from '@/data/assessmentQuestions';
+import { AssessmentLocale, getDomainLabels } from '@/data/assessmentQuestions';
 
 const ALL_DOMAINS: AssessmentDomain[] = [
   'reading_en',
@@ -32,8 +32,11 @@ export function getDifficultyForScore(
 }
 
 export function computeDomainResults(
-  answers: AssessmentAnswer[]
+  answers: AssessmentAnswer[],
+  locale: AssessmentLocale = 'ru'
 ): DomainResult[] {
+  const domainLabels = getDomainLabels(locale);
+
   return ALL_DOMAINS.map((domain) => {
     const selfAnswer = answers.find(
       (a) => a.domain === domain && a.type === 'self_assessment'
@@ -69,7 +72,7 @@ export function computeDomainResults(
 
     return {
       domain,
-      domainLabel: DOMAIN_LABELS[domain],
+      domainLabel: domainLabels[domain],
       score: finalScore,
       grade: scoreToGrade(finalScore),
       selfAssessmentScore: selfScore,

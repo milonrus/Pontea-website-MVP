@@ -3,11 +3,22 @@ import Link from 'next/link';
 import Header from '@/components/shared/Header';
 import { getRuLegalDocMetas } from '@/lib/legal/ruLegalDocs';
 import { buildPageMetadata } from '@/lib/seo/metadata';
+import { isRuOnlyMode } from '@/lib/i18n/mode';
+
+const ruOnlyMode = isRuOnlyMode();
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Юридические документы',
   description: 'Политика обработки данных, согласие, условия использования и политика cookie.',
-  canonical: '/ru/legal'
+  canonical: '/ru/legal',
+  ...(ruOnlyMode
+    ? {}
+    : {
+        languages: {
+          en: '/en/legal',
+          ru: '/ru/legal'
+        }
+      })
 });
 
 const RuLegalPage = async () => {
@@ -15,7 +26,7 @@ const RuLegalPage = async () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header />
+      <Header locale="ru" />
       <div className="mx-auto max-w-7xl px-4 pb-12 pt-28">
         <h1 className="mb-8 text-4xl font-bold text-black">Документы</h1>
         <ul className="space-y-3">

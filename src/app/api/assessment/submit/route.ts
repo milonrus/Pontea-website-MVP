@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     }
 
     const {
+      locale,
       name,
       email,
       phone,
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
       studyPlan,
       roadmapOutput,
     } = body;
+    const normalizedLocale = locale === 'en' || locale === 'ru' ? locale : 'ru';
 
     const normalizedName = typeof name === 'string' ? name.trim() : '';
     const normalizedEmail = typeof email === 'string' ? email.trim() : '';
@@ -108,7 +110,7 @@ export async function POST(request: Request) {
 
     const requestOrigin = new URL(request.url).origin.replace(/\/+$/, '');
     const appUrl = getOptionalServerEnv('APP_URL')?.replace(/\/+$/, '') || requestOrigin;
-    const resultsUrl = `${appUrl}/ru/results/${shareToken}`;
+    const resultsUrl = `${appUrl}/${normalizedLocale}/results/${shareToken}`;
     const compactDomainResults = Array.isArray(domainResults)
       ? domainResults.map((result: any) => ({
           domainLabel: result?.domainLabel,

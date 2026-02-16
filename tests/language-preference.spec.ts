@@ -2,42 +2,51 @@ import { test, expect } from '@playwright/test';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
 
-test('root redirects to /ru even when cookie is en', async ({ page }) => {
+test('root redirects to /en when language cookie is en', async ({ page }) => {
   await page.context().addCookies([
     {
       name: 'pontea_lang',
       value: 'en',
-      url: baseURL
-    }
+      url: baseURL,
+    },
+  ]);
+
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/en$/);
+});
+
+test('root redirects to /ru when language cookie is ru', async ({ page }) => {
+  await page.context().addCookies([
+    {
+      name: 'pontea_lang',
+      value: 'ru',
+      url: baseURL,
+    },
   ]);
 
   await page.goto('/');
   await expect(page).toHaveURL(/\/ru$/);
 });
 
-test('visiting /en redirects to /ru', async ({ page }) => {
+test('visiting /en stays on /en in multilingual mode', async ({ page }) => {
   await page.goto('/en');
-  await expect(page).toHaveURL(/\/ru$/);
+  await expect(page).toHaveURL(/\/en$/);
 });
 
-test('visiting /en/thank-you redirects to /ru/thank-you', async ({ page }) => {
-  await page.goto('/en/thank-you');
-  await expect(page).toHaveURL(/\/ru\/thank-you$/);
+test('language switcher keeps mirrored path for for-parents page', async ({ page }) => {
+  await page.goto('/en/for-parents');
+  const switcher = page.locator('nav[aria-label="Language selector"]');
+
+  await expect(switcher).toBeVisible();
+  await expect(switcher.getByRole('link', { name: 'RU' })).toHaveAttribute('href', '/ru/for-parents');
 });
 
-test('visiting /en/* fallback redirects to /ru', async ({ page }) => {
-  await page.goto('/en/some-random-path');
-  await expect(page).toHaveURL(/\/ru$/);
-});
+test('language switcher keeps mirrored path for thank-you page', async ({ page }) => {
+  await page.goto('/ru/thank-you');
+  const switcher = page.locator('nav[aria-label="Language selector"]');
 
-test('visiting /consultation redirects to /ru', async ({ page }) => {
-  await page.goto('/consultation');
-  await expect(page).toHaveURL(/\/ru$/);
-});
-
-test('visiting /methodology redirects to /ru', async ({ page }) => {
-  await page.goto('/methodology');
-  await expect(page).toHaveURL(/\/ru$/);
+  await expect(switcher).toBeVisible();
+  await expect(switcher.getByRole('link', { name: 'EN' })).toHaveAttribute('href', '/en/thank-you');
 });
 
 test('visiting /ru sets language cookie to ru', async ({ page }) => {
@@ -49,12 +58,16 @@ test('visiting /ru sets language cookie to ru', async ({ page }) => {
   expect(languageCookie?.value).toBe('ru');
 });
 
-test('language switcher is hidden on /ru page', async ({ page }) => {
-  await page.goto('/ru');
-  await expect(page.locator('nav[aria-label="Language selector"]')).toHaveCount(0);
+test('visiting /en sets language cookie to en', async ({ page }) => {
+  await page.context().clearCookies();
+  await page.goto('/en');
+
+  const cookies = await page.context().cookies();
+  const languageCookie = cookies.find((cookie) => cookie.name === 'pontea_lang');
+  expect(languageCookie?.value).toBe('en');
 });
 
-test('language switcher is hidden on /ru/thank-you page', async ({ page }) => {
-  await page.goto('/ru/thank-you');
-  await expect(page.locator('nav[aria-label="Language selector"]')).toHaveCount(0);
+test('english legal placeholder doc is available', async ({ page }) => {
+  await page.goto('/en/legal/consent');
+  await expect(page.getByText('This document will be updated soon.')).toBeVisible();
 });

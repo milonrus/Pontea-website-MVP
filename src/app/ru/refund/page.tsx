@@ -1,11 +1,22 @@
 import type { Metadata } from 'next';
 import LocalizedPageTopBar from '@/components/shared/LocalizedPageTopBar';
 import { buildPageMetadata } from '@/lib/seo/metadata';
+import { isRuOnlyMode } from '@/lib/i18n/mode';
+
+const ruOnlyMode = isRuOnlyMode();
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Политика возврата',
   description: 'Условия возврата средств и порядок оформления заявки на возврат.',
-  canonical: '/ru/refund'
+  canonical: '/ru/refund',
+  ...(ruOnlyMode
+    ? {}
+    : {
+        languages: {
+          en: '/en/refund',
+          ru: '/ru/refund'
+        }
+      })
 });
 
 const RefundPage = () => {

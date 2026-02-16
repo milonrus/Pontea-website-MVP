@@ -1,9 +1,10 @@
 import {
+  PricingLocale,
   RuPricingPlan,
   RuPricingPlanId,
 } from './types';
 
-export const RU_PRICING_PLANS: RuPricingPlan[] = [
+const RU_PRICING_PLANS: RuPricingPlan[] = [
   {
     id: 'foundation',
     name: 'Стартовый',
@@ -143,6 +144,151 @@ export const RU_PRICING_PLANS: RuPricingPlan[] = [
   },
 ];
 
+const EN_PRICING_PLANS: RuPricingPlan[] = [
+  {
+    id: 'foundation',
+    name: 'Starter',
+    subtitle: 'Perfect for students who are preparing independently',
+    price: 890,
+    priceRub: 82000,
+    installmentAvailable: false,
+    summary: [
+      'Strong theoretical foundation across all 5 exam sections',
+      '30+ hours of video lessons covering key topics and exam-style tasks',
+      'Exam task examples with explanations',
+      'Diagnostic at the start and mock exam at the end',
+    ],
+    groups: [
+      {
+        icon: '📘',
+        title: 'Academic foundation',
+        items: [
+          'Complete theory course for all 5 exam sections (25+ structured modules)',
+          '30+ hours of video lessons with topic breakdowns',
+          'Exam-style tasks with explanations',
+          'Step-by-step preparation roadmap for the full period',
+        ],
+      },
+      {
+        icon: '📊',
+        title: 'Progress tracking',
+        items: [
+          'Initial diagnostic test (point A)',
+          'Final mock exam in real test format (point B)',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'advanced',
+    name: 'Core',
+    subtitle: 'Best balance of practice, guidance, and feedback',
+    price: 1490,
+    priceRub: 137000,
+    badge: 'Chosen by 80% of students',
+    installmentAvailable: true,
+    includesFrom: 'Everything in Starter, plus:',
+    summary: [
+      '1300+ tasks, 10 mock tests, and 3 full exam simulations',
+      'Live group online classes for every subject',
+      'Chat with teachers and other students',
+      'Personal study plan and mentor progress session every 2 weeks',
+    ],
+    groups: [
+      {
+        icon: '🎓',
+        title: 'Live practice',
+        items: [
+          'Live group online classes with difficult-topic breakdowns',
+          '1300+ exam-style tasks for practice',
+          'Analysis of common mistakes and hard topics',
+          '10 full mock exams',
+          '3 exam simulations with detailed analysis',
+        ],
+      },
+      {
+        icon: '👩‍🏫',
+        title: 'Mentor guidance',
+        items: [
+          'Personalized study plan',
+          'Mentor progress session every 2 weeks',
+          'Preparation strategy adjustments',
+        ],
+      },
+      {
+        icon: '💬',
+        title: 'Teacher support',
+        items: [
+          'Chat with teachers and students',
+          'Teacher answers on assignments',
+          'Forum feedback on submitted work',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'mentorship',
+    name: 'Individual',
+    subtitle: 'Maximum personal attention and strategic guidance',
+    price: 3490,
+    priceRub: 321000,
+    badge: 'Limited seats',
+    installmentAvailable: true,
+    includesFrom: 'Everything in Core, plus:',
+    summary: [
+      '20 one-on-one sessions with top instructors',
+      'Personal mentor with priority support during working hours',
+      'Strategic sessions with founders and personal analytics',
+    ],
+    groups: [
+      {
+        icon: '👤',
+        title: 'Individual sessions',
+        items: [
+          '20 personal sessions with top instructors',
+          'Focused work on weak areas',
+          'Personal exam strategy development',
+        ],
+      },
+      {
+        icon: '🧭',
+        title: 'Priority mentor support',
+        items: [
+          'Dedicated personal mentor',
+          'Priority responses during working hours',
+          'Deep progress analysis',
+          'Individual plan adjustments',
+        ],
+      },
+      {
+        icon: '🏛',
+        title: 'Strategic sessions with founders',
+        items: [
+          '3 personal strategy sessions',
+          'Long-term academic goal definition',
+          'Confidence and motivation support',
+        ],
+      },
+      {
+        icon: '📈',
+        title: 'Personal analytics',
+        items: [
+          'Individual review of mock exams',
+          'Detailed strengths/weaknesses analysis',
+          'Real exam behavior strategy',
+        ],
+      },
+    ],
+    bonus:
+      'Professional session on concentration and stress control',
+  },
+];
+
+export const PRICING_PLANS_BY_LOCALE: Record<PricingLocale, RuPricingPlan[]> = {
+  en: EN_PRICING_PLANS,
+  ru: RU_PRICING_PLANS,
+};
+
 export const COURSE_DURATION_MONTHS = 5;
 
 const eurPerMonthFormatter = new Intl.NumberFormat('ru-RU', {
@@ -153,8 +299,23 @@ const eurPerMonthFormatter = new Intl.NumberFormat('ru-RU', {
 export const formatEurPerMonth = (totalEur: number) =>
   eurPerMonthFormatter.format(totalEur / COURSE_DURATION_MONTHS);
 
-export const RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN: Record<RuPricingPlanId, string> = {
-  foundation: 'Начать подготовку',
-  advanced: 'Выбрать Основной',
-  mentorship: 'Оставить заявку',
+const PRICING_PRIMARY_CTA_LABEL_BY_PLAN: Record<PricingLocale, Record<RuPricingPlanId, string>> = {
+  en: {
+    foundation: 'Start preparing',
+    advanced: 'Choose Core',
+    mentorship: 'Apply now',
+  },
+  ru: {
+    foundation: 'Начать подготовку',
+    advanced: 'Выбрать Основной',
+    mentorship: 'Оставить заявку',
+  },
 };
+
+export function getPricingPlans(locale: PricingLocale): RuPricingPlan[] {
+  return PRICING_PLANS_BY_LOCALE[locale];
+}
+
+export function getPricingPrimaryCtaLabel(locale: PricingLocale, planId: RuPricingPlanId): string {
+  return PRICING_PRIMARY_CTA_LABEL_BY_PLAN[locale][planId];
+}

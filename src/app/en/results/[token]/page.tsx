@@ -5,7 +5,6 @@ import ResultsPage from '@/views/ResultsPage';
 import { AssessmentResult, DomainResult } from '@/types';
 import type { CanonicalRoadmapOutput } from '@/lib/roadmap-generator/types';
 import { buildPageMetadata } from '@/lib/seo/metadata';
-import { isRuOnlyMode } from '@/lib/i18n/mode';
 
 export async function generateMetadata({
   params
@@ -13,20 +12,15 @@ export async function generateMetadata({
   params: Promise<{ token: string }>;
 }): Promise<Metadata> {
   const { token } = await params;
-  const ruOnlyMode = isRuOnlyMode();
 
   return buildPageMetadata({
-    title: 'Результаты диагностики',
-    description: 'Персональные результаты диагностики и план подготовки.',
-    canonical: `/ru/results/${token}`,
-    ...(ruOnlyMode
-      ? {}
-      : {
-          languages: {
-            en: `/en/results/${token}`,
-            ru: `/ru/results/${token}`
-          }
-        }),
+    title: 'Diagnostic Results',
+    description: 'Your personal diagnostic results and preparation roadmap.',
+    canonical: `/en/results/${token}`,
+    languages: {
+      en: `/en/results/${token}`,
+      ru: `/ru/results/${token}`
+    },
     robots: {
       index: false,
       follow: false
@@ -71,5 +65,5 @@ export default async function TokenResultsPage({
     submittedAt: data.submitted_at,
   };
 
-  return <ResultsPage initialResults={results} locale="ru" />;
+  return <ResultsPage initialResults={results} locale="en" />;
 }

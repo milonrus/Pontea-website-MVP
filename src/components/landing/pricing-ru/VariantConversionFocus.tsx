@@ -2,9 +2,8 @@ import React from 'react';
 import { BadgeCheck } from 'lucide-react';
 import Button from '@/components/shared/Button';
 import {
-  COURSE_DURATION_MONTHS,
   formatEurPerMonth,
-  RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN,
+  getPricingPrimaryCtaLabel,
 } from './data';
 import { RuPricingPlan, RuPricingVariantProps } from './types';
 
@@ -12,39 +11,40 @@ const visualByPlan: Record<
   RuPricingPlan['id'],
   {
     frame: string;
-    valueText: string;
   }
 > = {
   foundation: {
     frame: 'border-blue-100 bg-white',
-    valueText: 'Идеальный старт для тех, кто готовится самостоятельно',
   },
   advanced: {
     frame: 'border-accent bg-gradient-to-b from-accent/20 via-white to-white shadow-xl ring-2 ring-accent/50',
-    valueText: 'Оптимальный баланс практики, сопровождения и обратной связи',
   },
   mentorship: {
     frame: 'border-red-200 bg-gradient-to-b from-red-50/70 to-white',
-    valueText: 'Максимум персонального внимания и стратегической поддержки',
   },
-};
-
-const includeLabelByPlan: Record<RuPricingPlan['id'], string> = {
-  foundation: 'Что включено',
-  advanced: 'Всё из Стартового, а также',
-  mentorship: 'Всё из Основного, а также',
 };
 
 const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
   plans,
   onBuy,
+  locale,
 }) => {
+  const t = locale === 'en'
+    ? {
+        includeLabel: 'Included',
+        installmentHint: 'Installments available',
+      }
+    : {
+        includeLabel: 'Что включено',
+        installmentHint: 'Доступна оплата частями',
+      };
+
   return (
     <div className="grid gap-6 xl:grid-cols-3">
       {plans.map((plan) => {
         const visual = visualByPlan[plan.id];
         const isRecommended = plan.id === 'advanced';
-        const showTopBadge = plan.badge && plan.badge !== 'Количество мест ограничено';
+        const showTopBadge = plan.badge && plan.id !== 'mentorship';
 
         return (
           <article
@@ -59,18 +59,20 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
                 </div>
               )}
             </div>
-            <p className="mt-2 text-sm font-medium text-gray-800">{visual.valueText}</p>
+            <p className="mt-2 text-sm font-medium text-gray-800">{plan.subtitle}</p>
 
             <div className="mt-5 border-y border-gray-200 py-4">
               <div className="flex items-end gap-2 text-primary">
                 <span className="text-3xl font-bold leading-none md:text-4xl">€{plan.price}</span>
                 <span className="pb-1 text-sm font-semibold text-primary/80">
-                  = €{formatEurPerMonth(plan.price)}/мес
+                  = €{formatEurPerMonth(plan.price)}/{locale === 'en' ? 'mo' : 'мес'}
                 </span>
               </div>
-              <div className="mt-2 text-xs text-gray-500">
-                {plan.priceRub.toLocaleString('ru-RU')} ₽ за {COURSE_DURATION_MONTHS} месяцев
-              </div>
+              {locale === 'ru' ? (
+                <div className="mt-2 text-xs text-gray-500">
+                  {`${plan.priceRub.toLocaleString('ru-RU')} ₽ за 5 месяцев`}
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-4 min-h-6">
@@ -79,7 +81,7 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
                   isRecommended ? 'text-primary' : 'text-primary/85'
                 }`}
               >
-                {includeLabelByPlan[plan.id]}
+                {plan.includesFrom ?? t.includeLabel}
               </p>
             </div>
 
@@ -98,10 +100,10 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
                 fullWidth
                 onClick={() => onBuy(plan)}
               >
-                {RU_PRICING_PRIMARY_CTA_LABEL_BY_PLAN[plan.id]}
+                {getPricingPrimaryCtaLabel(locale, plan.id)}
               </Button>
               <p className="text-center text-xs font-medium text-gray-500">
-                Доступна оплата частями
+                {t.installmentHint}
               </p>
             </div>
           </article>
