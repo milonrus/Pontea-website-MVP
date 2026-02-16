@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { CanonicalRoadmapOutput } from '@/lib/roadmap-generator/types';
 import { buildVisualRoadmapModel } from '@/components/admin/roadmap/model';
 import { VisualRoadmap } from '@/components/admin/roadmap/types';
+import { AssessmentLocale } from '@/data/assessmentQuestions';
 
 /* ── Russian subject config ──────────────────────────────────── */
 
@@ -18,15 +19,27 @@ const SUBJECT_ORDER = [
   'History of Art & Architecture'
 ];
 
-const SUBJECT_LABELS_RU: Record<string, string> = {
-  'Text Comprehension': 'Чтение',
-  'Logical reasoning': 'Логика',
-  'Drawing & Representation': 'Черчение',
-  'Math': 'Математика',
-  'Physics': 'Физика',
-  'General culture': 'Культура',
-  'History': 'История',
-  'History of Art & Architecture': 'История искусств'
+const SUBJECT_LABELS_BY_LOCALE: Record<AssessmentLocale, Record<string, string>> = {
+  en: {
+    'Text Comprehension': 'Reading',
+    'Logical reasoning': 'Logic',
+    'Drawing & Representation': 'Drawing',
+    'Math': 'Mathematics',
+    'Physics': 'Physics',
+    'General culture': 'Culture',
+    'History': 'History',
+    'History of Art & Architecture': 'History of Art',
+  },
+  ru: {
+    'Text Comprehension': 'Чтение',
+    'Logical reasoning': 'Логика',
+    'Drawing & Representation': 'Черчение',
+    'Math': 'Математика',
+    'Physics': 'Физика',
+    'General culture': 'Культура',
+    'History': 'История',
+    'History of Art & Architecture': 'История искусств'
+  }
 };
 
 const SUBJECT_COLOR: Record<string, string> = {
@@ -100,9 +113,13 @@ const buildSubjectGroups = (
 
 interface ResultsSprintCarouselProps {
   roadmapOutput: CanonicalRoadmapOutput;
+  locale?: AssessmentLocale;
 }
 
-const ResultsSprintCarousel: React.FC<ResultsSprintCarouselProps> = ({ roadmapOutput }) => {
+const ResultsSprintCarousel: React.FC<ResultsSprintCarouselProps> = ({
+  roadmapOutput,
+  locale = 'ru',
+}) => {
   const roadmap = useMemo(() => buildVisualRoadmapModel(roadmapOutput), [roadmapOutput]);
   const allSubjects = useMemo(() => buildOrderedSubjects(roadmap), [roadmap]);
 
@@ -131,10 +148,12 @@ const ResultsSprintCarousel: React.FC<ResultsSprintCarouselProps> = ({ roadmapOu
                 {/* sprint header */}
                 <div className="px-4 pt-4 pb-3">
                   <span className="block text-[15px] font-bold text-slate-900">
-                    Спринт {sprint.sprintNumber}
+                    {locale === 'en' ? `Sprint ${sprint.sprintNumber}` : `Спринт ${sprint.sprintNumber}`}
                   </span>
                   <span className="block text-[11px] text-slate-400">
-                    Недели {sprint.weekStartIndex}–{sprint.weekEndIndex}
+                    {locale === 'en'
+                      ? `Weeks ${sprint.weekStartIndex}-${sprint.weekEndIndex}`
+                      : `Недели ${sprint.weekStartIndex}–${sprint.weekEndIndex}`}
                   </span>
                 </div>
 
@@ -154,7 +173,7 @@ const ResultsSprintCarousel: React.FC<ResultsSprintCarouselProps> = ({ roadmapOu
                           className="text-[11px] font-semibold uppercase tracking-wide"
                           style={{ color }}
                         >
-                          {SUBJECT_LABELS_RU[subject] ?? subject}
+                          {SUBJECT_LABELS_BY_LOCALE[locale][subject] ?? subject}
                         </span>
                         <ul className="mt-0.5">
                           {modules.map((mod) => (
@@ -176,7 +195,9 @@ const ResultsSprintCarousel: React.FC<ResultsSprintCarouselProps> = ({ roadmapOu
                   })}
 
                   {activeSubjects.length === 0 && (
-                    <p className="text-[13px] text-slate-400 italic">Нет модулей</p>
+                    <p className="text-[13px] text-slate-400 italic">
+                      {locale === 'en' ? 'No modules' : 'Нет модулей'}
+                    </p>
                   )}
                 </div>
               </div>

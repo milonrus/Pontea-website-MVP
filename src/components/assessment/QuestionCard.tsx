@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { OptionId, AssessmentOption } from '@/types';
 import Button from '@/components/shared/Button';
 import LaTeXRenderer from '@/components/shared/LaTeXRenderer';
+import { AssessmentLocale } from '@/data/assessmentQuestions';
 
 interface QuestionCardProps {
   questionId: string;
@@ -15,6 +16,7 @@ interface QuestionCardProps {
   onNext: () => void;
   currentNumber: number;
   isLastQuestion: boolean;
+  locale?: AssessmentLocale;
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
@@ -27,6 +29,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onNext,
   currentNumber,
   isLastQuestion,
+  locale = 'ru',
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -52,7 +55,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     >
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs font-medium bg-gray-100 px-2 py-0.5 rounded text-gray-600">
-          Вопрос {currentNumber}
+          {locale === 'en' ? `Question ${currentNumber}` : `Вопрос ${currentNumber}`}
         </span>
       </div>
 
@@ -108,10 +111,12 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             className="flex justify-between items-center pt-3 border-t border-gray-100"
           >
             <span className="text-xs text-gray-400 italic hidden sm:block">
-              Space или стрелка вправо
+              {locale === 'en' ? 'Space or right arrow' : 'Space или стрелка вправо'}
             </span>
             <Button onClick={onNext} className="group ml-auto">
-              {isLastQuestion ? 'Завершить' : 'Далее'}
+              {isLastQuestion
+                ? (locale === 'en' ? 'Finish' : 'Завершить')
+                : (locale === 'en' ? 'Next' : 'Далее')}
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Button>
           </motion.div>

@@ -12,10 +12,14 @@ export default function robots(): MetadataRoute.Robots {
         '/admin/',
         '/auth/',
         '/api/',
+        '/en/results',
+        '/en/results/',
         '/ru/results',
         '/ru/results/',
         '/en/thank-you',
-        '/ru/thank-you'
+        '/en/thank-you/',
+        '/ru/thank-you',
+        '/ru/thank-you/'
       ]
     },
     sitemap: `${siteUrl}/sitemap.xml`

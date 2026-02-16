@@ -2,17 +2,16 @@ import { DEFAULT_LOCALE, Locale, getLocaleHome } from './config';
 import { isRuOnlyMode } from './mode';
 
 const LOCALE_PREFIX_PATTERN = /^\/(en|ru)(\/|$)/;
-
-const PAIRED_ROUTE_MAP: Record<string, Record<Locale, string>> = {
-  'home': {
-    en: '/en',
-    ru: '/ru'
-  },
-  'thank-you': {
-    en: '/en/thank-you',
-    ru: '/ru/thank-you'
-  }
-};
+const SWITCHABLE_STATIC_PATHS = new Set([
+  '/',
+  '/thank-you',
+  '/assessment',
+  '/for-parents',
+  '/refund',
+  '/legal',
+  '/results',
+  '/arched-prep-course',
+]);
 
 function normalizePath(pathname: string): string {
   if (!pathname) return '/';
@@ -32,18 +31,39 @@ export function getLocaleFromPathname(pathname: string): Locale | null {
   return locale === 'en' || locale === 'ru' ? locale : null;
 }
 
-function getPairedRouteKey(pathname: string): keyof typeof PAIRED_ROUTE_MAP | null {
+function getPathWithoutLocalePrefix(pathname: string): string | null {
   const normalized = normalizePath(pathname);
+  const locale = getLocaleFromPathname(normalized);
 
-  if (normalized === '/en' || normalized === '/ru') {
-    return 'home';
+  if (!locale) {
+    return null;
   }
 
-  if (normalized === '/en/thank-you' || normalized === '/ru/thank-you') {
-    return 'thank-you';
+  if (normalized === `/${locale}`) {
+    return '/';
   }
 
-  return null;
+  return normalized.slice(3);
+}
+
+function buildLocalePath(locale: Locale, pathWithoutLocale: string): string {
+  if (pathWithoutLocale === '/') {
+    return getLocaleHome(locale);
+  }
+
+  return `/${locale}${pathWithoutLocale}`;
+}
+
+function isSwitchableDynamicPath(pathWithoutLocale: string): boolean {
+  if (pathWithoutLocale.startsWith('/legal/')) {
+    return pathWithoutLocale.split('/').length === 3;
+  }
+
+  if (pathWithoutLocale.startsWith('/results/')) {
+    return pathWithoutLocale.split('/').length === 3;
+  }
+
+  return false;
 }
 
 export function getSwitchLocalePath(pathname: string, targetLocale: Locale): string {
@@ -51,11 +71,14 @@ export function getSwitchLocalePath(pathname: string, targetLocale: Locale): str
     return '/ru';
   }
 
-  const normalized = normalizePath(pathname);
-  const routeKey = getPairedRouteKey(normalized);
+  const pathWithoutLocale = getPathWithoutLocalePrefix(pathname);
 
-  if (routeKey) {
-    return PAIRED_ROUTE_MAP[routeKey][targetLocale];
+  if (!pathWithoutLocale) {
+    return getLocaleHome(targetLocale);
+  }
+
+  if (SWITCHABLE_STATIC_PATHS.has(pathWithoutLocale) || isSwitchableDynamicPath(pathWithoutLocale)) {
+    return buildLocalePath(targetLocale, pathWithoutLocale);
   }
 
   return getLocaleHome(targetLocale);

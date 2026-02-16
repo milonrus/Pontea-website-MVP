@@ -15,7 +15,7 @@ const translations = {
     h1Line2: 'for ARCHED and TIL-A preparation',
     subtitle: "We'll prepare you from any level to a high score!",
     cta1: 'Get your preparation plan',
-    subLabel: 'Answer 5 questions',
+    subLabel: '5-minutes assessment. For free',
     cta2: 'Buy the course',
     statLabel: 'Get into their target universities',
     footnote: '*among those who completed the full course',

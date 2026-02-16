@@ -11,6 +11,41 @@ type BuildPageMetadataOptions = {
 };
 
 const DEFAULT_SOCIAL_IMAGE = '/pontea-logo.webp';
+const LOCALE_TO_OG_LOCALE = {
+  en: 'en_US',
+  ru: 'ru_RU'
+} as const;
+
+function inferLocaleFromCanonical(canonical: string): 'en' | 'ru' | null {
+  if (canonical === '/en' || canonical.startsWith('/en/')) {
+    return 'en';
+  }
+
+  if (canonical === '/ru' || canonical.startsWith('/ru/')) {
+    return 'ru';
+  }
+
+  return null;
+}
+
+function withXDefault(languages?: LanguageAlternates): LanguageAlternates | undefined {
+  if (!languages) {
+    return undefined;
+  }
+
+  if ('x-default' in languages) {
+    return languages;
+  }
+
+  if ('en' in languages && typeof languages.en === 'string') {
+    return {
+      ...languages,
+      'x-default': languages.en
+    } as LanguageAlternates;
+  }
+
+  return languages;
+}
 
 export function buildPageMetadata({
   title,
@@ -19,16 +54,28 @@ export function buildPageMetadata({
   languages,
   robots
 }: BuildPageMetadataOptions): Metadata {
+  const normalizedLanguages = withXDefault(languages);
+  const pageLocale = inferLocaleFromCanonical(canonical);
+  const openGraphLocale = pageLocale ? LOCALE_TO_OG_LOCALE[pageLocale] : undefined;
+  const alternateLocale = normalizedLanguages
+    ? (Object.keys(normalizedLanguages) as Array<keyof typeof normalizedLanguages>)
+        .filter((key) => key === 'en' || key === 'ru')
+        .map((key) => LOCALE_TO_OG_LOCALE[key as 'en' | 'ru'])
+        .filter((locale) => locale !== openGraphLocale)
+    : [];
+
   return {
     title,
     description,
     alternates: {
       canonical,
-      ...(languages ? { languages } : {})
+      ...(normalizedLanguages ? { languages: normalizedLanguages } : {})
     },
     ...(robots ? { robots } : {}),
     openGraph: {
       type: 'website',
+      ...(openGraphLocale ? { locale: openGraphLocale } : {}),
+      ...(alternateLocale.length > 0 ? { alternateLocale } : {}),
       title,
       description,
       url: canonical,
