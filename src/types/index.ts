@@ -416,6 +416,58 @@ export interface AssessmentResult {
   submittedAt: string;
 }
 
+export type ClientStatus = 'active' | 'placeholder' | 'merged';
+export type ClientContactType = 'phone' | 'email';
+export type ClientLinkReviewStatus = 'open' | 'resolved' | 'dismissed';
+export type ClientLinkResolutionAction =
+  | 'linked_existing'
+  | 'merged_clients'
+  | 'kept_placeholder';
+
+export interface Client {
+  id: string;
+  fullName: string | null;
+  canonicalPhoneE164: string | null;
+  canonicalEmail: string | null;
+  status: ClientStatus;
+  mergedIntoClientId: string | null;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClientContact {
+  id: string;
+  clientId: string;
+  contactType: ClientContactType;
+  contactValue: string;
+  isPrimary: boolean;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  sourceTable: 'assessment_results' | 'pricing_leads';
+  sourceRowId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClientLinkReview {
+  id: string;
+  sourceTable: 'assessment_results' | 'pricing_leads';
+  sourceRowId: string;
+  placeholderClientId: string;
+  incomingName: string | null;
+  incomingPhoneE164: string | null;
+  incomingEmailNormalized: string | null;
+  candidateClientIds: string[];
+  status: ClientLinkReviewStatus;
+  resolution: ClientLinkResolutionAction | null;
+  resolvedClientId: string | null;
+  resolutionNote: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
 // --- LEGACY TYPES (Keep until refactor complete) ---
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 export type Category = string;

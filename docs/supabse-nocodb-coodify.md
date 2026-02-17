@@ -75,6 +75,45 @@
 
 ---
 
+## Инцидент 2026-02-17: NocoDB `503` после миграции Supabase
+
+### Симптом
+
+- `https://nocodb.pontea.school` отдавал `503`.
+- Контейнер `nocodb-v484...` был в `Restarting (1)`.
+- В логах NocoDB:
+  - `getaddrinfo ENOTFOUND supabase-db-k4k0k4o0oog8w8480okc4g48`
+
+### Причина
+
+- `NC_DB` у NocoDB указывает на internal hostname Supabase DB:
+  - `supabase-db-k4k0k4o0oog8w8480okc4g48`.
+- После изменений в окружении контейнеры оказались в разных Docker network:
+  - NocoDB: `v484wscoso8s8kswkscscc44`
+  - Supabase: `k4k0k4o0oog8w8480okc4g48`
+- В результате hostname БД не резолвился из NocoDB (DNS `ENOTFOUND`), сервис падал на старте.
+
+### Фикс (применен)
+
+Подключили контейнер Supabase DB в сеть NocoDB:
+
+```bash
+sudo docker network connect v484wscoso8s8kswkscscc44 supabase-db-k4k0k4o0oog8w8480okc4g48
+```
+
+Проверки после фикса:
+
+- `nocodb-v484...` -> `Up (healthy)`
+- `https://nocodb.pontea.school` -> `302 https://nocodb.pontea.school/dashboard`
+- SQL test из сети NocoDB до Supabase DB -> `select 1` успешно.
+
+### Важно на будущее
+
+- Это network-level фикc. После `supabase` redeploy/recreate (особенно DB контейнера) привязка к сети `v484...` может слететь.
+- После каждого restart/redeploy Supabase нужно делать post-check NocoDB (см. Runbook ниже).
+
+---
+
 ## Текущая рабочая конфигурация app
 
 - `build_pack`: `dockerfile`
@@ -129,6 +168,23 @@ docker image prune -af
 1. app deploy
 2. supabase start
 3. nocodb restart/start
+
+### 5) Post-check NocoDB <-> Supabase DB network
+
+Проверка, что NocoDB не ушел в restart-loop:
+
+```bash
+sudo docker ps --format '{{.Names}}\t{{.Status}}' | grep nocodb-v484wscoso8s8kswkscscc44
+sudo docker logs --since 2m nocodb-v484wscoso8s8kswkscscc44 | tail -n 80
+curl -I https://nocodb.pontea.school
+```
+
+Если в логах `ENOTFOUND supabase-db-k4k0...`, выполнить:
+
+```bash
+sudo docker network connect v484wscoso8s8kswkscscc44 supabase-db-k4k0k4o0oog8w8480okc4g48 || true
+sudo docker restart nocodb-v484wscoso8s8kswkscscc44
+```
 
 ---
 
