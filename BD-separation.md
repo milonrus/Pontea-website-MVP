@@ -32,8 +32,7 @@ Postgres databases inside `supabase-db-*`:
 - `client_link_reviews`
 
 ### `postgres.public` views to KEEP (CRM)
-- `crm_client_timeline_v`
-- `crm_clients_overview_v`
+- none
 
 ### `postgres.public` tables to DELETE (non-CRM / product)
 - `attempt_questions`
@@ -81,8 +80,7 @@ Tables:
 - `users`
 
 Views:
-- `crm_client_timeline_v`
-- `crm_clients_overview_v`
+- none
 
 Triggers:
 - `assessment_results`: `trg_crm_assign_client_assessment` (BEFORE INSERT)
@@ -187,9 +185,8 @@ SQL
 - `client_contacts`
 - `client_link_reviews`
 
-### Views (still present)
-- `crm_client_timeline_v`
-- `crm_clients_overview_v`
+### Views (current)
+- none
 
 ### Triggers (still present)
 - `assessment_results`: `trg_crm_assign_client_assessment` (BEFORE INSERT)
@@ -217,11 +214,11 @@ where table_schema='public' and table_type='BASE TABLE'
 order by 1;
 ```
 
-Views still queryable (example):
+Tables still queryable (example):
 ```sql
 select *
-from public.crm_clients_overview_v
-order by last_activity_at desc nulls last
+from public.clients
+order by updated_at desc nulls last
 limit 5;
 ```
 
@@ -275,4 +272,3 @@ Warning:
 1) Point the application to the separate App DB (cloud copy) by updating its Supabase connection (URL/keys) in the app container environment.
 2) Verify product flows (question bank, tests, practice, profiles) against the new App DB.
 3) Keep CRM flows using the current VM Supabase instance (the CRM-only DB after this cleanup).
-

@@ -1,5 +1,8 @@
 # Pontea + Coolify + Supabase + NocoDB
 
+> Важно: этот документ сохранен как история миграции/инцидентов.  
+> Single source of truth по VM: `docs/pontea-vm-runbook.md` (актуализация: 2026-02-18).
+
 ## Финальный статус (после clean restart, resize и привязки NocoDB к Supabase)
 
 **Дата/время фиксации:** 2026-02-16 23:25 UTC  
@@ -95,22 +98,56 @@
 
 ### Фикс (применен)
 
-Подключили контейнер Supabase DB в сеть NocoDB:
+**Рекомендуемый фикс:** подключить **NocoDB** к сети **Supabase**, чтобы после `supabase` redeploy/recreate не нужно было каждый раз руками «добавлять» DB в сеть NocoDB.
 
 ```bash
-sudo docker network connect v484wscoso8s8kswkscscc44 supabase-db-k4k0k4o0oog8w8480okc4g48
+sudo docker network connect k4k0k4o0oog8w8480okc4g48 nocodb-v484wscoso8s8kswkscscc44 || true
 ```
 
-Проверки после фикса:
+Если раньше применяли старый workaround (подключали DB в сеть NocoDB), можно убрать лишнюю связь:
+
+```bash
+sudo docker network disconnect v484wscoso8s8kswkscscc44 supabase-db-k4k0k4o0oog8w8480okc4g48 || true
+```
+
+Проверки:
 
 - `nocodb-v484...` -> `Up (healthy)`
 - `https://nocodb.pontea.school` -> `302 https://nocodb.pontea.school/dashboard`
-- SQL test из сети NocoDB до Supabase DB -> `select 1` успешно.
+- Внутри `nocodb-v484...` резолвится `supabase-db-k4k0...` (и/или `supabase-db`) и есть TCP-коннект до `:5432`.
 
 ### Важно на будущее
 
-- Это network-level фикc. После `supabase` redeploy/recreate (особенно DB контейнера) привязка к сети `v484...` может слететь.
-- После каждого restart/redeploy Supabase нужно делать post-check NocoDB (см. Runbook ниже).
+- Важно, что проблема тут **network-level**: Docker DNS резолвит контейнерные hostname только внутри общей сети.
+- Старый workaround (подключать `supabase-db-*` в сеть `v484...`) часто ломается после `supabase` redeploy/recreate (DB контейнер пересоздается и связь с сетью теряется).
+- Если держать NocoDB подключенным к сети Supabase (`k4k0...`), то `supabase` redeploy обычно проходит без падения NocoDB.
+
+### Update 2026-02-18: "Permanent" hardening
+
+Чтобы не возвращаться к ручному `docker network connect` после пересоздания контейнеров, зафиксировали связь на уровне compose NocoDB:
+
+- В `/data/coolify/services/v484wscoso8s8kswkscscc44/docker-compose.yml` добавлена external-сеть Supabase `k4k0k4o0oog8w8480okc4g48`.
+- `nocodb` подключен к двум сетям: `v484...` (ingress) и `k4k0...` (доступ к DB).
+- В `/data/coolify/services/v484wscoso8s8kswkscscc44/.env` `NC_DB` переведен на `supabase-db` (alias), чтобы не зависеть от длинного имени контейнера.
+
+Авто-фикс через systemd timer больше не требуется и не установлен (оставлен ниже только как опциональный шаблон).
+
+### Авто-фикс (опционально)
+
+Если по каким-то причинам NocoDB периодически пересоздается/переезжает между сетями (и проблема повторяется), можно поставить на VM systemd-timer, который будет автоматически проверять сеть и, при необходимости, подключать `nocodb-*` к сети Supabase DB.
+
+Пример (на VM):
+
+- Скрипт: `/usr/local/bin/pontea-ensure-nocodb-supabase-network.sh`
+- Юнит: `/etc/systemd/system/pontea-nocodb-network.service`
+- Таймер: `/etc/systemd/system/pontea-nocodb-network.timer`
+
+Проверка:
+
+```bash
+sudo systemctl status pontea-nocodb-network.timer --no-pager
+sudo journalctl -u pontea-nocodb-network.service -n 50 --no-pager
+```
 
 ---
 
@@ -179,10 +216,15 @@ sudo docker logs --since 2m nocodb-v484wscoso8s8kswkscscc44 | tail -n 80
 curl -I https://nocodb.pontea.school
 ```
 
-Если в логах `ENOTFOUND supabase-db-k4k0...`, выполнить:
+Если в логах `ENOTFOUND` / `EAI_AGAIN` на `supabase-db-k4k0...`, выполнить:
 
 ```bash
-sudo docker network connect v484wscoso8s8kswkscscc44 supabase-db-k4k0k4o0oog8w8480okc4g48 || true
+# Подключить NocoDB к сети Supabase DB (рекомендуемый вариант)
+sudo docker network connect k4k0k4o0oog8w8480okc4g48 nocodb-v484wscoso8s8kswkscscc44 || true
+
+# (Опционально) если раньше применяли старый workaround, убрать лишнюю связь
+sudo docker network disconnect v484wscoso8s8kswkscscc44 supabase-db-k4k0k4o0oog8w8480okc4g48 || true
+
 sudo docker restart nocodb-v484wscoso8s8kswkscscc44
 ```
 

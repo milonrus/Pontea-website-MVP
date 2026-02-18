@@ -10,7 +10,10 @@
     "test:roadmap": "node --import tsx --test src/lib/roadmap-generator/engine.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:install": "playwright install"
+    "test:e2e:install": "playwright install",
+    "test:pricing:prepayment:api": "node scripts/pricing-prepayment-api-smoke.cjs",
+    "test:pricing:prepayment:e2e": "RUN_PREPAYMENT_FULL_E2E=1 playwright test tests/pricing-prepayment-submit.spec.ts --workers=1",
+    "test:pricing:prepayment:full": "npm run test:pricing:prepayment:api && npm run test:pricing:prepayment:e2e"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
@@ -24,6 +27,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-markdown": "^10.1.0",
+    "server-only": "^0.0.1",
     "tailwind-merge": "2.2.1"
   },
   "devDependencies": {

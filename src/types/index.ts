@@ -449,7 +449,7 @@ export interface ClientContact {
   isPrimary: boolean;
   firstSeenAt: string;
   lastSeenAt: string;
-  sourceTable: 'assessment_results' | 'pricing_leads' | 'consultation_leads';
+  sourceTable: 'assessment_results' | 'eur_requests' | 'consultation_requests';
   sourceRowId: string;
   createdAt: string;
   updatedAt: string;
@@ -457,7 +457,7 @@ export interface ClientContact {
 
 export interface ClientLinkReview {
   id: string;
-  sourceTable: 'assessment_results' | 'pricing_leads' | 'consultation_leads';
+  sourceTable: 'assessment_results' | 'eur_requests' | 'consultation_requests';
   sourceRowId: string;
   placeholderClientId: string;
   incomingName: string | null;

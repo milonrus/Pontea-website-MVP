@@ -25,6 +25,8 @@ test('public EN-root and RU mirrored routes are reachable', async ({ request }) 
     '/ru/arched-prep-course/',
     '/thank-you/',
     '/ru/thank-you/',
+    '/invoice-request/',
+    '/ru/invoice-request/',
     '/results/',
     '/ru/results/',
   ];
@@ -71,6 +73,88 @@ test('language switcher keeps mirrored path on localized content pages', async (
   const menu = page.getByRole('menu', { name: 'Language selector' });
   await expect(menu).toBeVisible();
   await expect(menu.getByRole('menuitem', { name: 'Русский' })).toHaveAttribute('href', '/ru/assessment/');
+});
+
+test('language switcher keeps mirrored invoice-request path and plan query', async ({ page }) => {
+  await page.goto('/invoice-request/?plan=foundation');
+
+  const toggle = page.getByRole('button', { name: 'Open language menu' });
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+
+  const menu = page.getByRole('menu', { name: 'Language selector' });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Русский' })).toHaveAttribute(
+    'href',
+    '/ru/invoice-request/?plan=foundation'
+  );
+});
+
+test('language switcher keeps mirrored invoice-request prepayment mode query', async ({ page }) => {
+  await page.goto('/invoice-request/?mode=prepayment');
+
+  const toggle = page.getByRole('button', { name: 'Open language menu' });
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+
+  const menu = page.getByRole('menu', { name: 'Language selector' });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Русский' })).toHaveAttribute(
+    'href',
+    '/ru/invoice-request/?mode=prepayment'
+  );
+});
+
+test('invoice-request normalizes missing or invalid plan to advanced and keeps other query params', async ({ page }) => {
+  await page.goto('/invoice-request/');
+
+  await expect.poll(() => {
+    const currentUrl = new URL(page.url());
+    return currentUrl.searchParams.get('plan');
+  }).toBe('advanced');
+
+  await page.goto('/invoice-request/?plan=unknown&utm_source=x');
+
+  await expect.poll(() => {
+    const currentUrl = new URL(page.url());
+    return `${currentUrl.searchParams.get('plan')}:${currentUrl.searchParams.get('utm_source')}`;
+  }).toBe('advanced:x');
+
+  await page.goto('/ru/invoice-request/');
+
+  await expect.poll(() => {
+    const currentUrl = new URL(page.url());
+    return currentUrl.searchParams.get('plan');
+  }).toBe('advanced');
+});
+
+test('invoice-request prepayment mode does not force plan normalization', async ({ page }) => {
+  await page.goto('/invoice-request/?mode=prepayment&utm_source=x');
+
+  await expect.poll(() => {
+    const currentUrl = new URL(page.url());
+    return `${currentUrl.searchParams.get('mode')}:${currentUrl.searchParams.get('plan')}:${currentUrl.searchParams.get('utm_source')}`;
+  }).toBe('prepayment:null:x');
+
+  await page.goto('/ru/invoice-request/?mode=prepayment');
+
+  await expect.poll(() => {
+    const currentUrl = new URL(page.url());
+    return `${currentUrl.searchParams.get('mode')}:${currentUrl.searchParams.get('plan')}`;
+  }).toBe('prepayment:null');
+});
+
+test('pricing prepayment strip opens currency modal with RUB and EUR options', async ({ page }) => {
+  await page.goto('/ru/');
+
+  const openModalButton = page.getByRole('button', { name: 'Зафиксировать цену за €100' });
+  await expect(openModalButton).toBeVisible();
+  await openModalButton.click();
+
+  await expect(page.getByRole('heading', { name: 'Выберите способ оплаты' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Оплата картой РФ/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Карты зарубежного банка \(EUR\)/i })).toBeVisible();
+  await expect(page.getByText(/Принимаю условия/i)).toHaveCount(0);
 });
 
 test('indexable pages expose hreflang, while noindex pages do not', async ({ request }) => {

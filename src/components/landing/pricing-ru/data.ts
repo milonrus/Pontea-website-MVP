@@ -9,9 +9,9 @@ const RU_PRICING_PLANS: RuPricingPlan[] = [
     id: 'foundation',
     name: 'Стартовый',
     subtitle: 'Идеальный старт для тех, кто готовится самостоятельно',
-    price: 890,
-    originalPrice: 990,
-    priceRub: 82000,
+    price: 790,
+    originalPrice: 890,
+    priceRub: 73000,
     installmentAvailable: false,
     summary: [
       'Сильная теоретическая база по всем 5 разделам экзамена',
@@ -44,9 +44,9 @@ const RU_PRICING_PLANS: RuPricingPlan[] = [
     id: 'advanced',
     name: 'Основной',
     subtitle: 'Оптимальный баланс практики, сопровождения и обратной связи',
-    price: 1490,
+    price: 1390,
     originalPrice: 1590,
-    priceRub: 137000,
+    priceRub: 128000,
     badge: 'Выбор 80% учеников',
     installmentAvailable: true,
     summary: [
@@ -92,9 +92,9 @@ const RU_PRICING_PLANS: RuPricingPlan[] = [
     id: 'mentorship',
     name: 'Индивидуальный',
     subtitle: 'Максимум персонального внимания и стратегической поддержки',
-    price: 3490,
-    originalPrice: 3590,
-    priceRub: 321000,
+    price: 3190,
+    originalPrice: 3490,
+    priceRub: 294000,
     badge: 'Количество мест ограничено',
     installmentAvailable: true,
     summary: [
@@ -152,9 +152,9 @@ const EN_PRICING_PLANS: RuPricingPlan[] = [
     id: 'foundation',
     name: 'Starter',
     subtitle: 'Perfect for students who are preparing independently',
-    price: 890,
-    originalPrice: 990,
-    priceRub: 82000,
+    price: 790,
+    originalPrice: 890,
+    priceRub: 73000,
     installmentAvailable: false,
     summary: [
       'Strong theoretical foundation across all 5 exam sections',
@@ -187,9 +187,9 @@ const EN_PRICING_PLANS: RuPricingPlan[] = [
     id: 'advanced',
     name: 'Core',
     subtitle: 'Best balance of practice, guidance, and feedback',
-    price: 1490,
+    price: 1390,
     originalPrice: 1590,
-    priceRub: 137000,
+    priceRub: 128000,
     badge: 'Chosen by 80% of students',
     installmentAvailable: true,
     summary: [
@@ -235,9 +235,9 @@ const EN_PRICING_PLANS: RuPricingPlan[] = [
     id: 'mentorship',
     name: 'Individual',
     subtitle: 'Maximum personal attention and strategic guidance',
-    price: 3490,
-    originalPrice: 3590,
-    priceRub: 321000,
+    price: 3190,
+    originalPrice: 3490,
+    priceRub: 294000,
     badge: 'Limited seats',
     installmentAvailable: true,
     summary: [
@@ -301,8 +301,8 @@ export const INSTALLMENT_MONTHS = 6;
 type RubPaymentPlanId = Exclude<RuPricingPlanId, 'mentorship'>;
 
 export const RUB_INSTALLMENT_TOTAL_BY_PLAN: Record<RubPaymentPlanId, number> = {
-  foundation: 89_000,
-  advanced: 149_000,
+  foundation: 79_000,
+  advanced: 139_000,
 };
 
 const eurPerMonthFormatter = new Intl.NumberFormat('ru-RU', {

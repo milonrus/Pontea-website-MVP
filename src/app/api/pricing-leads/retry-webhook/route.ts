@@ -4,11 +4,13 @@ import { MAX_WEBHOOK_ATTEMPTS, deliverWebhookWithRetries } from '../shared';
 
 const PRICING_EUR_INVOICE_WEBHOOK_ENV = 'PRICING_EUR_INVOICE_WEBHOOK_URL';
 const PRICING_MENTORSHIP_APPLICATION_WEBHOOK_ENV = 'PRICING_MENTORSHIP_APPLICATION_WEBHOOK_URL';
+const EUR_REQUESTS_TABLE = 'eur_requests';
+const CONSULTATION_REQUESTS_TABLE = 'consultation_requests';
 
 const extractOrderNumber = (lead: Record<string, any>): number | null =>
   typeof lead.invoice_order_number === 'number' ? lead.invoice_order_number : null;
 
-type RetryLeadTable = 'pricing_leads' | 'consultation_leads';
+type RetryLeadTable = typeof EUR_REQUESTS_TABLE | typeof CONSULTATION_REQUESTS_TABLE;
 
 export async function POST(request: Request) {
   try {
@@ -34,11 +36,11 @@ export async function POST(request: Request) {
 
     const supabase = createServerClient();
 
-    let table: RetryLeadTable = 'pricing_leads';
+    let table: RetryLeadTable = EUR_REQUESTS_TABLE;
     let lead: Record<string, any> | null = null;
 
     const pricingFetch = await supabase
-      .from('pricing_leads')
+      .from(EUR_REQUESTS_TABLE)
       .select('*')
       .eq('id', leadId)
       .maybeSingle();
@@ -52,11 +54,11 @@ export async function POST(request: Request) {
     }
 
     if (pricingFetch.data) {
-      table = 'pricing_leads';
+      table = EUR_REQUESTS_TABLE;
       lead = pricingFetch.data as Record<string, any>;
     } else {
       const consultFetch = await supabase
-        .from('consultation_leads')
+        .from(CONSULTATION_REQUESTS_TABLE)
         .select('*')
         .eq('id', leadId)
         .maybeSingle();
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
       }
 
       if (consultFetch.data) {
-        table = 'consultation_leads';
+        table = CONSULTATION_REQUESTS_TABLE;
         lead = consultFetch.data as Record<string, any>;
       }
     }
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (lead.status === 'webhook_delivered') {
+    if (lead.webhook_status === 'webhook_delivered') {
       return NextResponse.json({
         success: true,
         leadId: lead.id,
@@ -101,9 +103,9 @@ export async function POST(request: Request) {
     }
 
     const webhookEnvName =
-      table === 'pricing_leads'
+      table === EUR_REQUESTS_TABLE
         ? PRICING_EUR_INVOICE_WEBHOOK_ENV
-        : table === 'consultation_leads'
+        : table === CONSULTATION_REQUESTS_TABLE
           ? PRICING_MENTORSHIP_APPLICATION_WEBHOOK_ENV
           : null;
 
@@ -126,7 +128,7 @@ export async function POST(request: Request) {
       const { error: updateError } = await supabase
         .from(table)
         .update({
-          status: 'failed_webhook',
+          webhook_status: 'failed_webhook',
           webhook_attempts: totalAttempts,
           webhook_last_error: webhookResult.lastError,
           webhook_delivered_at: null,
@@ -151,7 +153,7 @@ export async function POST(request: Request) {
     const { error: deliveredUpdateError } = await supabase
       .from(table)
       .update({
-        status: 'webhook_delivered',
+        webhook_status: 'webhook_delivered',
         webhook_attempts: totalAttempts,
         webhook_last_error: null,
         webhook_delivered_at: new Date().toISOString(),

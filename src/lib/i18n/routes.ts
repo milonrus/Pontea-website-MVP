@@ -8,6 +8,7 @@ const SWITCHABLE_STATIC_PATHS = new Set([
   '/legal',
   '/results',
   '/arched-prep-course',
+  '/invoice-request',
 ]);
 
 function normalizePath(pathname: string): string {

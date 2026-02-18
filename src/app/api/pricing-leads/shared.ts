@@ -1,15 +1,47 @@
-import { getOptionalServerEnv, getServerEnvInt } from '@/lib/env/server';
+const hasText = (value: string | undefined): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
 
-const LEAD_TYPES = ['eur_application', 'mentorship_application'] as const;
-const PLAN_IDS = ['foundation', 'advanced', 'mentorship'] as const;
+const getOptionalServerEnv = (name: string): string | undefined => {
+  const value = process.env[name];
+  return hasText(value) ? value : undefined;
+};
+
+const getServerEnvInt = (
+  name: string,
+  defaultValue: number,
+  options?: { min?: number; max?: number }
+): number => {
+  const raw = process.env[name];
+  if (!hasText(raw)) {
+    return defaultValue;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Environment variable ${name} must be an integer`);
+  }
+
+  if (typeof options?.min === 'number' && parsed < options.min) {
+    throw new Error(`Environment variable ${name} must be >= ${options.min}`);
+  }
+
+  if (typeof options?.max === 'number' && parsed > options.max) {
+    throw new Error(`Environment variable ${name} must be <= ${options.max}`);
+  }
+
+  return parsed;
+};
+
+const LEAD_TYPES = ['eur_application', 'eur_prepayment_application', 'mentorship_application'] as const;
+const PLAN_IDS = ['foundation', 'advanced', 'mentorship', 'universal'] as const;
 const CURRENCIES = ['EUR'] as const;
 const PAYER_TYPES = ['individual', 'legal_entity'] as const;
-const MESSENGER_TYPES = ['telegram', 'whatsapp'] as const;
 
 const EUR_PRICE_BY_PLAN: Record<PlanId, number> = {
-  foundation: 890,
-  advanced: 1490,
-  mentorship: 3490,
+  foundation: 790,
+  advanced: 1390,
+  mentorship: 3190,
+  universal: 100,
 };
 
 export const MAX_WEBHOOK_ATTEMPTS = getServerEnvInt('PRICING_WEBHOOK_MAX_ATTEMPTS', 3, { min: 1 });
@@ -19,7 +51,6 @@ export type LeadType = (typeof LEAD_TYPES)[number];
 export type PlanId = (typeof PLAN_IDS)[number];
 export type Currency = (typeof CURRENCIES)[number];
 export type PayerType = (typeof PAYER_TYPES)[number];
-export type MessengerType = (typeof MESSENGER_TYPES)[number];
 
 export interface NormalizedPricingLeadPayload {
   leadType: LeadType;
@@ -30,8 +61,6 @@ export interface NormalizedPricingLeadPayload {
   email: string | null;
   phone: string;
   payerType: PayerType | null;
-  messengerType: MessengerType | null;
-  messengerHandle: string | null;
   comment: string | null;
   contractCountry: string | null;
   contractCity: string | null;
@@ -40,14 +69,7 @@ export interface NormalizedPricingLeadPayload {
   consentOffer: boolean;
   consentPersonalData: boolean;
   consentMarketing: boolean;
-  ctaLabel: string;
   pagePath: string;
-  referrer: string | null;
-  utmSource: string | null;
-  utmMedium: string | null;
-  utmCampaign: string | null;
-  utmTerm: string | null;
-  utmContent: string | null;
 }
 
 export interface WebhookDeliveryResult {
@@ -83,9 +105,6 @@ const isCurrency = (value: unknown): value is Currency =>
 const isPayerType = (value: unknown): value is PayerType =>
   typeof value === 'string' && PAYER_TYPES.includes(value as PayerType);
 
-const isMessengerType = (value: unknown): value is MessengerType =>
-  typeof value === 'string' && MESSENGER_TYPES.includes(value as MessengerType);
-
 export function validateAndNormalizeLeadPayload(body: unknown): {
   payload: NormalizedPricingLeadPayload | null;
   error: string | null;
@@ -118,11 +137,6 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
     return { payload: null, error: 'phone must be in E.164 format' };
   }
 
-  const ctaLabel = normalizeText(source.ctaLabel);
-  if (!ctaLabel) {
-    return { payload: null, error: 'ctaLabel is required' };
-  }
-
   const pagePath = normalizeText(source.pagePath);
   if (!pagePath) {
     return { payload: null, error: 'pagePath is required' };
@@ -138,52 +152,46 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
 
   const lastName = normalizeText(source.lastName);
   const email = normalizeText(source.email);
-  const payerTypeRaw = source.payerType;
-  const messengerTypeRaw = source.messengerType;
-  const messengerHandle = normalizeText(source.messengerHandle);
-
-  let payerType: PayerType | null = null;
-  if (payerTypeRaw !== undefined && payerTypeRaw !== null) {
-    if (!isPayerType(payerTypeRaw)) {
-      return { payload: null, error: 'Invalid payerType' };
-    }
-
-    payerType = payerTypeRaw;
-  }
-
-  let messengerType: MessengerType | null = null;
-  if (messengerTypeRaw !== undefined && messengerTypeRaw !== null && messengerTypeRaw !== '') {
-    if (!isMessengerType(messengerTypeRaw)) {
-      return { payload: null, error: 'Invalid messengerType' };
-    }
-
-    messengerType = messengerTypeRaw;
-  }
-
-  if (messengerHandle && !messengerType) {
-    return { payload: null, error: 'messengerType is required when messengerHandle is provided' };
-  }
-
   const comment = normalizeText(source.comment);
   const contractCountry = normalizeText(source.contractCountry);
   const contractCity = normalizeText(source.contractCity);
   const contractPostalCode = normalizeText(source.contractPostalCode);
   const contractAddress = normalizeText(source.contractAddress);
-  const referrer = normalizeText(source.referrer);
-  const utmSource = normalizeText(source.utmSource);
-  const utmMedium = normalizeText(source.utmMedium);
-  const utmCampaign = normalizeText(source.utmCampaign);
-  const utmTerm = normalizeText(source.utmTerm);
-  const utmContent = normalizeText(source.utmContent);
   const currency = isCurrency(source.currency) ? source.currency : null;
 
-  if (source.leadType === 'eur_application') {
-    if (source.planId !== 'foundation' && source.planId !== 'advanced') {
-      return { payload: null, error: 'eur_application supports only foundation and advanced' };
+  let payerType: PayerType | null = null;
+  if (source.payerType !== undefined && source.payerType !== null) {
+    if (!isPayerType(source.payerType)) {
+      return { payload: null, error: 'Invalid payerType' };
+    }
+
+    payerType = source.payerType;
+  }
+
+  if (source.leadType === 'eur_application' || source.leadType === 'eur_prepayment_application') {
+    const isPrepaymentLead = source.leadType === 'eur_prepayment_application';
+    if (
+      source.planId !== 'foundation'
+      && source.planId !== 'advanced'
+      && source.planId !== 'mentorship'
+    ) {
+      if (!isPrepaymentLead) {
+        return {
+          payload: null,
+          error: 'eur_application supports only foundation, advanced, and mentorship',
+        };
+      }
+    }
+
+    if (isPrepaymentLead && source.planId !== 'universal') {
+      return { payload: null, error: 'eur_prepayment_application requires universal plan' };
     }
 
     if (currency !== 'EUR') {
-      return { payload: null, error: 'eur_application currency must be EUR' };
+      return {
+        payload: null,
+        error: `${source.leadType} currency must be EUR`,
+      };
     }
 
     if (!lastName || lastName.length < 2) {
@@ -219,7 +227,7 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
     }
 
     if (!consentOffer) {
-      return { payload: null, error: 'consentOffer must be true for eur_application' };
+      return { payload: null, error: `consentOffer must be true for ${source.leadType}` };
     }
   }
 
@@ -231,6 +239,8 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
     if (currency !== null) {
       return { payload: null, error: 'mentorship_application currency must be null' };
     }
+
+    payerType = null;
   }
 
   return {
@@ -243,8 +253,6 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
       email,
       phone,
       payerType,
-      messengerType,
-      messengerHandle,
       comment,
       contractCountry,
       contractCity,
@@ -253,14 +261,7 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
       consentOffer,
       consentPersonalData,
       consentMarketing,
-      ctaLabel,
       pagePath,
-      referrer,
-      utmSource,
-      utmMedium,
-      utmCampaign,
-      utmTerm,
-      utmContent,
     },
     error: null,
   };
@@ -269,8 +270,15 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
 export function buildWebhookPayload(lead: Record<string, any>) {
   const planId = isPlanId(lead.plan_id) ? lead.plan_id : null;
   const price = planId ? EUR_PRICE_BY_PLAN[planId] : null;
+  const paymentKind = lead.lead_type === 'eur_prepayment_application'
+    ? 'prepayment'
+    : lead.lead_type === 'eur_application'
+      ? 'full_payment'
+      : null;
+  const isEurPrepaymentLead = paymentKind === 'prepayment';
   const orderNumber =
-    lead.lead_type === 'eur_application' && typeof lead.invoice_order_number === 'number'
+    (lead.lead_type === 'eur_application' || lead.lead_type === 'eur_prepayment_application')
+      && typeof lead.invoice_order_number === 'number'
       ? lead.invoice_order_number
       : null;
 
@@ -280,7 +288,7 @@ export function buildWebhookPayload(lead: Record<string, any>) {
     orderNumber,
     price,
     leadType: lead.lead_type,
-    status: lead.status,
+    webhookStatus: lead.webhook_status,
     planId: lead.plan_id,
     currency: lead.currency,
     firstName: lead.first_name,
@@ -288,26 +296,15 @@ export function buildWebhookPayload(lead: Record<string, any>) {
     email: lead.email,
     phone: lead.phone,
     payerType: lead.payer_type,
-    messengerType: lead.messenger_type,
-    messengerHandle: lead.messenger_handle,
     comment: lead.comment,
     contractCountry: lead.contract_country,
     contractCity: lead.contract_city,
     contractPostalCode: lead.contract_postal_code,
     contractAddress: lead.contract_address,
-    consentOffer: lead.consent_offer,
-    consentPersonalData: lead.consent_personal_data,
-    consentMarketing: lead.consent_marketing,
-    ctaLabel: lead.cta_label,
     pagePath: lead.page_path,
-    referrer: lead.referrer,
-    utmSource: lead.utm_source,
-    utmMedium: lead.utm_medium,
-    utmCampaign: lead.utm_campaign,
-    utmTerm: lead.utm_term,
-    utmContent: lead.utm_content,
-    isDuplicate: lead.is_duplicate,
-    duplicateOf: lead.duplicate_of,
+    paymentKind,
+    prepaymentAmountEur: isEurPrepaymentLead ? 100 : null,
+    prepaymentAmountRub: isEurPrepaymentLead ? 9000 : null,
     submittedAt: lead.created_at,
   };
 }

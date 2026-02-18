@@ -1,5 +1,9 @@
 # Pontea (Next.js) — Production сетап в Yandex Cloud (Compute VM + Nginx + PM2 + Let’s Encrypt)
 
+> Важно: этот документ содержит **исторический** сетап (Nginx + PM2).  
+> Текущий production на этой VM работает через **Coolify + Docker**.  
+> Single source of truth: `docs/pontea-vm-runbook.md` (актуализация: 2026-02-18).
+
 **Дата актуализации:** 2026-02-16  
 **Проект:** Pontea website MVP  
 **Репозиторий (локально у владельца):** `/Users/mikhail/Documents/vibe-coding/Pontea-website-MVP`  

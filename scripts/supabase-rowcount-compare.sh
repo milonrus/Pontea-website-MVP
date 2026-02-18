@@ -41,8 +41,9 @@ TABLES=(
   practice_sessions
   practice_answers
   assessment_results
-  pricing_leads
-  consultation_leads
+  eur_requests
+  consultation_requests
+  leads
   invoice_order_counter
 )
 

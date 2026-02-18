@@ -2,10 +2,10 @@
 
 /*
   CRM smoke test runner for:
-  - clients / client_contacts / client_link_reviews
+  - leads / client_contacts / client_link_reviews
   - assessment_results client linking
-  - consultation_leads linking for mentorship
-  - pricing_leads linking for eur
+  - consultation_requests linking for mentorship
+  - eur_requests linking for eur
   - collision handling + review resolution
 
   Notes:
@@ -100,7 +100,7 @@ async function uniquePhone() {
     // Candidate length: + + 11 digits => valid E.164.
     // Avoid collisions in both canonical and contact history.
     // eslint-disable-next-line no-await-in-loop
-    const exists = await tableHasValue('clients', 'canonical_phone_e164', candidate);
+    const exists = await tableHasValue('leads', 'phone', candidate);
     if (!exists) return candidate;
   }
   throw new Error('Failed to generate unique phone after 20 attempts');
@@ -110,7 +110,7 @@ async function uniqueEmail(label) {
   for (let i = 0; i < 20; i += 1) {
     const candidate = `${runId}.${label}.${i}@crm-qa.local`;
     // eslint-disable-next-line no-await-in-loop
-    const exists = await tableHasValue('clients', 'canonical_email', candidate);
+    const exists = await tableHasValue('leads', 'email', candidate);
     if (!exists) return candidate;
   }
   throw new Error(`Failed to generate unique email for label=${label}`);
@@ -124,13 +124,13 @@ async function cleanup() {
   const clientIds = Array.from(tracked.clientIds);
 
   if (pricingIds.length > 0) {
-    const { error } = await supabase.from('pricing_leads').delete().in('id', pricingIds);
-    if (error) logWarn('Cleanup pricing_leads failed', error.message);
+    const { error } = await supabase.from('eur_requests').delete().in('id', pricingIds);
+    if (error) logWarn('Cleanup eur_requests failed', error.message);
   }
 
   if (consultationIds.length > 0) {
-    const { error } = await supabase.from('consultation_leads').delete().in('id', consultationIds);
-    if (error) logWarn('Cleanup consultation_leads failed', error.message);
+    const { error } = await supabase.from('consultation_requests').delete().in('id', consultationIds);
+    if (error) logWarn('Cleanup consultation_requests failed', error.message);
   }
 
   if (assessmentIds.length > 0) {
@@ -147,8 +147,8 @@ async function cleanup() {
     const { error: contactsErr } = await supabase.from('client_contacts').delete().in('client_id', clientIds);
     if (contactsErr) logWarn('Cleanup client_contacts failed', contactsErr.message);
 
-    const { error: clientsErr } = await supabase.from('clients').delete().in('id', clientIds);
-    if (clientsErr) logWarn('Cleanup clients failed', clientsErr.message);
+    const { error: leadsErr } = await supabase.from('leads').delete().in('id', clientIds);
+    if (leadsErr) logWarn('Cleanup leads failed', leadsErr.message);
   }
 }
 
@@ -182,9 +182,9 @@ async function insertAssessment({ token, name, email, phone }) {
 
 async function insertPricingLead(payload) {
   const row = await supabase
-    .from('pricing_leads')
+    .from('eur_requests')
     .insert(payload)
-    .select('id,client_id,lead_type,invoice_order_number,status,crm_status')
+    .select('id,client_id,lead_type,invoice_order_number,webhook_status,crm_status')
     .single();
 
   if (row.error || !row.data) {
@@ -197,9 +197,9 @@ async function insertPricingLead(payload) {
 
 async function insertConsultationLead(payload) {
   const row = await supabase
-    .from('consultation_leads')
+    .from('consultation_requests')
     .insert(payload)
-    .select('id,client_id,lead_type,status,crm_status')
+    .select('id,client_id,lead_type,webhook_status,crm_status')
     .single();
 
   if (row.error || !row.data) {
@@ -213,16 +213,14 @@ async function insertConsultationLead(payload) {
 async function main() {
   // precheck
   const prechecks = await Promise.all([
-    supabase.from('clients').select('id').limit(1),
+    supabase.from('leads').select('id').limit(1),
     supabase.from('client_contacts').select('id').limit(1),
     supabase.from('client_link_reviews').select('id').limit(1),
-    supabase.from('consultation_leads').select('id').limit(1),
-    supabase.from('crm_client_timeline_v').select('client_id').limit(1),
-    supabase.from('crm_clients_overview_v').select('client_id').limit(1),
+    supabase.from('consultation_requests').select('id').limit(1),
   ]);
 
   const precheckFailed = prechecks.some((r) => r.error);
-  expect(!precheckFailed, 'CRM tables/views are reachable', prechecks.map((r) => r.error?.message).filter(Boolean));
+  expect(!precheckFailed, 'CRM tables are reachable', prechecks.map((r) => r.error?.message).filter(Boolean));
   if (precheckFailed) return;
 
   // Scenario 1: assessment creates client
@@ -238,57 +236,39 @@ async function main() {
   expect(!!s1.client_id, 'Assessment has client_id');
 
   const clientS1 = await supabase
-    .from('clients')
-    .select('id,status,canonical_phone_e164,canonical_email,crm_status,tariff')
+    .from('leads')
+    .select('id,lifecycle_status,phone,email,crm_status,tariff')
     .eq('id', s1.client_id)
     .single();
 
   expect(!clientS1.error && !!clientS1.data, 'Client row exists for assessment', clientS1.error?.message);
   if (clientS1.data) {
-    expect(clientS1.data.status === 'active', 'Client status is active');
+    expect(clientS1.data.lifecycle_status === 'active', 'Client lifecycle status is active');
     expect(clientS1.data.crm_status === 'new', 'Client CRM status defaults to new');
-    expect(clientS1.data.canonical_phone_e164 === phoneA, 'Canonical phone matches assessment');
-    expect(clientS1.data.canonical_email === emailA, 'Canonical email matches assessment');
+    expect(clientS1.data.phone === phoneA, 'Client phone matches assessment');
+    expect(clientS1.data.email === emailA, 'Client email matches assessment');
     expect(clientS1.data.tariff === null, 'Client tariff is null after assessment only');
   }
 
   // Scenario 2: mentorship links by phone
   const vip1 = await insertConsultationLead({
     lead_type: 'mentorship_application',
-    status: 'captured',
+    webhook_status: 'captured',
     crm_status: 'new',
     plan_id: 'mentorship',
-    currency: null,
     first_name: 'CRM',
     last_name: 'QA VIP',
     email: null,
     phone: phoneA,
-    payer_type: null,
-    messenger_type: null,
-    messenger_handle: null,
     comment: null,
-    contract_country: null,
-    contract_city: null,
-    contract_postal_code: null,
-    contract_address: null,
-    consent_offer: false,
-    consent_personal_data: true,
-    consent_marketing: false,
-    cta_label: 'crm-qa-test',
     page_path: '/ru/',
-    referrer: null,
-    utm_source: null,
-    utm_medium: null,
-    utm_campaign: null,
-    utm_term: null,
-    utm_content: null,
   });
 
   expect(vip1.client_id === s1.client_id, 'VIP lead linked to same client via phone', { assessmentClient: s1.client_id, vipClient: vip1.client_id });
   expect(vip1.crm_status === 'new', 'Consultation lead CRM status defaults to new');
 
   const clientAfterVip = await supabase
-    .from('clients')
+    .from('leads')
     .select('tariff')
     .eq('id', s1.client_id)
     .single();
@@ -298,7 +278,7 @@ async function main() {
   const phoneB = await uniquePhone();
   const eur1 = await insertPricingLead({
     lead_type: 'eur_application',
-    status: 'captured',
+    webhook_status: 'captured',
     plan_id: 'foundation',
     currency: 'EUR',
     first_name: 'CRM',
@@ -306,24 +286,12 @@ async function main() {
     email: emailA,
     phone: phoneB,
     payer_type: 'individual',
-    messenger_type: null,
-    messenger_handle: null,
     comment: null,
     contract_country: 'Italy',
     contract_city: 'Milan',
     contract_postal_code: '20121',
     contract_address: 'Via QA 1',
-    consent_offer: true,
-    consent_personal_data: true,
-    consent_marketing: false,
-    cta_label: 'crm-qa-test',
     page_path: '/ru/',
-    referrer: null,
-    utm_source: null,
-    utm_medium: null,
-    utm_campaign: null,
-    utm_term: null,
-    utm_content: null,
   });
 
   expect(eur1.client_id === s1.client_id, 'EUR lead linked to same client via email');
@@ -331,12 +299,12 @@ async function main() {
   expect(eur1.crm_status === 'new', 'Invoice lead CRM status defaults to new');
 
   const clientAfterEur = await supabase
-    .from('clients')
-    .select('canonical_phone_e164,canonical_email,tariff')
+    .from('leads')
+    .select('phone,email,tariff')
     .eq('id', s1.client_id)
     .single();
-  expect(clientAfterEur.data?.canonical_phone_e164 === phoneB, 'Canonical phone updated to latest');
-  expect(clientAfterEur.data?.canonical_email === emailA, 'Canonical email preserved');
+  expect(clientAfterEur.data?.phone === phoneB, 'Client phone updated to latest');
+  expect(clientAfterEur.data?.email === emailA, 'Client email preserved');
   expect(clientAfterEur.data?.tariff === 'foundation', 'Client tariff becomes foundation after EUR invoice');
 
   // Scenario 5/6: collision + review resolution
@@ -361,7 +329,7 @@ async function main() {
 
   const collision = await insertPricingLead({
     lead_type: 'eur_application',
-    status: 'captured',
+    webhook_status: 'captured',
     plan_id: 'foundation',
     currency: 'EUR',
     first_name: 'CRM',
@@ -369,33 +337,21 @@ async function main() {
     email: emailC,
     phone: phoneC,
     payer_type: 'individual',
-    messenger_type: null,
-    messenger_handle: null,
     comment: null,
     contract_country: 'Italy',
     contract_city: 'Milan',
     contract_postal_code: '20121',
     contract_address: 'Via QA 2',
-    consent_offer: true,
-    consent_personal_data: true,
-    consent_marketing: false,
-    cta_label: 'crm-qa-test',
     page_path: '/ru/',
-    referrer: null,
-    utm_source: null,
-    utm_medium: null,
-    utm_campaign: null,
-    utm_term: null,
-    utm_content: null,
   });
 
-  const placeholder = await supabase.from('clients').select('id,status').eq('id', collision.client_id).single();
-  expect(placeholder.data?.status === 'placeholder', 'Collision creates placeholder client');
+  const placeholder = await supabase.from('leads').select('id,lifecycle_status').eq('id', collision.client_id).single();
+  expect(placeholder.data?.lifecycle_status === 'placeholder', 'Collision creates placeholder client');
 
   const review = await supabase
     .from('client_link_reviews')
     .select('id,status,candidate_client_ids,source_table,source_row_id')
-    .eq('source_table', 'pricing_leads')
+    .eq('source_table', 'eur_requests')
     .eq('source_row_id', collision.id)
     .single();
 
@@ -444,7 +400,7 @@ async function main() {
   expect(reviewAfter.data?.resolution === resolutionActionUsed, 'Resolution action recorded', reviewAfter.data || reviewAfter.error?.message);
 
   const collisionAfter = await supabase
-    .from('pricing_leads')
+    .from('eur_requests')
     .select('client_id')
     .eq('id', collision.id)
     .single();
@@ -466,10 +422,10 @@ async function main() {
   const phoneE = await uniquePhone();
   const emailD = await uniqueEmail('d');
   const rubAttempt = await supabase
-    .from('pricing_leads')
+    .from('eur_requests')
     .insert({
       lead_type: 'rub_intent',
-      status: 'captured',
+      webhook_status: 'captured',
       plan_id: 'foundation',
       currency: 'RUB',
       first_name: 'CRM',
@@ -477,38 +433,19 @@ async function main() {
       email: emailD,
       phone: phoneE,
       payer_type: null,
-      messenger_type: null,
-      messenger_handle: null,
       comment: null,
       contract_country: null,
       contract_city: null,
       contract_postal_code: null,
       contract_address: null,
-      consent_offer: false,
-      consent_personal_data: true,
-      consent_marketing: false,
-      cta_label: 'crm-qa-test',
       page_path: '/ru/',
-      referrer: null,
-      utm_source: null,
-      utm_medium: null,
-      utm_campaign: null,
-      utm_term: null,
-      utm_content: null,
     })
     .select('id')
     .maybeSingle();
 
   expect(!!rubAttempt.error, 'rub_intent insert is rejected (disabled)', rubAttempt.error?.message);
 
-  // Overview sanity
-  const overview = await supabase
-    .from('crm_clients_overview_v')
-    .select('client_id,assessments_count,vip_count,eur_count,open_reviews_count')
-    .eq('client_id', s1.client_id)
-    .single();
-
-  expect(!overview.error && !!overview.data, 'crm_clients_overview_v returns row for linked client', overview.error?.message);
+  expect(clientB.client_id !== clientA.client_id, 'Collision setup produced two independent clients');
 }
 
 (async () => {

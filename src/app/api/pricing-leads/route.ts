@@ -5,23 +5,29 @@ import {
   deliverWebhookWithRetries,
   validateAndNormalizeLeadPayload,
 } from './shared';
+
 const PRICING_EUR_INVOICE_WEBHOOK_ENV = 'PRICING_EUR_INVOICE_WEBHOOK_URL';
 const PRICING_MENTORSHIP_APPLICATION_WEBHOOK_ENV = 'PRICING_MENTORSHIP_APPLICATION_WEBHOOK_URL';
+const EUR_REQUESTS_TABLE = 'eur_requests';
+const CONSULTATION_REQUESTS_TABLE = 'consultation_requests';
 
-const BACKWARD_COMPAT_OPTIONAL_COLUMNS = [
-  'consent_offer',
-  'contract_country',
-  'contract_city',
-  'contract_postal_code',
-  'contract_address',
-] as const;
-
-type CompatibilityColumn = (typeof BACKWARD_COMPAT_OPTIONAL_COLUMNS)[number];
 const ORDER_NUMBER_SCHEMA_ERROR_TOKENS = [
+  'eur_requests',
   'invoice_order_number',
   'invoice_order_counter',
   'assign_invoice_order_number',
   'trg_assign_invoice_order_number',
+] as const;
+const EUR_PREPAYMENT_SCHEMA_ERROR_TOKENS = [
+  'pricing_leads_flow_check',
+  'eur_requests_flow_v2_check',
+  'eur_requests_flow_v3_check',
+  'eur_requests_plan_id_v2_check',
+  'eur_requests_plan_id_v3_check',
+  'eur_requests_client_id_required_for_scoped_types',
+  'pricing_leads_client_id_required_for_scoped_types',
+  'trg_crm_assign_client_pricing_leads',
+  'crm_resolve_or_create_client',
 ] as const;
 const ORDER_NUMBER_SCHEMA_REQUIRED_MESSAGE = 'schema migration required';
 
@@ -40,31 +46,31 @@ const getSchemaRequiredErrorMessage = (detail: string) =>
     ? ORDER_NUMBER_SCHEMA_REQUIRED_MESSAGE
     : `${ORDER_NUMBER_SCHEMA_REQUIRED_MESSAGE}: ${detail}`;
 
-const getMissingColumnNames = (error: unknown): CompatibilityColumn[] => {
-  const text = getErrorText(error);
-
-  return BACKWARD_COMPAT_OPTIONAL_COLUMNS.filter((columnName) => text.includes(columnName));
-};
-
 const hasOrderNumberSchemaError = (error: unknown) => {
   const text = getErrorText(error);
   return ORDER_NUMBER_SCHEMA_ERROR_TOKENS.some((token) => text.includes(token));
 };
 
-const omitColumns = <T extends Record<string, any>>(payload: T, columns: CompatibilityColumn[]) => {
-  const next = { ...payload };
-  columns.forEach((columnName) => {
-    delete next[columnName];
-  });
-  return next;
+const hasEurPrepaymentSchemaError = (error: unknown) => {
+  const text = getErrorText(error);
+  return EUR_PREPAYMENT_SCHEMA_ERROR_TOKENS.some((token) => text.includes(token));
 };
 
 const extractOrderNumber = (lead: Record<string, any>): number | null =>
   typeof lead.invoice_order_number === 'number' ? lead.invoice_order_number : null;
 
+const extractClientId = (lead: Record<string, any>): string | null => {
+  if (typeof lead.client_id !== 'string') {
+    return null;
+  }
+
+  const trimmed = lead.client_id.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 async function ensureInvoiceOrderSchemaReady(supabase: any): Promise<string | null> {
   const columnCheck = await supabase
-    .from('pricing_leads')
+    .from(EUR_REQUESTS_TABLE)
     .select('invoice_order_number')
     .limit(1);
 
@@ -87,34 +93,6 @@ async function ensureInvoiceOrderSchemaReady(supabase: any): Promise<string | nu
   }
 
   return null;
-}
-
-async function findRecentDuplicateLeadId(
-  supabase: any,
-  table: 'pricing_leads' | 'consultation_leads',
-  phone: string
-): Promise<string | null> {
-  // NOTE: Duplicate rules are intentionally table-local to keep flows independent.
-  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-  const { data, error } = await supabase
-    .from(table)
-    .select('id')
-    .eq('phone', phone)
-    .gte('created_at', twentyFourHoursAgo)
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (error) {
-    console.error(`Failed to lookup duplicate lead in ${table}:`, error);
-    return null;
-  }
-
-  if (!data || data.length === 0) {
-    return null;
-  }
-
-  return data[0].id;
 }
 
 export async function POST(request: Request) {
@@ -151,9 +129,12 @@ export async function POST(request: Request) {
 
     const supabase = createServerClient();
 
-    const isEurLead = payload.leadType === 'eur_application';
-    const targetTable = isEurLead ? 'pricing_leads' : 'consultation_leads';
-    if (isEurLead) {
+    const isEurRequestLead =
+      payload.leadType === 'eur_application'
+      || payload.leadType === 'eur_prepayment_application';
+    const requiresInvoiceOrderNumber = isEurRequestLead;
+    const targetTable = isEurRequestLead ? EUR_REQUESTS_TABLE : CONSULTATION_REQUESTS_TABLE;
+    if (requiresInvoiceOrderNumber) {
       const schemaError = await ensureInvoiceOrderSchemaReady(supabase);
       if (schemaError) {
         return NextResponse.json(
@@ -163,39 +144,18 @@ export async function POST(request: Request) {
       }
     }
 
-    const duplicateLeadId = await findRecentDuplicateLeadId(supabase, targetTable, payload.phone);
     const now = new Date().toISOString();
 
-    const insertPayload = {
+    const commonInsertPayload = {
       lead_type: payload.leadType,
-      status: 'captured',
+      webhook_status: 'captured',
       plan_id: payload.planId,
-      currency: payload.currency,
       first_name: payload.firstName,
       last_name: payload.lastName,
       email: payload.email,
       phone: payload.phone,
-      payer_type: payload.payerType,
-      messenger_type: payload.messengerType,
-      messenger_handle: payload.messengerHandle,
       comment: payload.comment,
-      contract_country: payload.contractCountry,
-      contract_city: payload.contractCity,
-      contract_postal_code: payload.contractPostalCode,
-      contract_address: payload.contractAddress,
-      consent_offer: payload.consentOffer,
-      consent_personal_data: payload.consentPersonalData,
-      consent_marketing: payload.consentMarketing,
-      cta_label: payload.ctaLabel,
       page_path: payload.pagePath,
-      referrer: payload.referrer,
-      utm_source: payload.utmSource,
-      utm_medium: payload.utmMedium,
-      utm_campaign: payload.utmCampaign,
-      utm_term: payload.utmTerm,
-      utm_content: payload.utmContent,
-      is_duplicate: !!duplicateLeadId,
-      duplicate_of: duplicateLeadId,
       webhook_attempts: 0,
       webhook_last_error: null,
       webhook_delivered_at: null,
@@ -203,33 +163,33 @@ export async function POST(request: Request) {
       updated_at: now,
     };
 
-    let { data: lead, error: insertError } = await supabase
+    const insertPayload = isEurRequestLead
+      ? {
+          ...commonInsertPayload,
+          currency: payload.currency,
+          payer_type: payload.payerType,
+          contract_country: payload.contractCountry,
+          contract_city: payload.contractCity,
+          contract_postal_code: payload.contractPostalCode,
+          contract_address: payload.contractAddress,
+        }
+      : commonInsertPayload;
+
+    const { data: lead, error: insertError } = await supabase
       .from(targetTable)
       .insert(insertPayload)
       .select('*')
       .single();
+    const hasEurSchemaInsertError =
+      isEurRequestLead
+      && (hasEurPrepaymentSchemaError(insertError)
+        || (requiresInvoiceOrderNumber && hasOrderNumberSchemaError(insertError)));
 
-    if (insertError) {
-      const missingColumns = getMissingColumnNames(insertError);
-
-      if (missingColumns.length > 0) {
-        const fallbackPayload = omitColumns(insertPayload, missingColumns);
-        const retryInsert = await supabase
-          .from(targetTable)
-          .insert(fallbackPayload)
-          .select('*')
-          .single();
-
-        lead = retryInsert.data;
-        insertError = retryInsert.error;
-      }
-    }
-
-    if (insertError && isEurLead && hasOrderNumberSchemaError(insertError)) {
+    if (insertError && hasEurSchemaInsertError) {
       return NextResponse.json(
         {
           error: getSchemaRequiredErrorMessage(
-            insertError.message || 'failed to assign invoice order number'
+            insertError.message || 'eur request schema is outdated'
           ),
         },
         { status: 500 }
@@ -239,8 +199,8 @@ export async function POST(request: Request) {
     if (insertError || !lead) {
       console.error(`Failed to create lead in ${targetTable}:`, insertError);
       const responseError =
-        isEurLead && hasOrderNumberSchemaError(insertError)
-          ? getSchemaRequiredErrorMessage(insertError?.message || 'failed to assign invoice order number')
+        hasEurSchemaInsertError
+          ? getSchemaRequiredErrorMessage(insertError?.message || 'eur request schema is outdated')
           : process.env.NODE_ENV === 'production'
             ? 'Failed to save lead'
             : `Failed to save lead: ${insertError?.message || 'unknown database error'}`;
@@ -251,7 +211,7 @@ export async function POST(request: Request) {
     }
 
     const orderNumber = extractOrderNumber(lead);
-    if (isEurLead && orderNumber === null) {
+    if (requiresInvoiceOrderNumber && orderNumber === null) {
       const { error: cleanupError } = await supabase
         .from(targetTable)
         .delete()
@@ -271,8 +231,29 @@ export async function POST(request: Request) {
       );
     }
 
+    const clientId = extractClientId(lead);
+    if (isEurRequestLead && clientId === null) {
+      const { error: cleanupError } = await supabase
+        .from(targetTable)
+        .delete()
+        .eq('id', lead.id);
+
+      if (cleanupError) {
+        console.error('Failed to cleanup eur lead without client_id:', cleanupError);
+      }
+
+      return NextResponse.json(
+        {
+          error: getSchemaRequiredErrorMessage(
+            'client_id was not assigned by CRM trigger'
+          ),
+        },
+        { status: 500 }
+      );
+    }
+
     const webhookEnvName =
-      payload.leadType === 'eur_application'
+      payload.leadType === 'eur_application' || payload.leadType === 'eur_prepayment_application'
         ? PRICING_EUR_INVOICE_WEBHOOK_ENV
         : PRICING_MENTORSHIP_APPLICATION_WEBHOOK_ENV;
     const webhookResult = await deliverWebhookWithRetries(
@@ -285,7 +266,7 @@ export async function POST(request: Request) {
       const { error: updateError } = await supabase
         .from(targetTable)
         .update({
-          status: 'failed_webhook',
+          webhook_status: 'failed_webhook',
           webhook_attempts: webhookResult.attempts,
           webhook_last_error: webhookResult.lastError,
           webhook_delivered_at: null,
@@ -310,7 +291,7 @@ export async function POST(request: Request) {
     const { error: deliveredUpdateError } = await supabase
       .from(targetTable)
       .update({
-        status: 'webhook_delivered',
+        webhook_status: 'webhook_delivered',
         webhook_attempts: webhookResult.attempts,
         webhook_last_error: null,
         webhook_delivered_at: new Date().toISOString(),
