@@ -22,6 +22,9 @@ const EUR_PREPAYMENT_SCHEMA_ERROR_TOKENS = [
   'pricing_leads_flow_check',
   'eur_requests_flow_v2_check',
   'eur_requests_flow_v3_check',
+  'requested_amount_eur',
+  'eur_requests_requested_amount_eur_non_negative_check',
+  'eur_requests_requested_amount_eur_required_check',
   'eur_requests_plan_id_v2_check',
   'eur_requests_plan_id_v3_check',
   'eur_requests_client_id_required_for_scoped_types',
@@ -71,11 +74,11 @@ const extractClientId = (lead: Record<string, any>): string | null => {
 async function ensureInvoiceOrderSchemaReady(supabase: any): Promise<string | null> {
   const columnCheck = await supabase
     .from(EUR_REQUESTS_TABLE)
-    .select('invoice_order_number')
+    .select('invoice_order_number,requested_amount_eur')
     .limit(1);
 
   if (columnCheck.error) {
-    return columnCheck.error.message || 'invoice_order_number column is not accessible';
+    return columnCheck.error.message || 'invoice_order_number/requested_amount_eur columns are not accessible';
   }
 
   const counterCheck = await supabase
@@ -167,6 +170,7 @@ export async function POST(request: Request) {
       ? {
           ...commonInsertPayload,
           currency: payload.currency,
+          requested_amount_eur: payload.requestedAmountEur,
           payer_type: payload.payerType,
           contract_country: payload.contractCountry,
           contract_city: payload.contractCity,

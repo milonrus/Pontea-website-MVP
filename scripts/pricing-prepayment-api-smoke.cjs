@@ -86,7 +86,7 @@ async function waitForLeadDelivered(leadId, timeoutMs = 120000) {
   while (Date.now() < deadline) {
     const { data, error } = await supabase
       .from('eur_requests')
-      .select('id,lead_type,plan_id,currency,client_id,invoice_order_number,webhook_status,webhook_last_error,created_at')
+      .select('id,lead_type,plan_id,currency,requested_amount_eur,client_id,invoice_order_number,webhook_status,webhook_last_error,created_at')
       .eq('id', leadId)
       .maybeSingle();
 
@@ -125,6 +125,7 @@ async function main() {
         leadType: 'eur_prepayment_application',
         planId: 'universal',
         currency: 'EUR',
+        requestedAmountEur: 100,
         firstName: 'E2E',
         lastName: marker,
         email,
@@ -167,6 +168,10 @@ async function main() {
 
     if (lead.currency !== 'EUR') {
       throw new Error(`Unexpected currency: ${lead.currency}`);
+    }
+
+    if (lead.requested_amount_eur !== 100) {
+      throw new Error(`Unexpected requested_amount_eur: ${lead.requested_amount_eur}`);
     }
 
     if (!lead.client_id) {

@@ -60,6 +60,7 @@ Expected result:
    - `leadType='eur_application'`
    - `planId='foundation'`
    - `currency='EUR'`
+   - `requestedAmountEur=790` (or discounted final amount if promo is used)
    - `firstName='CRM'`, `lastName='QA User 1'`
    - `email=Email A`
    - `phone=Phone B` (different from old phone)
@@ -182,6 +183,7 @@ Note:
    - `lead_type='eur_prepayment_application'`
    - `plan_id='universal'`
    - `currency='EUR'`
+   - `requested_amount_eur=100`
    - `client_id IS NOT NULL`
    - `invoice_order_number IS NOT NULL`
    - `webhook_status='webhook_delivered'`

@@ -7,6 +7,7 @@ test('validateAndNormalizeLeadPayload accepts eur_prepayment_application with un
     leadType: 'eur_prepayment_application',
     planId: 'universal',
     currency: 'EUR',
+    requestedAmountEur: 100,
     firstName: 'Ivan',
     lastName: 'Ivanov',
     email: 'ivan@example.com',
@@ -34,6 +35,7 @@ test('validateAndNormalizeLeadPayload rejects eur_prepayment_application with no
     leadType: 'eur_prepayment_application',
     planId: 'advanced',
     currency: 'EUR',
+    requestedAmountEur: 100,
     firstName: 'Ivan',
     lastName: 'Ivanov',
     email: 'ivan@example.com',
@@ -53,11 +55,36 @@ test('validateAndNormalizeLeadPayload rejects eur_prepayment_application with no
   assert.equal(error, 'eur_prepayment_application requires universal plan');
 });
 
+test('validateAndNormalizeLeadPayload rejects EUR leads without requestedAmountEur', () => {
+  const { payload, error } = validateAndNormalizeLeadPayload({
+    leadType: 'eur_application',
+    planId: 'advanced',
+    currency: 'EUR',
+    firstName: 'Anna',
+    lastName: 'Ivanova',
+    email: 'anna@example.com',
+    phone: '+79991234567',
+    payerType: 'individual',
+    contractCountry: 'Italy',
+    contractCity: 'Milan',
+    contractPostalCode: '20121',
+    contractAddress: 'Via Roma 1',
+    consentOffer: true,
+    consentPersonalData: true,
+    consentMarketing: false,
+    pagePath: '/invoice-request/?plan=advanced',
+  });
+
+  assert.equal(payload, null);
+  assert.equal(error, 'requestedAmountEur must be >= 1 for EUR leads');
+});
+
 test('validateAndNormalizeLeadPayload accepts eur_application with mentorship plan', () => {
   const { payload, error } = validateAndNormalizeLeadPayload({
     leadType: 'eur_application',
     planId: 'mentorship',
     currency: 'EUR',
+    requestedAmountEur: 3190,
     firstName: 'Anna',
     lastName: 'Ivanova',
     email: 'anna@example.com',
@@ -99,11 +126,13 @@ test('buildWebhookPayload marks eur_prepayment_application correctly', () => {
     contract_address: 'Via Roma 1',
     page_path: '/invoice-request/?mode=prepayment',
     invoice_order_number: 100777,
+    requested_amount_eur: 100,
     created_at: '2026-02-21T10:00:00.000Z',
   });
 
   assert.equal(payload.paymentKind, 'prepayment');
   assert.equal(payload.prepaymentAmountEur, 100);
   assert.equal(payload.prepaymentAmountRub, 9000);
+  assert.equal(payload.requestedAmountEur, 100);
   assert.equal(payload.orderNumber, 100777);
 });

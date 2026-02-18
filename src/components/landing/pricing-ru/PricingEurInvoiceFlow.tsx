@@ -201,6 +201,7 @@ const PricingEurInvoiceFlow: React.FC<PricingEurInvoiceFlowProps> = ({
             : 'eur_application',
           planId: isPrepaymentMode ? 'universal' : plan!.id,
           currency: 'EUR',
+          requestedAmountEur: finalPrice,
           firstName: validation.parsedFullName.firstName,
           lastName: validation.parsedFullName.lastName,
           email: leadForm.email.trim(),

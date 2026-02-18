@@ -56,6 +56,7 @@ export interface NormalizedPricingLeadPayload {
   leadType: LeadType;
   planId: PlanId;
   currency: Currency | null;
+  requestedAmountEur: number | null;
   firstName: string;
   lastName: string | null;
   email: string | null;
@@ -104,6 +105,18 @@ const isCurrency = (value: unknown): value is Currency =>
 
 const isPayerType = (value: unknown): value is PayerType =>
   typeof value === 'string' && PAYER_TYPES.includes(value as PayerType);
+
+const parseInteger = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    return Number.parseInt(value.trim(), 10);
+  }
+
+  return null;
+};
 
 export function validateAndNormalizeLeadPayload(body: unknown): {
   payload: NormalizedPricingLeadPayload | null;
@@ -158,6 +171,14 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
   const contractPostalCode = normalizeText(source.contractPostalCode);
   const contractAddress = normalizeText(source.contractAddress);
   const currency = isCurrency(source.currency) ? source.currency : null;
+  const hasRequestedAmountEur = source.requestedAmountEur !== undefined && source.requestedAmountEur !== null;
+  const requestedAmountEur = hasRequestedAmountEur
+    ? parseInteger(source.requestedAmountEur)
+    : null;
+
+  if (hasRequestedAmountEur && requestedAmountEur === null) {
+    return { payload: null, error: 'requestedAmountEur must be an integer' };
+  }
 
   let payerType: PayerType | null = null;
   if (source.payerType !== undefined && source.payerType !== null) {
@@ -192,6 +213,10 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
         payload: null,
         error: `${source.leadType} currency must be EUR`,
       };
+    }
+
+    if (requestedAmountEur === null || requestedAmountEur < 1) {
+      return { payload: null, error: 'requestedAmountEur must be >= 1 for EUR leads' };
     }
 
     if (!lastName || lastName.length < 2) {
@@ -248,6 +273,7 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
       leadType: source.leadType,
       planId: source.planId,
       currency,
+      requestedAmountEur,
       firstName,
       lastName,
       email,
@@ -287,6 +313,10 @@ export function buildWebhookPayload(lead: Record<string, any>) {
     leadId: lead.id,
     orderNumber,
     price,
+    requestedAmountEur:
+      typeof lead.requested_amount_eur === 'number'
+        ? lead.requested_amount_eur
+        : null,
     leadType: lead.lead_type,
     webhookStatus: lead.webhook_status,
     planId: lead.plan_id,

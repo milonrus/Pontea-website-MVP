@@ -21,6 +21,7 @@ interface EurRequestRow {
   lead_type: string;
   plan_id: string;
   currency: string | null;
+  requested_amount_eur: number | null;
   client_id: string | null;
   invoice_order_number: number | null;
   webhook_status: string;
@@ -183,7 +184,7 @@ const pollLeadByEmailUntilDelivered = async (
   while (Date.now() < deadline) {
     const { data, error } = await supabase
       .from('eur_requests')
-      .select('id,lead_type,plan_id,currency,client_id,invoice_order_number,webhook_status,webhook_last_error,page_path,created_at')
+      .select('id,lead_type,plan_id,currency,requested_amount_eur,client_id,invoice_order_number,webhook_status,webhook_last_error,page_path,created_at')
       .eq('email', email)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -254,6 +255,7 @@ const runScenario = async (page: Page, supabase: SupabaseClient, locale: Locale)
     expect(lead.lead_type).toBe('eur_prepayment_application');
     expect(lead.plan_id).toBe('universal');
     expect(lead.currency).toBe('EUR');
+    expect(lead.requested_amount_eur).toBe(100);
     expect(lead.webhook_status).toBe('webhook_delivered');
     expect(lead.client_id).not.toBeNull();
     expect(typeof lead.invoice_order_number).toBe('number');
