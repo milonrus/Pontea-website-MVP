@@ -1,8 +1,8 @@
 import { getOptionalServerEnv, getServerEnvInt } from '@/lib/env/server';
 
-const LEAD_TYPES = ['rub_intent', 'eur_application', 'mentorship_application'] as const;
+const LEAD_TYPES = ['eur_application', 'mentorship_application'] as const;
 const PLAN_IDS = ['foundation', 'advanced', 'mentorship'] as const;
-const CURRENCIES = ['RUB', 'EUR'] as const;
+const CURRENCIES = ['EUR'] as const;
 const PAYER_TYPES = ['individual', 'legal_entity'] as const;
 const MESSENGER_TYPES = ['telegram', 'whatsapp'] as const;
 
@@ -10,12 +10,6 @@ const EUR_PRICE_BY_PLAN: Record<PlanId, number> = {
   foundation: 890,
   advanced: 1490,
   mentorship: 3490,
-};
-
-const RUB_PRICE_BY_PLAN: Record<PlanId, number> = {
-  foundation: 82000,
-  advanced: 137000,
-  mentorship: 321000,
 };
 
 export const MAX_WEBHOOK_ATTEMPTS = getServerEnvInt('PRICING_WEBHOOK_MAX_ATTEMPTS', 3, { min: 1 });
@@ -183,16 +177,6 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
   const utmContent = normalizeText(source.utmContent);
   const currency = isCurrency(source.currency) ? source.currency : null;
 
-  if (source.leadType === 'rub_intent') {
-    if (source.planId !== 'foundation' && source.planId !== 'advanced') {
-      return { payload: null, error: 'rub_intent supports only foundation and advanced' };
-    }
-
-    if (currency !== 'RUB') {
-      return { payload: null, error: 'rub_intent currency must be RUB' };
-    }
-  }
-
   if (source.leadType === 'eur_application') {
     if (source.planId !== 'foundation' && source.planId !== 'advanced') {
       return { payload: null, error: 'eur_application supports only foundation and advanced' };
@@ -283,24 +267,15 @@ export function validateAndNormalizeLeadPayload(body: unknown): {
 }
 
 export function buildWebhookPayload(lead: Record<string, any>) {
-  const event =
-    lead.lead_type === 'rub_intent'
-      ? 'pricing_payment_intent'
-      : 'pricing_lead_submitted';
   const planId = isPlanId(lead.plan_id) ? lead.plan_id : null;
-  const price =
-    planId && lead.currency === 'RUB'
-      ? RUB_PRICE_BY_PLAN[planId]
-      : planId
-        ? EUR_PRICE_BY_PLAN[planId]
-        : null;
+  const price = planId ? EUR_PRICE_BY_PLAN[planId] : null;
   const orderNumber =
     lead.lead_type === 'eur_application' && typeof lead.invoice_order_number === 'number'
       ? lead.invoice_order_number
       : null;
 
   return {
-    event,
+    event: 'pricing_lead_submitted',
     leadId: lead.id,
     orderNumber,
     price,

@@ -42,6 +42,7 @@ TABLES=(
   practice_answers
   assessment_results
   pricing_leads
+  consultation_leads
   invoice_order_counter
 )
 

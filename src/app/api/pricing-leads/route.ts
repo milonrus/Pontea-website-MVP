@@ -5,7 +5,6 @@ import {
   deliverWebhookWithRetries,
   validateAndNormalizeLeadPayload,
 } from './shared';
-const PRICING_PAYMENT_INTENT_WEBHOOK_ENV = 'PRICING_PAYMENT_INTENT_WEBHOOK_URL';
 const PRICING_EUR_INVOICE_WEBHOOK_ENV = 'PRICING_EUR_INVOICE_WEBHOOK_URL';
 const PRICING_MENTORSHIP_APPLICATION_WEBHOOK_ENV = 'PRICING_MENTORSHIP_APPLICATION_WEBHOOK_URL';
 
@@ -90,11 +89,16 @@ async function ensureInvoiceOrderSchemaReady(supabase: any): Promise<string | nu
   return null;
 }
 
-async function findRecentDuplicateLeadId(supabase: any, phone: string): Promise<string | null> {
+async function findRecentDuplicateLeadId(
+  supabase: any,
+  table: 'pricing_leads' | 'consultation_leads',
+  phone: string
+): Promise<string | null> {
+  // NOTE: Duplicate rules are intentionally table-local to keep flows independent.
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
-    .from('pricing_leads')
+    .from(table)
     .select('id')
     .eq('phone', phone)
     .gte('created_at', twentyFourHoursAgo)
@@ -102,7 +106,7 @@ async function findRecentDuplicateLeadId(supabase: any, phone: string): Promise<
     .limit(1);
 
   if (error) {
-    console.error('Failed to lookup duplicate pricing lead:', error);
+    console.error(`Failed to lookup duplicate lead in ${table}:`, error);
     return null;
   }
 
@@ -125,6 +129,17 @@ export async function POST(request: Request) {
       );
     }
 
+    const rawLeadType =
+      body && typeof body === 'object'
+        ? (body as Record<string, unknown>).leadType
+        : null;
+    if (rawLeadType === 'rub_intent') {
+      return NextResponse.json(
+        { error: 'rub_intent disabled' },
+        { status: 400 }
+      );
+    }
+
     const { payload, error } = validateAndNormalizeLeadPayload(body);
 
     if (error || !payload) {
@@ -137,6 +152,7 @@ export async function POST(request: Request) {
     const supabase = createServerClient();
 
     const isEurLead = payload.leadType === 'eur_application';
+    const targetTable = isEurLead ? 'pricing_leads' : 'consultation_leads';
     if (isEurLead) {
       const schemaError = await ensureInvoiceOrderSchemaReady(supabase);
       if (schemaError) {
@@ -147,7 +163,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const duplicateLeadId = await findRecentDuplicateLeadId(supabase, payload.phone);
+    const duplicateLeadId = await findRecentDuplicateLeadId(supabase, targetTable, payload.phone);
     const now = new Date().toISOString();
 
     const insertPayload = {
@@ -188,7 +204,7 @@ export async function POST(request: Request) {
     };
 
     let { data: lead, error: insertError } = await supabase
-      .from('pricing_leads')
+      .from(targetTable)
       .insert(insertPayload)
       .select('*')
       .single();
@@ -199,7 +215,7 @@ export async function POST(request: Request) {
       if (missingColumns.length > 0) {
         const fallbackPayload = omitColumns(insertPayload, missingColumns);
         const retryInsert = await supabase
-          .from('pricing_leads')
+          .from(targetTable)
           .insert(fallbackPayload)
           .select('*')
           .single();
@@ -221,13 +237,13 @@ export async function POST(request: Request) {
     }
 
     if (insertError || !lead) {
-      console.error('Failed to create pricing lead:', insertError);
+      console.error(`Failed to create lead in ${targetTable}:`, insertError);
       const responseError =
         isEurLead && hasOrderNumberSchemaError(insertError)
           ? getSchemaRequiredErrorMessage(insertError?.message || 'failed to assign invoice order number')
           : process.env.NODE_ENV === 'production'
-            ? 'Failed to save pricing lead'
-            : `Failed to save pricing lead: ${insertError?.message || 'unknown database error'}`;
+            ? 'Failed to save lead'
+            : `Failed to save lead: ${insertError?.message || 'unknown database error'}`;
       return NextResponse.json(
         { error: responseError },
         { status: 500 }
@@ -237,7 +253,7 @@ export async function POST(request: Request) {
     const orderNumber = extractOrderNumber(lead);
     if (isEurLead && orderNumber === null) {
       const { error: cleanupError } = await supabase
-        .from('pricing_leads')
+        .from(targetTable)
         .delete()
         .eq('id', lead.id);
 
@@ -255,45 +271,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (payload.leadType === 'rub_intent') {
-      const webhookResult = await deliverWebhookWithRetries(
-        lead,
-        MAX_WEBHOOK_ATTEMPTS,
-        PRICING_PAYMENT_INTENT_WEBHOOK_ENV
-      );
-
-      const rubWebhookStatusUpdate = webhookResult.delivered
-        ? {
-            status: 'webhook_delivered',
-            webhook_attempts: webhookResult.attempts,
-            webhook_last_error: null,
-            webhook_delivered_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        : {
-            status: 'failed_webhook',
-            webhook_attempts: webhookResult.attempts,
-            webhook_last_error: webhookResult.lastError,
-            webhook_delivered_at: null,
-            updated_at: new Date().toISOString(),
-          };
-
-      const { error: rubUpdateError } = await supabase
-        .from('pricing_leads')
-        .update(rubWebhookStatusUpdate)
-        .eq('id', lead.id);
-
-      if (rubUpdateError) {
-        console.error('Failed to update rub_intent webhook status:', rubUpdateError);
-      }
-
-      return NextResponse.json({
-        success: true,
-        leadId: lead.id,
-        orderNumber,
-      });
-    }
-
     const webhookEnvName =
       payload.leadType === 'eur_application'
         ? PRICING_EUR_INVOICE_WEBHOOK_ENV
@@ -306,7 +283,7 @@ export async function POST(request: Request) {
 
     if (!webhookResult.delivered) {
       const { error: updateError } = await supabase
-        .from('pricing_leads')
+        .from(targetTable)
         .update({
           status: 'failed_webhook',
           webhook_attempts: webhookResult.attempts,
@@ -331,7 +308,7 @@ export async function POST(request: Request) {
     }
 
     const { error: deliveredUpdateError } = await supabase
-      .from('pricing_leads')
+      .from(targetTable)
       .update({
         status: 'webhook_delivered',
         webhook_attempts: webhookResult.attempts,

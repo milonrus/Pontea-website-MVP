@@ -1,6 +1,6 @@
 export type RuPricingPlanId = 'foundation' | 'advanced' | 'mentorship';
 export type RuPricingCurrency = 'RUB' | 'EUR';
-export type PricingLeadType = 'rub_intent' | 'eur_application' | 'mentorship_application';
+export type PricingLeadType = 'eur_application' | 'mentorship_application';
 export type PayerType = 'individual' | 'legal_entity';
 export type MessengerType = 'telegram' | 'whatsapp';
 export type PricingLocale = 'en' | 'ru';
@@ -16,6 +16,7 @@ export interface RuPricingPlan {
   name: string;
   subtitle: string;
   price: number;
+  originalPrice?: number;
   priceRub: number;
   badge?: string;
   installmentAvailable: boolean;

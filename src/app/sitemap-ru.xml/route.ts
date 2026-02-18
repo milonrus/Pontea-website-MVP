@@ -8,6 +8,10 @@ const EN_INDEXABLE_PATHS = [
   '/legal/cookies/'
 ] as const;
 
+const RU_EXTRA_PATHS = [
+  '/ru/legal/user-agreement/'
+] as const;
+
 function getSiteUrl() {
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pontea.school';
   return siteUrl.endsWith('/') ? siteUrl.slice(0, -1) : siteUrl;
@@ -20,8 +24,8 @@ function toRuPath(enPath: string): string {
 export async function GET() {
   const siteUrl = getSiteUrl();
 
-  const urls = EN_INDEXABLE_PATHS
-    .map((enPath) => `  <url><loc>${siteUrl}${toRuPath(enPath)}</loc></url>`)
+  const urls = [...EN_INDEXABLE_PATHS.map(toRuPath), ...RU_EXTRA_PATHS]
+    .map((path) => `  <url><loc>${siteUrl}${path}</loc></url>`)
     .join('\n');
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>

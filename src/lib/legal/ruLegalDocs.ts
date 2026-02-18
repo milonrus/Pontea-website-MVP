@@ -1,7 +1,7 @@
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 
-export type RuLegalDocId = 'privacy' | 'consent' | 'terms' | 'cookies';
+export type RuLegalDocId = 'privacy' | 'consent' | 'terms' | 'user-agreement' | 'cookies';
 
 export interface RuLegalDocMeta {
   id: RuLegalDocId;
@@ -31,8 +31,13 @@ const RU_LEGAL_DOC_MANIFEST: readonly RuLegalDocMeta[] = [
   },
   {
     id: 'terms',
-    title: 'Пользовательское соглашение',
+    title: 'Публичная оферта',
     fileName: 'terms.md'
+  },
+  {
+    id: 'user-agreement',
+    title: 'Пользовательское соглашение',
+    fileName: 'user-agreement.md'
   },
   {
     id: 'cookies',

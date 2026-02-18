@@ -4,7 +4,8 @@
   CRM smoke test runner for:
   - clients / client_contacts / client_link_reviews
   - assessment_results client linking
-  - pricing_leads linking for mentorship/eur
+  - consultation_leads linking for mentorship
+  - pricing_leads linking for eur
   - collision handling + review resolution
 
   Notes:
@@ -51,6 +52,7 @@ const runId = `crmqa_${Date.now()}`;
 const tracked = {
   assessmentIds: new Set(),
   pricingIds: new Set(),
+  consultationIds: new Set(),
   reviewIds: new Set(),
   clientIds: new Set(),
 };
@@ -116,6 +118,7 @@ async function uniqueEmail(label) {
 
 async function cleanup() {
   const pricingIds = Array.from(tracked.pricingIds);
+  const consultationIds = Array.from(tracked.consultationIds);
   const assessmentIds = Array.from(tracked.assessmentIds);
   const reviewIds = Array.from(tracked.reviewIds);
   const clientIds = Array.from(tracked.clientIds);
@@ -123,6 +126,11 @@ async function cleanup() {
   if (pricingIds.length > 0) {
     const { error } = await supabase.from('pricing_leads').delete().in('id', pricingIds);
     if (error) logWarn('Cleanup pricing_leads failed', error.message);
+  }
+
+  if (consultationIds.length > 0) {
+    const { error } = await supabase.from('consultation_leads').delete().in('id', consultationIds);
+    if (error) logWarn('Cleanup consultation_leads failed', error.message);
   }
 
   if (assessmentIds.length > 0) {
@@ -176,7 +184,7 @@ async function insertPricingLead(payload) {
   const row = await supabase
     .from('pricing_leads')
     .insert(payload)
-    .select('id,client_id,lead_type,invoice_order_number,status')
+    .select('id,client_id,lead_type,invoice_order_number,status,crm_status')
     .single();
 
   if (row.error || !row.data) {
@@ -187,12 +195,28 @@ async function insertPricingLead(payload) {
   return row.data;
 }
 
+async function insertConsultationLead(payload) {
+  const row = await supabase
+    .from('consultation_leads')
+    .insert(payload)
+    .select('id,client_id,lead_type,status,crm_status')
+    .single();
+
+  if (row.error || !row.data) {
+    throw new Error(`insertConsultationLead failed: ${row.error?.message || 'unknown error'}`);
+  }
+  tracked.consultationIds.add(row.data.id);
+  if (row.data.client_id) tracked.clientIds.add(row.data.client_id);
+  return row.data;
+}
+
 async function main() {
   // precheck
   const prechecks = await Promise.all([
     supabase.from('clients').select('id').limit(1),
     supabase.from('client_contacts').select('id').limit(1),
     supabase.from('client_link_reviews').select('id').limit(1),
+    supabase.from('consultation_leads').select('id').limit(1),
     supabase.from('crm_client_timeline_v').select('client_id').limit(1),
     supabase.from('crm_clients_overview_v').select('client_id').limit(1),
   ]);
@@ -215,21 +239,24 @@ async function main() {
 
   const clientS1 = await supabase
     .from('clients')
-    .select('id,status,canonical_phone_e164,canonical_email')
+    .select('id,status,canonical_phone_e164,canonical_email,crm_status,tariff')
     .eq('id', s1.client_id)
     .single();
 
   expect(!clientS1.error && !!clientS1.data, 'Client row exists for assessment', clientS1.error?.message);
   if (clientS1.data) {
     expect(clientS1.data.status === 'active', 'Client status is active');
+    expect(clientS1.data.crm_status === 'new', 'Client CRM status defaults to new');
     expect(clientS1.data.canonical_phone_e164 === phoneA, 'Canonical phone matches assessment');
     expect(clientS1.data.canonical_email === emailA, 'Canonical email matches assessment');
+    expect(clientS1.data.tariff === null, 'Client tariff is null after assessment only');
   }
 
   // Scenario 2: mentorship links by phone
-  const vip1 = await insertPricingLead({
+  const vip1 = await insertConsultationLead({
     lead_type: 'mentorship_application',
     status: 'captured',
+    crm_status: 'new',
     plan_id: 'mentorship',
     currency: null,
     first_name: 'CRM',
@@ -258,6 +285,14 @@ async function main() {
   });
 
   expect(vip1.client_id === s1.client_id, 'VIP lead linked to same client via phone', { assessmentClient: s1.client_id, vipClient: vip1.client_id });
+  expect(vip1.crm_status === 'new', 'Consultation lead CRM status defaults to new');
+
+  const clientAfterVip = await supabase
+    .from('clients')
+    .select('tariff')
+    .eq('id', s1.client_id)
+    .single();
+  expect(clientAfterVip.data?.tariff === 'individual', 'Client tariff becomes individual after consultation');
 
   // Scenario 3: EUR links by email and updates canonical phone
   const phoneB = await uniquePhone();
@@ -293,14 +328,16 @@ async function main() {
 
   expect(eur1.client_id === s1.client_id, 'EUR lead linked to same client via email');
   expect(typeof eur1.invoice_order_number === 'number', 'EUR lead has invoice_order_number');
+  expect(eur1.crm_status === 'new', 'Invoice lead CRM status defaults to new');
 
   const clientAfterEur = await supabase
     .from('clients')
-    .select('canonical_phone_e164,canonical_email')
+    .select('canonical_phone_e164,canonical_email,tariff')
     .eq('id', s1.client_id)
     .single();
   expect(clientAfterEur.data?.canonical_phone_e164 === phoneB, 'Canonical phone updated to latest');
   expect(clientAfterEur.data?.canonical_email === emailA, 'Canonical email preserved');
+  expect(clientAfterEur.data?.tariff === 'foundation', 'Client tariff becomes foundation after EUR invoice');
 
   // Scenario 5/6: collision + review resolution
   const phoneC = await uniquePhone();
@@ -323,23 +360,23 @@ async function main() {
   });
 
   const collision = await insertPricingLead({
-    lead_type: 'mentorship_application',
+    lead_type: 'eur_application',
     status: 'captured',
-    plan_id: 'mentorship',
-    currency: null,
+    plan_id: 'foundation',
+    currency: 'EUR',
     first_name: 'CRM',
     last_name: 'QA Collision',
     email: emailC,
     phone: phoneC,
-    payer_type: null,
+    payer_type: 'individual',
     messenger_type: null,
     messenger_handle: null,
     comment: null,
-    contract_country: null,
-    contract_city: null,
-    contract_postal_code: null,
-    contract_address: null,
-    consent_offer: false,
+    contract_country: 'Italy',
+    contract_city: 'Milan',
+    contract_postal_code: '20121',
+    contract_address: 'Via QA 2',
+    consent_offer: true,
     consent_personal_data: true,
     consent_marketing: false,
     cta_label: 'crm-qa-test',
@@ -425,40 +462,44 @@ async function main() {
     );
   }
 
-  // Scenario 8: rub_intent out of scope
+  // Scenario 8: rub_intent should be rejected (DB guard)
   const phoneE = await uniquePhone();
   const emailD = await uniqueEmail('d');
-  const rub = await insertPricingLead({
-    lead_type: 'rub_intent',
-    status: 'captured',
-    plan_id: 'foundation',
-    currency: 'RUB',
-    first_name: 'CRM',
-    last_name: 'QA RUB',
-    email: emailD,
-    phone: phoneE,
-    payer_type: null,
-    messenger_type: null,
-    messenger_handle: null,
-    comment: null,
-    contract_country: null,
-    contract_city: null,
-    contract_postal_code: null,
-    contract_address: null,
-    consent_offer: false,
-    consent_personal_data: true,
-    consent_marketing: false,
-    cta_label: 'crm-qa-test',
-    page_path: '/ru/',
-    referrer: null,
-    utm_source: null,
-    utm_medium: null,
-    utm_campaign: null,
-    utm_term: null,
-    utm_content: null,
-  });
+  const rubAttempt = await supabase
+    .from('pricing_leads')
+    .insert({
+      lead_type: 'rub_intent',
+      status: 'captured',
+      plan_id: 'foundation',
+      currency: 'RUB',
+      first_name: 'CRM',
+      last_name: 'QA RUB',
+      email: emailD,
+      phone: phoneE,
+      payer_type: null,
+      messenger_type: null,
+      messenger_handle: null,
+      comment: null,
+      contract_country: null,
+      contract_city: null,
+      contract_postal_code: null,
+      contract_address: null,
+      consent_offer: false,
+      consent_personal_data: true,
+      consent_marketing: false,
+      cta_label: 'crm-qa-test',
+      page_path: '/ru/',
+      referrer: null,
+      utm_source: null,
+      utm_medium: null,
+      utm_campaign: null,
+      utm_term: null,
+      utm_content: null,
+    })
+    .select('id')
+    .maybeSingle();
 
-  expect(rub.client_id === null, 'rub_intent remains out of scope (client_id is null)', rub);
+  expect(!!rubAttempt.error, 'rub_intent insert is rejected (disabled)', rubAttempt.error?.message);
 
   // Overview sanity
   const overview = await supabase

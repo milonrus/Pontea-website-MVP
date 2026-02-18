@@ -95,7 +95,7 @@ run_target_sql 'select now() as dst_now;'
 
 echo "[2/9] Source public table inventory"
 run_source 'psql "$SRC_DB_URL" -Atc "select table_name from information_schema.tables where table_schema='\''public'\'' order by 1;"' > "$MIG_DIR/source_public_tables.txt"
-for table in assessment_results pricing_leads invoice_order_counter student_progress; do
+for table in assessment_results pricing_leads consultation_leads invoice_order_counter student_progress; do
   if ! grep -qx "$table" "$MIG_DIR/source_public_tables.txt"; then
     echo "Required table missing in source: $table" >&2
     exit 1
@@ -159,6 +159,7 @@ KEY_TABLES=(
   practice_answers
   assessment_results
   pricing_leads
+  consultation_leads
   invoice_order_counter
 )
 

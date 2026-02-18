@@ -417,6 +417,8 @@ export interface AssessmentResult {
 }
 
 export type ClientStatus = 'active' | 'placeholder' | 'merged';
+export type ClientCrmStatus = 'new' | 'in_progress' | 'won' | 'lost';
+export type ClientTariff = 'foundation' | 'advanced' | 'individual';
 export type ClientContactType = 'phone' | 'email';
 export type ClientLinkReviewStatus = 'open' | 'resolved' | 'dismissed';
 export type ClientLinkResolutionAction =
@@ -430,6 +432,8 @@ export interface Client {
   canonicalPhoneE164: string | null;
   canonicalEmail: string | null;
   status: ClientStatus;
+  crmStatus: ClientCrmStatus | null;
+  tariff: ClientTariff | null;
   mergedIntoClientId: string | null;
   firstSeenAt: string;
   lastSeenAt: string;
@@ -445,7 +449,7 @@ export interface ClientContact {
   isPrimary: boolean;
   firstSeenAt: string;
   lastSeenAt: string;
-  sourceTable: 'assessment_results' | 'pricing_leads';
+  sourceTable: 'assessment_results' | 'pricing_leads' | 'consultation_leads';
   sourceRowId: string;
   createdAt: string;
   updatedAt: string;
@@ -453,7 +457,7 @@ export interface ClientContact {
 
 export interface ClientLinkReview {
   id: string;
-  sourceTable: 'assessment_results' | 'pricing_leads';
+  sourceTable: 'assessment_results' | 'pricing_leads' | 'consultation_leads';
   sourceRowId: string;
   placeholderClientId: string;
   incomingName: string | null;

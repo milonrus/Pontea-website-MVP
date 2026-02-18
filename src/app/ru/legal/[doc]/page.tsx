@@ -40,15 +40,20 @@ export async function generateMetadata({
   }
 
   const legalDoc = await getRuLegalDoc(doc);
+  const languages = doc === 'user-agreement'
+    ? {
+        ru: `/ru/legal/${doc}/`
+      }
+    : {
+        en: `/legal/${doc}/`,
+        ru: `/ru/legal/${doc}/`
+      };
 
   return buildPageMetadata({
     title: legalDoc.title,
     description: `${legalDoc.title} PONTEA School.`,
     canonical: `/ru/legal/${doc}/`,
-    languages: {
-      en: `/legal/${doc}/`,
-      ru: `/ru/legal/${doc}/`
-    }
+    languages
   });
 }
 
@@ -64,6 +69,62 @@ const RuLegalDocPage = async ({
   }
 
   const legalDoc = await getRuLegalDoc(doc);
+  const publicOfferPdfPath = '/legal/ru/public-offer-ru.pdf';
+
+  if (doc === 'terms') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header locale="ru" />
+        <div className="mx-auto max-w-7xl px-4 pb-12 pt-28 text-black">
+          <Link
+            href="/ru/legal/"
+            className="mb-6 inline-block text-sm font-medium text-black underline underline-offset-4 transition-colors hover:text-black/70"
+          >
+            К документам
+          </Link>
+
+          <h1 className="mb-4 text-4xl font-bold text-black">{legalDoc.title}</h1>
+
+          <p className="mb-3 leading-7 text-black">
+            Актуальная версия доступна в формате PDF. Если документ не открывается внутри страницы,
+            воспользуйтесь ссылками ниже.
+          </p>
+
+          <div className="mb-6 flex flex-wrap gap-3">
+            <a
+              href={publicOfferPdfPath}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-black shadow-sm transition-colors hover:bg-black/5"
+            >
+              Открыть PDF
+            </a>
+            <a
+              href={publicOfferPdfPath}
+              download
+              className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-black/90"
+            >
+              Скачать PDF
+            </a>
+            <Link
+              href="/ru/legal/user-agreement/"
+              className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-black shadow-sm transition-colors hover:bg-black/5"
+            >
+              Пользовательское соглашение
+            </Link>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+            <iframe
+              src={publicOfferPdfPath}
+              title={legalDoc.title}
+              className="h-[75vh] w-full"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">

@@ -6,7 +6,7 @@ import { buildPageMetadata } from '@/lib/seo/metadata';
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Юридические документы',
-  description: 'Политика обработки данных, согласие, условия использования и политика cookie.',
+  description: 'Публичная оферта, политика обработки данных, согласие и политика cookie.',
   canonical: '/ru/legal/',
   languages: {
     en: '/legal/',

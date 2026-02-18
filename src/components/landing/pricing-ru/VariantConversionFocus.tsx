@@ -68,11 +68,27 @@ const VariantConversionFocus: React.FC<RuPricingVariantProps> = ({
             <p className="mt-2 text-sm font-medium text-gray-800">{plan.subtitle}</p>
 
             <div className="mt-5 border-y border-gray-200 py-4">
-              <div className="flex items-end gap-2 text-primary">
-                <span className="text-3xl font-bold leading-none md:text-4xl">€{plan.price}</span>
-                <span className="pb-1 text-sm font-semibold text-primary/80">
-                  = €{formatEurPerMonth(plan.price)}/{locale === 'en' ? 'mo' : 'мес'}
-                </span>
+              <div className="grid grid-cols-[1fr_auto] items-end gap-3 text-primary">
+                <div className="flex min-w-0 flex-nowrap items-end gap-x-2">
+                  <span className="text-3xl font-bold leading-none md:text-4xl">€{plan.price}</span>
+                  <span className="relative pb-1 text-sm font-semibold text-primary/80">
+                    = €{formatEurPerMonth(plan.price)}/{locale === 'en' ? 'mo' : 'мес'}
+                    {plan.originalPrice && plan.originalPrice > plan.price ? (
+                      <span className="absolute left-full bottom-0 ml-6 inline-block whitespace-nowrap text-3xl font-semibold leading-none text-slate-400 tabular-nums md:ml-8 md:text-4xl">
+                        <span className="sr-only">
+                          {locale === 'en' ? 'Previous price:' : 'Старая цена:'}{' '}
+                        </span>
+                        <span className="relative inline-block">
+                          €{plan.originalPrice}
+                          <span
+                            aria-hidden
+                            className="pointer-events-none absolute left-[-6px] right-[-6px] top-[55%] h-[2px] -translate-y-1/2 -rotate-12 rounded-full bg-slate-500/60"
+                          />
+                        </span>
+                      </span>
+                    ) : null}
+                  </span>
+                </div>
               </div>
               {locale === 'ru' ? (
                 <div className="mt-2 text-xs text-gray-500">

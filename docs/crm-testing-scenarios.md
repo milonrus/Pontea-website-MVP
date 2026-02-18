@@ -1,15 +1,19 @@
-# CRM Testing Scenarios (clients + assessment + VIP/EUR links)
+# CRM Testing Scenarios (clients + assessment + consultation + EUR invoices)
 
 ## Scope
 - Verify CRM normalization introduced by migration `20260217_crm_clients_normalization.sql`.
+- Verify CRM v2 split introduced by migration `20260218_crm_split_consults_and_status_tariff.sql`.
 - Verify linking for:
-- `assessment_results` (always in scope)
-- `pricing_leads` with `lead_type='mentorship_application'` (VIP/consultation)
-- `pricing_leads` with `lead_type='eur_application'` (EUR invoice)
-- Verify that `rub_intent` remains out of scope for `client_id` in phase 1.
+  - `assessment_results` (always in scope)
+  - `pricing_leads` with `lead_type='eur_application'` (EUR invoice only)
+  - `consultation_leads` with `lead_type='mentorship_application'` (consultation/individual)
+- Verify that `rub_intent` is disabled (API rejects; DB guard rejects new inserts).
 
 ## Preconditions
-- Migration `20260217_crm_clients_normalization.sql` is applied.
+- Migrations are applied in order:
+  - `20260217_crm_clients_normalization.sql`
+  - `20260217_crm_clients_hotfix_review_merge.sql`
+  - `20260218_crm_split_consults_and_status_tariff.sql`
 - API routes are available:
 - `POST /api/assessment/submit`
 - `POST /api/pricing-leads`
@@ -47,7 +51,7 @@ Expected result:
 - `firstName='CRM QA User 1'`
 - `phone=Phone A`
 - `email` omitted
-2. Verify inserted `pricing_leads` row has `client_id` equal to Scenario 1 client.
+2. Verify inserted `consultation_leads` row has `client_id` equal to Scenario 1 client.
 3. Verify `clients.last_seen_at` updated.
 4. Verify no new `clients` row created.
 
@@ -150,13 +154,14 @@ Expected result:
 Expected result:
 - EUR lead has both invoice order and CRM link.
 
-## Scenario 10: rub_intent remains out of scope
-1. Insert `rub_intent` lead through API.
-2. Verify insert succeeds even if `client_id` stays null.
-3. Verify no `client_link_reviews` created for this row.
+## Scenario 10: rub_intent is disabled
+1. Submit `rub_intent` lead through API.
+2. Verify API returns 400 with error `rub_intent disabled`.
+3. Try SQL insert into `pricing_leads` with `lead_type='rub_intent'`.
+4. Verify DB rejects insert due to check constraint `pricing_leads_only_eur_application_check`.
 
 Expected result:
-- Phase-1 scope is respected: `rub_intent` is not forced into CRM linking.
+- `rub_intent` is disabled and does not enter the CRM database.
 
 ## Scenario 11: Constraint guard for in-scope types
 1. Try SQL insert into `pricing_leads` for `eur_application` with `client_id` explicitly null and triggers disabled (or with manual transaction mode if available in your env).
@@ -183,7 +188,13 @@ Expected result:
 -- A) In-scope rows with missing client_id (must be 0)
 select lead_type, count(*) as cnt
 from pricing_leads
-where lead_type in ('eur_application', 'mentorship_application')
+where lead_type = 'eur_application'
+  and client_id is null
+group by lead_type;
+
+select lead_type, count(*) as cnt
+from consultation_leads
+where lead_type = 'mentorship_application'
   and client_id is null
 group by lead_type;
 
@@ -216,6 +227,7 @@ limit 50;
 ```sql
 -- Adjust filters if your test data pattern differs.
 delete from pricing_leads where cta_label = 'crm-qa-test';
+delete from consultation_leads where cta_label = 'crm-qa-test';
 delete from assessment_results where email like '%@crm-qa.local';
 
 -- Optional cleanup for orphan placeholders and reviews.

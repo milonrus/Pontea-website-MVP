@@ -8,6 +8,8 @@ const PRICING_MENTORSHIP_APPLICATION_WEBHOOK_ENV = 'PRICING_MENTORSHIP_APPLICATI
 const extractOrderNumber = (lead: Record<string, any>): number | null =>
   typeof lead.invoice_order_number === 'number' ? lead.invoice_order_number : null;
 
+type RetryLeadTable = 'pricing_leads' | 'consultation_leads';
+
 export async function POST(request: Request) {
   try {
     let body: unknown;
@@ -32,13 +34,48 @@ export async function POST(request: Request) {
 
     const supabase = createServerClient();
 
-    const { data: lead, error: fetchError } = await supabase
+    let table: RetryLeadTable = 'pricing_leads';
+    let lead: Record<string, any> | null = null;
+
+    const pricingFetch = await supabase
       .from('pricing_leads')
       .select('*')
       .eq('id', leadId)
-      .single();
+      .maybeSingle();
 
-    if (fetchError || !lead) {
+    if (pricingFetch.error) {
+      console.error('Failed to fetch pricing lead:', pricingFetch.error);
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
+    }
+
+    if (pricingFetch.data) {
+      table = 'pricing_leads';
+      lead = pricingFetch.data as Record<string, any>;
+    } else {
+      const consultFetch = await supabase
+        .from('consultation_leads')
+        .select('*')
+        .eq('id', leadId)
+        .maybeSingle();
+
+      if (consultFetch.error) {
+        console.error('Failed to fetch consultation lead:', consultFetch.error);
+        return NextResponse.json(
+          { error: 'Internal server error' },
+          { status: 500 }
+        );
+      }
+
+      if (consultFetch.data) {
+        table = 'consultation_leads';
+        lead = consultFetch.data as Record<string, any>;
+      }
+    }
+
+    if (!lead) {
       return NextResponse.json(
         { error: 'Lead not found' },
         { status: 404 }
@@ -64,9 +101,9 @@ export async function POST(request: Request) {
     }
 
     const webhookEnvName =
-      lead.lead_type === 'eur_application'
+      table === 'pricing_leads'
         ? PRICING_EUR_INVOICE_WEBHOOK_ENV
-        : lead.lead_type === 'mentorship_application'
+        : table === 'consultation_leads'
           ? PRICING_MENTORSHIP_APPLICATION_WEBHOOK_ENV
           : null;
 
@@ -87,7 +124,7 @@ export async function POST(request: Request) {
 
     if (!webhookResult.delivered) {
       const { error: updateError } = await supabase
-        .from('pricing_leads')
+        .from(table)
         .update({
           status: 'failed_webhook',
           webhook_attempts: totalAttempts,
@@ -112,7 +149,7 @@ export async function POST(request: Request) {
     }
 
     const { error: deliveredUpdateError } = await supabase
-      .from('pricing_leads')
+      .from(table)
       .update({
         status: 'webhook_delivered',
         webhook_attempts: totalAttempts,
