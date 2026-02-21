@@ -299,6 +299,8 @@ const WorryCard = ({
                 <img
                     src={worry.image}
                     alt={worry.tag}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-contain p-2 mix-blend-multiply"
                 />
             </div>

@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
 import { Plus } from 'lucide-react';
 
 interface FAQItem {
@@ -223,7 +222,6 @@ const translations = {
 };
 
 const FAQ: React.FC<FAQProps> = ({ locale = 'ru' }) => {
-  const [openKey, setOpenKey] = useState<string | null>(null);
   const t = translations[locale];
 
   const faqSections: FAQSection[] = [
@@ -281,45 +279,30 @@ const FAQ: React.FC<FAQProps> = ({ locale = 'ru' }) => {
                 <div className="px-5 sm:px-7 pb-4 divide-y divide-slate-200">
                   {section.faqs.map((faq, idx) => {
                     const key = `${section.id}-${idx}`;
-                    const isOpen = openKey === key;
 
                     return (
-                      <div key={key} className="first:border-t border-slate-200">
-                        <button
-                          onClick={() => setOpenKey(isOpen ? null : key)}
-                          aria-expanded={isOpen}
-                          aria-controls={`faq-answer-${key}`}
-                          className="group w-full flex items-start justify-between gap-6 py-5 sm:py-6 text-left focus:outline-none"
+                      <details
+                        key={key}
+                        className="group first:border-t border-slate-200"
+                      >
+                        <summary
+                          className="w-full list-none flex items-start justify-between gap-6 py-5 sm:py-6 text-left cursor-pointer [&::-webkit-details-marker]:hidden"
                         >
-                          <span className={`font-semibold text-base sm:text-lg leading-snug transition-colors ${isOpen ? 'text-primary' : 'text-slate-800 group-hover:text-primary'}`}>
+                          <span className="font-semibold text-base sm:text-lg leading-snug text-slate-800 transition-colors group-hover:text-primary group-open:text-primary">
                             {faq.question}
                           </span>
-                          <span
-                            className={`
-                              flex-shrink-0 mt-0.5 text-slate-400 transition-all duration-200
-                              ${isOpen ? 'rotate-45 text-primary' : ''}
-                            `}
-                          >
+                          <span className="flex-shrink-0 mt-0.5 text-slate-400 transition-all duration-200 group-open:rotate-45 group-open:text-primary">
                             <Plus className="w-4 h-4" />
                           </span>
-                        </button>
+                        </summary>
 
-                        <AnimatePresence>
-                          {isOpen && (
-                            <motion.div
-                              id={`faq-answer-${key}`}
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.22 }}
-                            >
-                              <div className="pb-6 pr-9 text-slate-600 leading-relaxed whitespace-pre-line">
-                                {faq.answer}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
+                        <div
+                          id={`faq-answer-${key}`}
+                          className="pb-6 pr-9 text-slate-600 leading-relaxed whitespace-pre-line"
+                        >
+                          {faq.answer}
+                        </div>
+                      </details>
                     );
                   })}
                 </div>

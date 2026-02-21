@@ -84,6 +84,8 @@ const TestimonialCard = ({ testimonial, index }: { testimonial: Testimonial, ind
           <img
             src={testimonial.image}
             alt={testimonial.name}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
 
@@ -134,7 +136,13 @@ const TestimonialCard = ({ testimonial, index }: { testimonial: Testimonial, ind
           <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200">
-                <img src={testimonial.image} alt={testimonial.name} className="w-full h-full object-cover" />
+                <img
+                  src={testimonial.image}
+                  alt={testimonial.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
                 <div className="font-bold text-primary text-sm">{testimonial.name}</div>

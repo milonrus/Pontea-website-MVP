@@ -1,0 +1,212 @@
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { Menu, X } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { createPortal } from 'react-dom';
+import Button from './Button';
+import LanguageSwitcher from './LanguageSwitcher';
+import { getRequiredPublicEnv } from '@/lib/env/public';
+
+interface MarketingHeaderProps {
+  locale?: 'en' | 'ru';
+}
+
+const translations = {
+  en: {
+    aboutCourse: 'About the Course',
+    pricing: 'Pricing',
+    personalPlan: 'Personal Plan',
+    needHelp: 'Need help choosing?',
+  },
+  ru: {
+    aboutCourse: 'О курсе',
+    pricing: 'Цены',
+    personalPlan: 'План подготовки',
+    needHelp: 'Нужна помощь с выбором?',
+  },
+};
+
+const MarketingHeader: React.FC<MarketingHeaderProps> = ({ locale = 'ru' }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
+
+  const t = translations[locale];
+  const isEnglish = locale === 'en';
+  const homePath = isEnglish ? '/' : '/ru/';
+  const assessmentPath = isEnglish ? '/assessment/' : '/ru/assessment/';
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      document.body.style.overflow = '';
+      return;
+    }
+
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  const supportTelegramUrl = getRequiredPublicEnv('NEXT_PUBLIC_SUPPORT_TELEGRAM_URL');
+
+  const normalizePath = (path: string) => {
+    if (path === '/') {
+      return '/';
+    }
+
+    return path.endsWith('/') ? path.slice(0, -1) : path;
+  };
+
+  const scrollToSection = (id: string) => {
+    setMobileMenuOpen(false);
+    if (normalizePath(pathname) !== normalizePath(homePath)) {
+      window.location.href = `${homePath}#${id}`;
+      return;
+    }
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const navLinks = [
+    { label: t.aboutCourse, path: homePath, type: 'link' as const },
+    { label: t.pricing, id: 'pricing-cards', type: 'scroll' as const },
+    { label: t.personalPlan, path: assessmentPath, type: 'link' as const },
+  ];
+
+  return (
+    <>
+      <header
+        className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+          isScrolled ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <Link href={homePath} className="z-50">
+            <div
+              className={`w-auto transition-all duration-300 ${isScrolled ? 'h-5' : 'h-7'}`}
+              style={{
+                aspectRatio: '1056 / 122',
+                backgroundColor: '#01278b',
+                WebkitMaskImage: 'url(/pontea-logo.webp)',
+                WebkitMaskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskImage: 'url(/pontea-logo.webp)',
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center',
+              }}
+              role="img"
+              aria-label="Pontea"
+            />
+          </Link>
+
+          <nav className="hidden lg:flex items-center gap-8">
+            {navLinks.map((link) => (
+              link.type === 'link' ? (
+                <Link
+                  key={link.label}
+                  href={link.path!}
+                  className="text-sm font-medium text-gray-600 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <button
+                  key={link.label}
+                  type="button"
+                  onClick={() => scrollToSection(link.id!)}
+                  className="text-sm font-medium text-gray-600 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </button>
+              )
+            ))}
+
+            <LanguageSwitcher />
+
+            <a href={supportTelegramUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="primary">{t.needHelp}</Button>
+            </a>
+          </nav>
+
+          <button
+            type="button"
+            aria-label={mobileMenuOpen ? 'Close mobile menu' : 'Open mobile menu'}
+            className="lg:hidden z-50 p-2 min-w-11 min-h-11 text-primary"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+      </header>
+
+      {isMounted && mobileMenuOpen && createPortal(
+        <div className="fixed inset-0 bg-white z-[70] flex flex-col items-center justify-center gap-6 px-6 lg:hidden">
+          <button
+            type="button"
+            aria-label="Close mobile menu"
+            className="absolute top-4 right-4 p-2 min-w-11 min-h-11 text-primary"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <X />
+          </button>
+
+          {navLinks.map((link) => (
+            link.type === 'link' ? (
+              <Link
+                key={link.label}
+                href={link.path!}
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-xl font-display font-bold text-primary min-h-11 px-4 flex items-center"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <button
+                key={link.label}
+                type="button"
+                onClick={() => scrollToSection(link.id!)}
+                className="text-xl font-display font-bold text-primary min-h-11 px-4 flex items-center"
+              >
+                {link.label}
+              </button>
+            )
+          ))}
+
+          <LanguageSwitcher />
+
+          <a
+            href={supportTelegramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <Button size="lg" variant="primary">{t.needHelp}</Button>
+          </a>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+};
+
+export default MarketingHeader;

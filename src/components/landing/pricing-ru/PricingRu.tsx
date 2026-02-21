@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { getPricingPlans } from './data';
 import { PricingLocale, RuPricingPlan } from './types';
 import VariantConversionFocus from './VariantConversionFocus';
 import PricingPrepaymentStrip from './PricingPrepaymentStrip';
@@ -23,7 +22,8 @@ const PricingRu: React.FC<PricingRuProps> = ({ locale = 'ru' }) => {
   const searchParams = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<RuPricingPlan | null>(null);
   const [isPrepaymentFlowOpen, setIsPrepaymentFlowOpen] = useState(false);
-  const plans = getPricingPlans(locale);
+  const [plans, setPlans] = useState<RuPricingPlan[]>([]);
+  const [plansLoaded, setPlansLoaded] = useState(false);
   const t = locale === 'en'
     ? {
         heading: 'Choose your preparation format',
@@ -43,7 +43,38 @@ const PricingRu: React.FC<PricingRuProps> = ({ locale = 'ru' }) => {
   };
 
   useEffect(() => {
-    if (searchParams.get('openPricing') !== '1') {
+    let isCancelled = false;
+    setPlansLoaded(false);
+
+    const loadPlans = async () => {
+      const { getPricingPlans } = await import('./data');
+      if (isCancelled) {
+        return;
+      }
+
+      setPlans(getPricingPlans(locale));
+      setPlansLoaded(true);
+    };
+
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(() => {
+        void loadPlans();
+      });
+
+      return () => {
+        isCancelled = true;
+        window.cancelIdleCallback(idleId);
+      };
+    }
+
+    void loadPlans();
+    return () => {
+      isCancelled = true;
+    };
+  }, [locale]);
+
+  useEffect(() => {
+    if (!plansLoaded || searchParams.get('openPricing') !== '1') {
       return;
     }
 
@@ -60,7 +91,7 @@ const PricingRu: React.FC<PricingRuProps> = ({ locale = 'ru' }) => {
 
     const nextQuery = nextSearch.toString();
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
-  }, [pathname, plans, router, searchParams]);
+  }, [pathname, plans, plansLoaded, router, searchParams]);
 
   const variantProps = {
     plans,
@@ -81,7 +112,13 @@ const PricingRu: React.FC<PricingRuProps> = ({ locale = 'ru' }) => {
         </div>
 
         <div id="pricing-cards" className="mt-8 scroll-mt-12 md:scroll-mt-16">
-          <VariantConversionFocus {...variantProps} />
+          {plansLoaded ? (
+            <VariantConversionFocus {...variantProps} />
+          ) : (
+            <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500">
+              {locale === 'en' ? 'Loading pricing plans…' : 'Загружаем тарифы…'}
+            </div>
+          )}
         </div>
 
         <div className="mt-12 grid gap-5 lg:grid-cols-[minmax(0,1.75fr)_minmax(260px,0.85fr)] lg:items-stretch">

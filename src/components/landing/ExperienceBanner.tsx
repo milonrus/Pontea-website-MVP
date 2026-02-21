@@ -48,6 +48,8 @@ const ExperienceBanner: React.FC<ExperienceBannerProps> = ({ locale = 'ru' }) =>
                             <img
                                 src={uni.src}
                                 alt={uni.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="max-w-full max-h-full object-contain"
                             />
                         </motion.div>

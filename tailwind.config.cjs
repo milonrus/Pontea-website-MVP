@@ -62,8 +62,8 @@ module.exports = {
         "brand-pink-crimson": "#FFCCBC"
       },
       fontFamily: {
-        sans: ['"Mulish"', "sans-serif"],
-        display: ['"Mulish"', "sans-serif"]
+        sans: ['var(--font-mulish)', "sans-serif"],
+        display: ['var(--font-mulish)', "sans-serif"]
       }
     }
   },
